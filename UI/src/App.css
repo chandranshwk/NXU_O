@@ -1,0 +1,221 @@
+@import url("https://googleapis.com");
+@import "tailwindcss";
+
+/* =============================================================
+   PROJECT NXU_O - FINALIZED LOCAL DIRECTORY FONT ARCHITECTURE
+   ============================================================= */
+
+/* 1. APTOS LOCAL */
+@font-face {
+  font-family: "AptosLocal";
+  src: url("./assets/Fonts/Aptos.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "AptosLocal";
+  src: url("./assets/Fonts/Aptos-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* 2. CALIBRI LOCAL */
+@font-face {
+  font-family: "CalibriLocal";
+  src: url("./assets/Fonts/Fluent_Calibri.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "CalibriLocal";
+  src: url("./assets/Fonts/Fluent_Calibri-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* 3. JETBRAINS MONO LOCAL */
+@font-face {
+  font-family: "JetBrainsMonoLocal";
+  src: url("./assets/Fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "JetBrainsMonoLocal";
+  src: url("./assets/Fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  overflow: hidden;
+}
+
+/* Target TipTap's actual content-editable engine container directly */
+.tiptap,
+.tiptap:focus,
+.tiptap:active,
+.tiptap:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Style TipTap's inner text nodes so headings look like headings */
+.tiptap h1 {
+  font-size: 1.875rem !important; /* text-3xl equivalent */
+  font-weight: 700 !important; /* font-bold equivalent */
+  line-height: 1.25 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.tiptap h2 {
+  font-size: 1.5rem !important; /* text-2xl equivalent */
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.tiptap h3 {
+  font-size: 1.25rem !important; /* text-xl equivalent */
+  font-weight: 600 !important;
+  margin-top: 1rem !important;
+}
+
+/* Ensure regular paragraph blocks retain comfortable tracking distances */
+.tiptap p {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  font-size: var(--editor-font-size, 1rem) !important;
+  color: var(--editor-font-color, "#000") !important;
+}
+
+/* Inside your layout stylesheet or your global css index module */
+.tiptap p {
+  /* Forces lines to scale their vertical clearance match inline font measurements */
+  line-height: var(--editor-line-height, relaxed) !important;
+}
+
+.tiptap span[style*="font-size"] {
+  /* Keeps blank elements block-aligned so the caret draws matching pixel vertical metrics */
+  display: inline;
+}
+
+/* Inside your main editor style block within src/index.css */
+.tiptap h1 span[style*="font-size"],
+.tiptap h2 span[style*="font-size"],
+.tiptap h3 span[style*="font-size"] {
+  /* 🛠️ Forces clashing baseline inline spans to drop back to native header percentages */
+  font-size: inherit !important;
+}
+
+/* Optional: If they explicitly apply an oversized font, let it breakout */
+.tiptap h1 span[style^="font-size: 2"],
+.tiptap h1 span[style^="font-size: 3"] {
+  font-size: var(--custom-size) !important; /* Standard reference */
+}
+
+.tiptap ul {
+  list-style-type: circle !important;
+  padding-left: 1.25rem !important;
+  margin-top: 0.25rem !important;
+  color: var(--editor-font-color, "#000");
+  margin-bottom: 0.5rem !important;
+}
+
+/* Force decimal sequential numeric indicators to render accurately */
+.tiptap ol {
+  list-style-type: var(
+    --editor-ordered-list-representer,
+    "lower-roman"
+  ) !important;
+  padding-left: 1.25rem !important;
+  margin-top: 0.5rem !important;
+  color: var(--editor-font-color, "#000");
+  margin-bottom: 0.5rem !important;
+}
+
+/* Ensure line-items stack with optimal vertical density */
+.tiptap li {
+  margin-bottom: 0.125rem !important;
+  line-height: inherit !important;
+}
+
+.tiptap table th {
+  font-weight: 600;
+  text-align: left;
+  background-color: rgba(
+    113,
+    113,
+    122,
+    0.08
+  ); /* Soft subtle gray header fill */
+}
+
+/* Give selected cell highlights crisp, low-overhead high-density visual markers */
+.tiptap .selectedCell::after {
+  background: rgba(
+    59,
+    130,
+    246,
+    0.12
+  ) !important; /* Soft Tailwind Blue accent hue */
+}
+
+/* Ensure table structures scroll horizontally inside tight window scales if they overflow */
+.tiptap-editor-container {
+  overflow-x: auto;
+}
+
+/* =============================================================
+   PROJECT NXU_O - FINAL CRITICAL TABLE CELL ALIGNMENT RESETS
+   ============================================================= */
+
+/* Force table cell data elements to honor horizontal alignment attribute tags */
+.tiptap td[align="left"] {
+  text-align: left !important;
+}
+.tiptap td[align="center"] {
+  text-align: center !important;
+}
+.tiptap td[align="right"] {
+  text-align: right !important;
+}
+
+/* Force table headers to listen to their native align attributes */
+.tiptap th[align="left"] {
+  text-align: left !important;
+}
+.tiptap th[align="center"] {
+  text-align: center !important;
+}
+.tiptap th[align="right"] {
+  text-align: right !important;
+}
+/* Table Cell alignment handlers inside src/index.css */
+.tiptap td[style*="text-align: left"],
+.tiptap th[style*="text-align: left"] {
+  text-align: left !important;
+}
+.tiptap td[style*="text-align: center"],
+.tiptap th[style*="text-align: center"] {
+  text-align: center !important;
+}
+.tiptap td[style*="text-align: right"],
+.tiptap th[style*="text-align: right"] {
+  text-align: right !important;
+}
+.tiptap mark {
+  color: #1c1917 !important; /* Hard dark stone text for readability contrast inside highlights */
+  border-radius: 0.125rem;
+  padding: 0.05rem 0.15rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Maintain high-contrast text if the application switches to dark mode */
+.dark .tiptap mark {
+  color: #18181b !important;
+}

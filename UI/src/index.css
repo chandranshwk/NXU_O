@@ -1,0 +1,81 @@
+@import url("https://googleapis.com");
+/* Registering the base Aptos Sans Family */
+/* =============================================================
+   PROJECT nxu_o - FINALIZED LOCAL DIRECTORY FONT ARCHITECTURE
+   ============================================================= */
+
+/* 1. APTOS LOCAL */
+@font-face {
+  font-family: "AptosLocal";
+  src: url("./assets/Fonts/Aptos.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "AptosLocal";
+  src: url("./assets/Fonts/Aptos-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* 2. CALIBRI LOCAL (NATIVE WINDOWS SYSTEM FILES) */
+@font-face {
+  font-family: "CalibriLocal";
+  src: url("./assets/Fonts/CALIBRI.TTF") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "CalibriLocal";
+  src: url("./assets/Fonts/CALIBRIB.TTF") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* 3. JETBRAINS MONO LOCAL */
+@font-face {
+  font-family: "JetBrainsMonoLocal";
+  src: url("./assets/Fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "JetBrainsMonoLocal";
+  src: url("./assets/Fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* 1. Target the floating popover wrapper to kill the heavy shadow glow */
+.bn-popover,
+[data-component="FormattingToolbar"] {
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 0 transparent) !important;
+  border: 1px solid #242425 !important; /* Clean, flat border matching your app specs */
+}
+
+/* 2. Enforce your dark theme colors onto the floating menu when app is in dark mode */
+.dark .bn-popover,
+.dark [data-component="FormattingToolbar"] {
+  background-color: #18181b !important;
+  color: #ffffff !important;
+  border-color: #242425ab !important;
+}
+
+/* 3. Style the individual mini-buttons inside the floating bar to match your style */
+.dark [data-component="FormattingToolbar"] button {
+  background: transparent !important;
+  color: #d4d4d8 !important;
+}
+
+.dark [data-component="FormattingToolbar"] button:hover {
+  background-color: #27272a !important; /* Flat subtle hover state */
+  color: #ffffff !important;
+}
+
+/* 4. Fix active button states so they remain clear without neon flares */
+.dark [data-component="FormattingToolbar"] button[data-active="true"] {
+  background-color: #3f3f46 !important;
+  color: #fbbf24 !important; /* Clean amber accent text for active items */
+}
