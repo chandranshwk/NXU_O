@@ -64,9 +64,20 @@ function Layout() {
     return () => window.removeEventListener("keydown", handleCommands);
   }, [settings.openCommandBarKeys]);
 
+  const colorTrack = settings.darkMode ? "#262627" : "#DDDDDD";
+  const thumbColor = settings.darkMode ? "#D8D9DC" : "#222223";
+  const thumbHover = settings.darkMode ? "#B1B8C1" : "#40526C";
+
   return (
     <div
       className={`${settings.darkMode ? "bg-black/95" : "bg-slate-100"}  h-screen flex transition-colors duration-200`}
+      style={
+        {
+          "--colorTrack": colorTrack,
+          "--thumbColor": thumbColor,
+          "--thumbHover": thumbHover,
+        } as React.CSSProperties
+      }
     >
       {openCommandBar && (
         <CommandBar

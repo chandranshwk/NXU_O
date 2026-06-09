@@ -144,21 +144,6 @@ export const getEditorTools = (
           if (url) editor?.chain().focus().setLink({ href: url }).run();
         },
       },
-      {
-        icon: <MdOutlineFormatListBulleted />,
-        name: "Bullet List",
-        onClick: (editor) => {
-          editor?.chain().focus().toggleBulletList().run();
-          context.setIsBulletList((prev) => !prev);
-        },
-      },
-      {
-        icon: <MdOutlineGridOn />,
-        name: "Table Grid",
-        onClick: () => {
-          console.log("Table Grid template layout triggered");
-        },
-      },
     );
   }
 
