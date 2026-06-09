@@ -8,12 +8,7 @@ import {
   LuHeading5,
   LuHeading6,
 } from "react-icons/lu";
-import {
-  MdFormatListBulleted,
-  MdFormatListNumbered,
-  MdOutlineFormatListBulleted,
-  MdOutlineGridOn,
-} from "react-icons/md";
+import { MdFormatListBulleted, MdFormatListNumbered } from "react-icons/md";
 import { RxSection } from "react-icons/rx";
 import { type editorContextType } from "../contexts/editorContext";
 import type { Editor } from "@tiptap/core";
