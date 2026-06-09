@@ -122,7 +122,7 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
           }`}
           style={{ color: settings.defaultColor }}
         >
-          {COLORS(darkMode).map((color, idx) => (
+          {COLORS.map((color, idx) => (
             <option value={color} key={idx} style={{ color: color }}>
               Abc
             </option>

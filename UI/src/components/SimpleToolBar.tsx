@@ -107,7 +107,7 @@ const FontNames = ({
 };
 
 // =========================================================================
-// 🚀 MAIN WORKSPACE TOOLBAR CONTROLLER LAYOUT
+// MAIN WORKSPACE TOOLBAR CONTROLLER LAYOUT
 // =========================================================================
 const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
   const ELEMENTS = getEditorTools(type, context);
@@ -181,7 +181,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         }
       `}
     >
-      {/* 🚀 DROPDOWN 1: UNIQUE TEXT COLOR OPTIONS */}
+      {/* DROPDOWN 1: UNIQUE TEXT COLOR OPTIONS */}
       <ToolbarDropdown
         type="blocks"
         icon={
@@ -201,7 +201,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         title="Text Color"
         darkMode={darkMode}
       >
-        {COLORS(darkMode).map((color, idx) => (
+        {COLORS.map((color, idx) => (
           <ColorNames
             key={idx}
             darkMode={darkMode}
@@ -226,7 +226,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         </button>
       </ToolbarDropdown>
 
-      {/* 🚀 DROPDOWN: UNIQUE HIGHLIGHTER MARKER OPTIONS */}
+      {/* DROPDOWN: UNIQUE HIGHLIGHTER MARKER OPTIONS */}
       <ToolbarDropdown
         type="blocks"
         icon={
@@ -246,7 +246,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         title="Text Color"
         darkMode={darkMode}
       >
-        {COLORS(darkMode).map((color, idx) => (
+        {COLORS.map((color, idx) => (
           <HighLighterNames
             key={idx}
             darkMode={darkMode}
@@ -305,7 +305,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         }`}
       />
 
-      {/* 📝 CONTAINER LAYER 3: THE TYPOGRAPHY FONT PICKER DROPDOWN */}
+      {/* CONTAINER LAYER 3: THE TYPOGRAPHY FONT PICKER DROPDOWN */}
       <ToolbarDropdown
         type="col"
         icon={
@@ -350,11 +350,11 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
       </ToolbarDropdown>
 
       <TablePickerDropdown darkMode={darkMode} editor={context.editor!} />
-      {ELEMENTS.map((el) => {
+      {ELEMENTS.map((el, idx) => {
         const isActive = checkIsActive(el.name);
         return (
           <button
-            key={el.name}
+            key={idx}
             title={el.name}
             aria-label={el.name}
             className={`p-2 rounded transition-colors duration-150 outline-none ${

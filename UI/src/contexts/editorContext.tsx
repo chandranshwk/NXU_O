@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/core";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { useSettings } from "./settingsContext";
 
 // 1. The data blueprint for your workspace features
@@ -47,6 +47,7 @@ export interface editorContextType {
 }
 
 // Initialize the raw capsule bucket setting an explicit null entry point
+/* eslint-disable react-refresh/only-export-components */
 export const EditorContext = createContext<editorContextType | null>(null);
 
 // The self-contained state manager component
@@ -87,8 +88,6 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
   const toggleHeading = (level: number) => {
     setActiveHeadingLevel(level);
   };
-
-  useEffect(() => console.log(textColor), [textColor, setTextColor]);
 
   const editorContextValue: editorContextType = {
     editor,

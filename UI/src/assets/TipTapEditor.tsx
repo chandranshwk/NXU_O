@@ -79,7 +79,7 @@ export const getEditorExtensions = ({
         "Mod-Alt-2": () => this.editor.commands.toggleHeading({ level: 2 }),
         "Mod-Alt-3": () => this.editor.commands.toggleHeading({ level: 3 }),
 
-        // 🛠️ FIX B: Remove the dead toggleStrike command line from here to clear duplication
+        // Remove the dead toggleStrike command line from here to clear duplication
 
         "Mod-Shift-s": () => {
           console.log("Custom save shortcut fired from text canvas!");

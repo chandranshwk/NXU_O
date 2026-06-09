@@ -86,9 +86,9 @@ export const SettingsProvider = ({
   const [scratchpadOpenShortcut, setScratchpadOpenShortcut] =
     useState<string>("Mod-Shift-S");
   const [defaultOLRepresenter, setDefaultOLRepresenter] = useState(
-    ORDEREDLISTRESPRESENTER[ORDEREDLISTRESPRESENTER.length - 1],
+    ORDEREDLISTRESPRESENTER[0],
   );
-  const [defaultColor, setDefaultColor] = useState(darkMode ? "#fff" : "000");
+  const [defaultColor, setDefaultColor] = useState("");
   const [defaultStrikeThroughShortcut, setDefaultStrikeThroughShortcut] =
     useState<string>("Mod-Shift-x");
 

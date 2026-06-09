@@ -22,7 +22,7 @@ const ScratchPadContent = () => {
 
       {/* Scrollable text editing content layout below */}
       <div className="flex-1 overflow-y-auto focus:outline-none pb-12">
-        <EditorDoc />
+        <EditorDoc size="full" />
       </div>
     </div>
   );

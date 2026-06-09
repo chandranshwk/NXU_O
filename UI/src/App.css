@@ -118,7 +118,7 @@
 }
 
 .tiptap ul {
-  list-style-type: circle !important;
+  list-style-type: square !important;
   padding-left: 1.25rem !important;
   margin-top: 0.25rem !important;
   color: var(--editor-font-color, "#000");

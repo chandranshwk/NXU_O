@@ -16,10 +16,17 @@ import { getEditorExtensions } from "../assets/TipTapEditor";
 import { useSettings } from "../contexts/settingsContext";
 import { useEditorContext } from "../contexts/editorContext";
 
-const EditorDoc = () => {
+interface props {
+  size: "full" | "short";
+}
+
+const EditorDoc: React.FC<props> = ({ size }) => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const context = useEditorContext();
   const settings = useSettings();
+  settings.setDefaultColor(
+    size === "full" ? (darkMode ? "#fff" : "#000") : "#000",
+  );
 
   const editor = useEditor({
     editorProps: {
@@ -62,85 +69,6 @@ const EditorDoc = () => {
     },
   });
 
-  // FINALISED AUDIO ENGINE: PHYSICAL TEXT NODE MARK HIGHLIGHTING
-  // const handleReadScratchpadText = () => {
-  //   if (!editor) return;
-
-  //   const rawDocumentText = editor.getText();
-  //   if (!rawDocumentText.trim()) return;
-
-  //   if (window.speechSynthesis.speaking) {
-  //     window.speechSynthesis.cancel();
-  //     editor.commands.unsetMark("narratorHighlight"); // Clear highlights instantly on cancel
-  //     return;
-  //   }
-
-  //   const utterance = new SpeechSynthesisUtterance(rawDocumentText);
-  //   utterance.rate = 1.0;
-  //   utterance.pitch = 1.0;
-
-  //   // 🚀 THE BULLETPROOF BOUNDARY INTERCEPTOR
-  //   utterance.onboundary = (event: any) => {
-  //     if (event.name !== "word") return;
-
-  //     const wordCharIndex = event.charIndex;
-
-  //     // Look up text snippet slice thresholds safely
-  //     const remainingText = rawDocumentText.substring(wordCharIndex);
-  //     const nextSpaceIndex = remainingText.indexOf(" ");
-  //     const wordLength =
-  //       nextSpaceIndex === -1 ? remainingText.length : nextSpaceIndex;
-
-  //     // 🛠️ RE-ALIGNMENT MATH: Dynamically scan the DOM tree nodes to locate the exact character position matches
-  //     let absoluteDocPos = 1;
-  //     editor.state.doc.descendants((node, pos) => {
-  //       if (node.isText && node.text) {
-  //         const matchIndex = node.text.indexOf(
-  //           rawDocumentText.substring(
-  //             wordCharIndex,
-  //             wordCharIndex + wordLength,
-  //           ),
-  //         );
-  //         if (matchIndex !== -1) {
-  //           absoluteDocPos = pos + matchIndex;
-  //           return false; // Exit loop early once coordinates match perfectly
-  //         }
-  //       }
-  //       return true;
-  //     });
-
-  //     // Execute atomic highlight repaint chains cleanly without capturing keyboard text focus cursor contexts
-  //     editor
-  //       .chain()
-  //       .unsetMark("narratorHighlight") // Wipe old highlight mark blocks
-  //       .setTextSelection({
-  //         from: absoluteDocPos,
-  //         to: absoluteDocPos + wordLength,
-  //       })
-  //       .setMark("narratorHighlight") // Drop active yellow tracker background
-  //       .run();
-  //   };
-
-  //   // Clean up highlights entirely when the audio track hits an ending edge threshold boundary
-  //   utterance.onend = () => {
-  //     editor
-  //       .chain()
-  //       .unsetMark("narratorHighlight")
-  //       .setTextSelection({ from: 1, to: 1 })
-  //       .run();
-  //     console.log(
-  //       "🔊 Narration finished. Active custom canvas markup marks cleared.",
-  //     );
-  //   };
-
-  //   utterance.onerror = () => {
-  //     editor.commands.unsetMark("narratorHighlight");
-  //   };
-
-  //   window.speechSynthesis.speak(utterance);
-  // };
-
-  // ⚡ HOIST TO GLOBAL STATE BRIDGE
   useEffect(() => {
     if (editor) {
       context.setEditor(editor);
@@ -158,12 +86,16 @@ const EditorDoc = () => {
     <div
       /* DISMISS ON CLICK AWAY: Clears the popup if clicking blank space */
       onClick={closeContextMenu}
-      className={`h-full w-full flex flex-col overflow-hidden transition-colors outline-none duration-200 relative ${
-        darkMode ? "bg-[#18181b]" : "bg-white"
+      className={`flex flex-col overflow-hidden transition-all outline-none duration-200 relative ${
+        size === "full"
+          ? "w-full h-full"
+          : "w-2/3 h-[120vh] top-0 border border-zinc-200/50 relative left-[16.666667%]"
+      } ${
+        size === "short" ? "bg-white" : darkMode ? "bg-[#18181b]" : "bg-white"
       }`}
     >
       <div
-        className="flex-1 overflow-y-auto px-10 py-6  pt-0 focus:outline-none"
+        className="flex-1 h-[120vh] overflow-y-auto px-10 py-0  pt-0 focus:outline-none"
         /* THE RIGHT-CLICK INTERCEPTOR INTERACTION */
         onContextMenu={(e) => {
           if (!editor) return;
@@ -192,7 +124,9 @@ const EditorDoc = () => {
       >
         <EditorContent
           editor={editor}
-          className={`w-full min-h-[calc(100%-2rem)] focus:outline-none outline-none font-sans text-base leading-relaxed [&_.tiptap]:outline-none
+          className={`w-full ${
+            size === "full" ? "w-full min-h-[calc(100%-2rem)]" : "w-full pt-4"
+          } focus:outline-none outline-none font-sans text-base leading-relaxed [&_.tiptap]:outline-none
               ${
                 darkMode
                   ? " [&_.tiptap_h1]:text-white [&_.tiptap_p]:text-zinc-200 [&_.tiptap_ul]:text-zinc-100 [&_.tiptap_ol]:text-zinc-100"
@@ -209,6 +143,7 @@ const EditorDoc = () => {
           }
         />
       </div>
+
       {contextMenu && (
         <div
           style={{ top: contextMenu.y, left: contextMenu.x }}

@@ -67,7 +67,7 @@ export const FONTS = [
   "lucida-console",
 ];
 
-export const COLORS = (darkMode: boolean) => [
+export const COLORS = [
   "#64748b",
   "#71717a",
   "#ef4444",
@@ -79,10 +79,12 @@ export const COLORS = (darkMode: boolean) => [
   "#6366f1",
   "#a855f7",
   "#f43f5e",
-  `${darkMode ? "#ffffff" : "#000000"}`,
+  `#000000`,
+  "#ffffff",
 ];
 
 export const ORDEREDLISTRESPRESENTER = [
+  "decimal",
   "armenian",
   "decimal-leading-zero",
   "disc",

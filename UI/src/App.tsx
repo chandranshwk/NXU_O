@@ -8,6 +8,7 @@ import ScratchPad from "./Pages/ScratchPad";
 import GraphView from "./Pages/GraphView";
 import Settings from "./Pages/Settings";
 import { useSettings } from "./contexts/settingsContext";
+import NewDocument from "./Pages/NewDocument";
 
 function Layout() {
   const settings = useSettings();
@@ -100,6 +101,7 @@ const router = createHashRouter([
       { path: "scratchpad", element: <ScratchPad /> },
       { path: "graph", element: <GraphView /> },
       { path: "settings", element: <Settings /> },
+      { path: "document/:id", element: <NewDocument /> },
     ],
   },
 ]);
