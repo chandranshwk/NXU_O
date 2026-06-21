@@ -15,15 +15,18 @@ import {
 import { getEditorExtensions } from "../assets/TipTapEditor";
 import { useSettings } from "../contexts/settingsContext";
 import { useEditorContext } from "../contexts/editorContext";
+import { useScratchContext } from "../contexts/scratchContext";
 
 interface props {
   size: "full" | "short";
+  content: string;
 }
 
-const EditorDoc: React.FC<props> = ({ size }) => {
+const EditorDoc: React.FC<props> = ({ size, content }) => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const context = useEditorContext();
   const settings = useSettings();
+  const scratch = useScratchContext();
   settings.setDefaultColor(
     size === "full" ? (darkMode ? "#fff" : "#000") : "#000",
   );
@@ -38,7 +41,14 @@ const EditorDoc: React.FC<props> = ({ size }) => {
 
     extensions: getEditorExtensions({ settings }),
 
-    content: `     `,
+    content: content,
+    onUpdate: ({ editor: currentEditor }) => {
+      const currentHTML = currentEditor.getHTML();
+      // Only call setInfo if text actually changed to prevent render loops
+      if (currentHTML !== content) {
+        scratch.setInfo(currentHTML); // Maps directly to your context's setInfo state
+      }
+    },
 
     onSelectionUpdate: ({ editor: currentEditor }) => {
       context.setIsBold(currentEditor.isActive("bold"));
@@ -70,6 +80,21 @@ const EditorDoc: React.FC<props> = ({ size }) => {
   });
 
   useEffect(() => {
+    if (!editor) return;
+
+    // 1. Get whatever text or content is currently idling inside TipTap's memory core
+    const currentHTML = editor.getHTML();
+    const currentText = editor.getText();
+
+    // 2. Only force update if incoming file content differs from active canvas contents
+    // This comparison layer stops cursor jumping bugs when typing loops trigger
+    if (content !== currentHTML && content !== currentText) {
+      // setContent clears TipTap completely and injects your raw data safely
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
+
+  useEffect(() => {
     if (editor) {
       context.setEditor(editor);
       // context.setReadText(() => handleReadScratchpadText);
@@ -91,7 +116,7 @@ const EditorDoc: React.FC<props> = ({ size }) => {
           ? "w-full h-full"
           : "w-2/3 h-[120vh] top-0 border border-zinc-200/50 relative left-[16.666667%]"
       } ${
-        size === "short" ? "bg-white" : darkMode ? "bg-[#18181b]" : "bg-white"
+        size === "short" ? "bg-white" : darkMode ? "bg-[#141414]" : "bg-white"
       }`}
     >
       <div

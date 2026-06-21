@@ -3,9 +3,11 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useRef,
   type SetStateAction,
 } from "react";
 import { FONTS, ORDEREDLISTRESPRESENTER } from "../assets/assets";
+import { invoke } from "@tauri-apps/api/core";
 
 export interface settingsContextType {
   defaultFontSize: string;
@@ -42,11 +44,32 @@ export interface settingsContextType {
 /* eslint-disable react-refresh/only-export-components */
 export const SettingsContext = createContext<settingsContextType | null>(null);
 
+interface settings {
+  systemView: string;
+  defaultFontSize: string;
+  defaultFont: string;
+  lineHeight: number;
+  saveTimer: number;
+  notesViewShortcut: string;
+  openCommandBarKeys: string;
+  folderExplorerShortcut: string;
+  scratchpadOpenShortcut: string;
+  defaultOLRepresenter: string;
+  defaultColor: string;
+  defaultStrikeThroughShortcut: string;
+  openShortcut: string;
+  defaultSavingFolder: string;
+}
+
 export const SettingsProvider = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const isHydrated = useRef<boolean>(false);
+
   const [systemView, setSystemView] = useState<string>("Dark Mode");
 
   const isDarkMode =
@@ -95,6 +118,122 @@ export const SettingsProvider = ({
   const [openShortcut, setOpenShortcut] = useState<string>("Mod-Alt-C");
   const [defaultSavingFolder, setDefaultSavingFolder] =
     useState<string>("C:\\Desktop");
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const savedData = await invoke<settings>("load_portable_settings", {
+          filename: "settings.json",
+        });
+
+        if (savedData && savedData !== null) {
+          if (savedData.systemView !== undefined)
+            setSystemView(savedData.systemView);
+          if (savedData.defaultFontSize !== undefined)
+            setDefaultFontSize(savedData.defaultFontSize);
+
+          if (savedData.defaultFont) {
+            setDefaultFont(savedData.defaultFont);
+          } else {
+            setDefaultFont(FONTS[0]);
+          }
+
+          if (savedData.lineHeight !== undefined)
+            setLineHeight(Number(savedData.lineHeight));
+          if (savedData.saveTimer !== undefined)
+            setSaveTimer(Number(savedData.saveTimer));
+          if (savedData.notesViewShortcut !== undefined)
+            setNotesViewShortcut(savedData.notesViewShortcut);
+          if (savedData.openCommandBarKeys !== undefined)
+            setOpenCommandBarKeys(savedData.openCommandBarKeys);
+          if (savedData.folderExplorerShortcut !== undefined)
+            setFolderExplorerShortcut(savedData.folderExplorerShortcut);
+          if (savedData.scratchpadOpenShortcut !== undefined)
+            setScratchpadOpenShortcut(savedData.scratchpadOpenShortcut);
+
+          if (savedData.defaultOLRepresenter) {
+            setDefaultOLRepresenter(savedData.defaultOLRepresenter);
+          } else {
+            setDefaultOLRepresenter(ORDEREDLISTRESPRESENTER[0]);
+          }
+
+          if (savedData.defaultColor !== undefined)
+            setDefaultColor(savedData.defaultColor);
+          if (savedData.defaultStrikeThroughShortcut !== undefined)
+            setDefaultStrikeThroughShortcut(
+              savedData.defaultStrikeThroughShortcut,
+            );
+          if (savedData.openShortcut !== undefined)
+            setOpenShortcut(savedData.openShortcut);
+          if (savedData.defaultSavingFolder !== undefined)
+            setDefaultSavingFolder(savedData.defaultSavingFolder);
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings from Rust file:", error);
+      } finally {
+        // Lower shield and release the view
+        isHydrated.current = true;
+        setIsLoading(false);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated.current) return;
+    const dataToSave = {
+      systemView,
+      defaultFontSize,
+      defaultFont,
+      lineHeight,
+      saveTimer,
+      notesViewShortcut,
+      openCommandBarKeys,
+      folderExplorerShortcut,
+      scratchpadOpenShortcut,
+      defaultOLRepresenter,
+      defaultColor,
+      defaultStrikeThroughShortcut,
+      openShortcut,
+      defaultSavingFolder,
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      async function saveFile() {
+        try {
+          // Call the Rust command, passing only the file name and the JSON string
+          await invoke("save_portable_settings", {
+            filename: "settings.json",
+            contents: JSON.stringify(dataToSave, null, 2),
+          });
+        } catch (error) {
+          console.error("Portable save failed:", error);
+        }
+      }
+      saveFile();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [
+    systemView,
+    defaultFontSize,
+    defaultFont,
+    lineHeight,
+    saveTimer,
+    notesViewShortcut,
+    openCommandBarKeys,
+    folderExplorerShortcut,
+    scratchpadOpenShortcut,
+    defaultOLRepresenter,
+    defaultColor,
+    defaultStrikeThroughShortcut,
+    openShortcut,
+    defaultSavingFolder,
+  ]);
+
+  if (isLoading) {
+    return <div style={{ background: "#1a1a1a", height: "100vh" }} />; // Or a spinner matching your app theme
+  }
 
   const settingContextValue: settingsContextType = {
     defaultFontSize,

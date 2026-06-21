@@ -53,7 +53,7 @@ export const ToolbarDropdown: React.FC<DropdownProps> = ({
             }`}
           >
             <div
-              className={`${width ? width : "w-4 h-4"}  flex items-center justify-center`}
+              className={`${width ? width : "w-4 h-4"} gap-4 flex items-center justify-center`}
             >
               {icon}
             </div>
@@ -64,7 +64,7 @@ export const ToolbarDropdown: React.FC<DropdownProps> = ({
             <div
               className={`absolute left-0 mt-1 ${wDropDown ? wDropDown : "w-40"} rounded-lg shadow-xl border p-1 z-50 flex flex-col gap-0.5 outline-none ${
                 darkMode
-                  ? "bg-[#1f1f23] border-[#242425ab] text-zinc-200"
+                  ? "bg-[#121211] border-[#242425ab] text-zinc-200"
                   : "bg-white border-slate-200 text-gray-700"
               }`}
               onClick={() => setIsOpen(false)} // Snap shut automatically after clicking a choice option
@@ -76,7 +76,7 @@ export const ToolbarDropdown: React.FC<DropdownProps> = ({
       ) : (
         <div
           ref={dropdownRef}
-          className={`relative inline-block text-left ${darkMode ? "bg-zinc-800" : "bg-white"}`}
+          className={`relative inline-block text-left rounded-md ${darkMode ? "bg-[#191919]" : "bg-white"}`}
         >
           {/* TRIGGER BUTTON ELEMENT */}
           <button
@@ -85,7 +85,7 @@ export const ToolbarDropdown: React.FC<DropdownProps> = ({
               isOpen
                 ? "shadow-inner font-semibold"
                 : darkMode
-                  ? "hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                  ? "hover:bg-zinc-900 text-zinc-400 hover:text-white"
                   : "hover:bg-gray-200 text-gray-500 hover:text-gray-900"
             }`}
           >
@@ -107,7 +107,7 @@ export const ToolbarDropdown: React.FC<DropdownProps> = ({
       
       ${
         darkMode
-          ? "bg-[#1f1f23] border-[#242425ab] text-zinc-200"
+          ? "bg-[#121211] border-[#242425ab] text-zinc-200"
           : "bg-white border-slate-200 text-gray-700"
       }
     `}

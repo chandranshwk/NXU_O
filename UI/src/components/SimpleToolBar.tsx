@@ -171,7 +171,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         flex items-center justify-center gap-3 py-1.5 px-3 select-none outline-none transition-all duration-200
         ${
           darkMode
-            ? "bg-zinc-900/90 text-zinc-100 border-zinc-800/80 shadow-zinc-950/40"
+            ? "bg-[#121211] text-zinc-100 border-zinc-800/80 shadow-zinc-950/40"
             : "bg-zinc-100 text-zinc-800 border-zinc-200 shadow-zinc-200/50"
         } 
         ${

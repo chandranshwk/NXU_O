@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "nxu_o",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.nxuo.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
