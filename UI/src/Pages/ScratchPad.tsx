@@ -14,7 +14,7 @@ const ScratchPadContent = () => {
     <div
       className={`h-full flex flex-col justify-center overflow-hidden ${!darkMode ? "bg-white" : "bg-[#141414]"}`}
     >
-      <div className="shrink-0 flex px-2 items-center justify-between w-full bg-transparent relative z-40">
+      <div className="shrink-0 flex px-2 mb-4 items-center justify-between w-full bg-transparent relative z-40">
         <Pages
           darkMode={darkMode}
           allPads={settings.allPads}
@@ -30,21 +30,17 @@ const ScratchPadContent = () => {
         />
       </div>
 
-      {settings.saveStatus && (
-        <span
-          className={`text-[11px] font-medium transition-opacity duration-200 ${
-            settings.saveStatus === "Saved!"
-              ? "text-green-500"
-              : "text-amber-500"
-          }`}
-        >
-          {settings.saveStatus}
-        </span>
-      )}
-
       {/* Scrollable text editing content layout below */}
       <div className="flex-1 overflow-y-auto focus:outline-none pb-12">
-        <EditorDoc size="full" content={settings.info} />
+        {settings.activeSlots.length > 0 ? (
+          <EditorDoc size="full" content={settings.info} />
+        ) : (
+          /* Clean empty state message view displayed when no unsaved files are idle */
+          <div className="flex flex-col items-center justify-center w-full h-full text-zinc-500 italic text-sm">
+            No active scratchpads opened. Use the menu dropdown to create or
+            load a file.
+          </div>
+        )}
       </div>
     </div>
   );

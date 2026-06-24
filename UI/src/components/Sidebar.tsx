@@ -126,7 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
   }, [isOpen]);
 
   return (
-    <div className="mr-1">
+    <div className="mr-1 xl:block sm:hidden">
       <motion.div
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => {
@@ -139,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
       >
         {/* TOP SECTION: Project Switcher */}
         <div
-          className={`flex items-center p-3 gap-3 h-16 shrink-0 border-b border-transparent rounded-lg ${darkMode ? "bg-[#18181b] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
+          className={`flex items-center p-3 gap-3 h-16 shrink-0 border-b border-transparent rounded-lg ${darkMode ? "bg-[#141414] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
         >
           <div className="relative shrink-0 flex items-center justify-center">
             {currentSite.icon}
@@ -170,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
 
         {/* NAVIGATION BODY: Scrollable area */}
         <div
-          className={`flex-1 overflow-y-auto rounded-lg overflow-x-hidden justify-between flex flex-col p-3 pt-2 custom-scrollbar ${darkMode ? "bg-[#18181b] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
+          className={`flex-1 overflow-y-auto rounded-lg overflow-x-hidden justify-between flex flex-col p-3 pt-2 custom-scrollbar ${darkMode ? "bg-[#141414] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
         >
           <div>
             <div className="flex flex-col gap-2 mt-2">

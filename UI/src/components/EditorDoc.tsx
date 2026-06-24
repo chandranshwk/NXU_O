@@ -2,7 +2,7 @@ import { useOutletContext } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import "regenerator-runtime/runtime";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FiAlignCenter,
   FiAlignLeft,
@@ -30,6 +30,7 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
   settings.setDefaultColor(
     size === "full" ? (darkMode ? "#fff" : "#000") : "#000",
   );
+  const isTransitioningRef = useRef<boolean>(false);
 
   const editor = useEditor({
     editorProps: {
@@ -43,10 +44,11 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
 
     content: content,
     onUpdate: ({ editor: currentEditor }) => {
+      if (isTransitioningRef.current) return;
       const currentHTML = currentEditor.getHTML();
       // Only call setInfo if text actually changed to prevent render loops
-      if (currentHTML !== content) {
-        scratch.setInfo(currentHTML); // Maps directly to your context's setInfo state
+      if (scratch.info !== currentHTML) {
+        scratch.setInfo(currentHTML);
       }
     },
 
@@ -82,15 +84,15 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
   useEffect(() => {
     if (!editor) return;
 
-    // 1. Get whatever text or content is currently idling inside TipTap's memory core
     const currentHTML = editor.getHTML();
     const currentText = editor.getText();
 
-    // 2. Only force update if incoming file content differs from active canvas contents
-    // This comparison layer stops cursor jumping bugs when typing loops trigger
     if (content !== currentHTML && content !== currentText) {
-      // setContent clears TipTap completely and injects your raw data safely
+      isTransitioningRef.current = true;
+
       editor.commands.setContent(content);
+
+      isTransitioningRef.current = false;
     }
   }, [content, editor]);
 
