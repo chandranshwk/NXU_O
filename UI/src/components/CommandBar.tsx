@@ -1,22 +1,13 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiEdit3, FiFilePlus, FiGrid, FiLayers } from "react-icons/fi";
-import {
-  BiCheckSquare,
-  BiMessageSquare,
-  BiMoon,
-  BiSun,
-  BiSearch,
-  BiSolidHome,
-  BiCog,
-  BiCommand,
-} from "react-icons/bi";
+import { FiFilePlus } from "react-icons/fi";
+import { BiMoon, BiSun, BiSearch, BiSolidHome } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
-import { PiCommandLight } from "react-icons/pi";
 import { FaRegFolderOpen } from "react-icons/fa";
-import { getThemeActions } from "../assets/BGEcho_O";
-import { RiWechatChannelsLine } from "react-icons/ri";
 import { useSettings } from "../contexts/settingsContext";
+import { LuNotepadText, LuSettings2 } from "react-icons/lu";
+import { VscColorMode } from "react-icons/vsc";
+import { FormatHotkey } from "../assets/FormatHotKeys";
 
 interface CommandBarProps {
   isOpen: boolean;
@@ -43,7 +34,6 @@ const CommandBar: React.FC<CommandBarProps> = ({
   isOpen,
   onClose,
   darkMode,
-  setDarkMode,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -86,7 +76,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
       },
       {
         id: "system",
-        icon: <BiCommand />,
+        icon: <VscColorMode />,
         title: "Switch to System settings",
         shortcut: "/system",
         module: "System",
@@ -99,37 +89,17 @@ const CommandBar: React.FC<CommandBarProps> = ({
         icon: <FiFilePlus />,
         title: "New Document",
         shortcut: "/n-docs",
-        module: "TEXT_O",
+        module: "Editor",
         hideByDefault: false,
         category: "Quick Actions",
         action: () => navigate("/TEXT_O/docs"),
       },
       {
-        id: "new-sheet",
-        icon: <FiGrid />,
-        title: "New Spreadsheet",
-        shortcut: "/n-sheets",
-        module: "TEXT_O",
-        category: "Quick Actions",
-        action: () => navigate("/TEXT_O/sheets"),
-        hideByDefault: true,
-      },
-      {
-        id: "new-AXIS_O",
-        icon: <FiLayers />,
-        title: "New AXIS_O",
-        shortcut: "/n-AXIS_O",
-        module: "AXIS_O",
-        hideByDefault: false,
-        category: "Quick Actions",
-        action: () => navigate("/AXIS_O/new"),
-      },
-      {
-        id: "open",
+        id: "open dox",
         icon: <FaRegFolderOpen />,
         title: "Open Document",
         shortcut: "/o",
-        module: "OXU_O",
+        module: "Editor",
         category: "Quick Actions",
         action: () => navigate("/profile"),
         hideByDefault: true,
@@ -139,74 +109,33 @@ const CommandBar: React.FC<CommandBarProps> = ({
         icon: <BiSolidHome />,
         title: "Profile",
         shortcut: "/profile",
-        module: "OXU_O",
+        module: "NXU_O",
         hideByDefault: false,
         category: "Core",
-        action: () => navigate("/profile"),
+        action: () => navigate("/"),
       },
       {
-        id: "TEXT_O",
-        icon: <FiEdit3 />,
-        title: "TEXT_O",
-        shortcut: "/TEXT_O",
-        module: "Management",
+        id: "scratchpad",
+        icon: <LuNotepadText />,
+        title: "Scratch-Pad",
+        shortcut: "/scratch",
+        module: "NXU_O",
         hideByDefault: false,
-        category: "Modules",
-        action: () => navigate("/TEXT_O"),
+        category: "Core",
+        action: () => navigate("/scratchpad"),
       },
       {
-        id: "FLOW_O",
-        icon: <BiCheckSquare />,
-        title: "FLOW_O Tasks",
-        shortcut: "/FLOW_O",
-        module: "Management",
+        id: "settings",
+        icon: <LuSettings2 />,
+        title: "Settings",
+        shortcut: "/settings",
+        module: "NXU_O",
         hideByDefault: false,
-        category: "Modules",
-        action: () => navigate("/FLOW_O"),
+        category: "Core",
+        action: () => navigate("/settings"),
       },
-      {
-        id: "ECHO_OS",
-        icon: <BiCog />,
-        title: "ECHO_O Setting",
-        shortcut: "/ECHO_O",
-        module: "Collaboration",
-        hideByDefault: false,
-        category: "Quick Actions",
-        action: () => navigate("/ECHO_O/settings"),
-      },
-      {
-        id: "ECHO_OC",
-        icon: <BiMessageSquare />,
-        title: "ECHO_O Chat",
-        shortcut: "/ECHO_O",
-        module: "Collaboration",
-        hideByDefault: false,
-        category: "Modules",
-        action: () => navigate("/ECHO_O/settings"),
-      },
-      {
-        id: "ECHO_OCH",
-        icon: <RiWechatChannelsLine />,
-        title: "ECHO_O Channels",
-        shortcut: "/ECHO_O",
-        module: "Collaboration",
-        hideByDefault: false,
-        category: "Modules",
-        action: () => navigate("/ECHO_O/settings"),
-      },
-      {
-        id: "AXIS_O",
-        icon: <FiLayers />,
-        title: "AXIS_O",
-        shortcut: "/AXIS_O",
-        module: "Management",
-        hideByDefault: false,
-        category: "Modules",
-        action: () => navigate("/AXIS_O"),
-      },
-      ...getThemeActions({ setDarkMode }),
     ],
-    [setDarkMode, navigate],
+    [navigate, settings],
   );
 
   const filteredActions = useMemo(() => {
@@ -306,7 +235,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
     backdrop: "fixed inset-0",
     panel: `relative w-full border-1 border-zinc-500/80 max-w-xl overflow-hidden border border-zinc-400/20 rounded-xl shadow-2xl transition-all duration-300 ${
       darkMode
-        ? "bg-zinc-900/90 border-white/10 text-white shadow-black/50"
+        ? "bg-[#121211] border-white/10 text-white shadow-black/50"
         : "bg-white/90 border-black/5 text-zinc-900 shadow-black/10"
     } backdrop-blur-2xl`,
     input:
@@ -334,11 +263,11 @@ const CommandBar: React.FC<CommandBarProps> = ({
           <div
             className={`flex items-center px-5 border-b ${darkMode ? "border-white/10" : "border-black/5"}`}
           >
-            <div
-              className={`flex items-center justify-center mr-2 px-1.5 py-0.5 rounded text-[10px] border font-bold ${darkMode ? "bg-zinc-800 border-white/10 text-zinc-500" : "bg-zinc-100 border-black/10 text-zinc-400"}`}
+            <kbd
+              className={`inline-flex border mr-2 items-center px-2 justify-center gap-0.5 h-5  rounded-sm font-bold font-sans tracking-wide ${darkMode ? "bg-zinc-800/50 border-white/10 text-zinc-200" : "bg-zinc-100 border-black/10 text-zinc-400"} select-none`}
             >
-              <PiCommandLight size={15} />K
-            </div>
+              <FormatHotkey hotkeyStr={settings.openCommandBarKeys} />
+            </kbd>
             <BiSearch
               className={darkMode ? "text-zinc-400" : "text-zinc-500"}
               size={18}
@@ -430,10 +359,16 @@ const CommandBar: React.FC<CommandBarProps> = ({
                 to execute
               </span>
               <span className="flex items-center gap-1">
-                ESC or <PiCommandLight size={15} />K to close
+                ESC or{" "}
+                <kbd
+                  className={`inline-flex items-center px-2 justify-center gap-0.5 h-5  rounded-sm font-bold font-sans tracking-wide ${darkMode ? "bg-zinc-800/50 border-white/10 text-zinc-200" : "bg-zinc-100 border-black/10 text-zinc-400"} select-none`}
+                >
+                  <FormatHotkey hotkeyStr={settings.openCommandBarKeys} />
+                </kbd>
+                to close
               </span>
             </div>
-            <span>OXU_O OS V 1.0.4</span>
+            <span>NXU_O OS V 1.0.4</span>
           </div>
         </motion.div>
       </div>
@@ -472,7 +407,7 @@ const CommandItem: React.FC<CommandItemProps> = ({
               ? "bg-indigo-900 text-white"
               : "bg-blue-900 text-white"
             : darkMode
-              ? "bg-zinc-800 text-zinc-400"
+              ? "bg-[#202020] text-zinc-400"
               : style
                 ? "bg-zinc-800"
                 : "bg-zinc-100 text-zinc-600"
