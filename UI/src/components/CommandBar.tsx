@@ -9,12 +9,14 @@ import {
   BiSearch,
   BiSolidHome,
   BiCog,
+  BiCommand,
 } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { PiCommandLight } from "react-icons/pi";
 import { FaRegFolderOpen } from "react-icons/fa";
 import { getThemeActions } from "../assets/BGEcho_O";
 import { RiWechatChannelsLine } from "react-icons/ri";
+import { useSettings } from "../contexts/settingsContext";
 
 interface CommandBarProps {
   isOpen: boolean;
@@ -53,6 +55,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
 
   const navigate = useNavigate();
   const searchRef = useRef(search);
+  const settings = useSettings();
 
   useEffect(() => {
     searchRef.current = search;
@@ -69,7 +72,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
         module: "System",
         hideByDefault: false,
         category: "System Setting",
-        action: () => setDarkMode(true),
+        action: () => settings.setSystemView("Dark Mode"),
       },
       {
         id: "light",
@@ -79,7 +82,17 @@ const CommandBar: React.FC<CommandBarProps> = ({
         module: "System",
         hideByDefault: false,
         category: "System Setting",
-        action: () => setDarkMode(false),
+        action: () => settings.setSystemView("Light Mode"),
+      },
+      {
+        id: "system",
+        icon: <BiCommand />,
+        title: "Switch to System settings",
+        shortcut: "/system",
+        module: "System",
+        hideByDefault: false,
+        category: "System Setting",
+        action: () => settings.setSystemView("System-Settings"),
       },
       {
         id: "new-doc",

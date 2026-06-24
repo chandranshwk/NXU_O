@@ -168,7 +168,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
   return (
     <div
       className={`
-        flex flex-1  items-center justify-center gap-3 py-1.5 px-3 select-none outline-none transition-all duration-200
+        flex items-center justify-center gap-3 py-1.5 px-3 select-none outline-none transition-all duration-200
         ${
           darkMode
             ? "bg-[#121211] text-zinc-100 border-zinc-800/80 shadow-zinc-950/40"
@@ -176,7 +176,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         } 
         ${
           size === "small"
-            ? "w-max rounded-lg border my-2 mb-0 shadow-sm backdrop-blur-md"
+            ? "w-full rounded-lg  flex-1 border my-2 mb-0 shadow-sm backdrop-blur-md"
             : "w-full border-b"
         }
       `}

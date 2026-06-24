@@ -25,11 +25,53 @@ const Pages: React.FC<Props> = ({
   const [editingTabName, setEditingTabName] = useState<string | null>(null); // Tracks tab name being renamed
   const [renameValue, setRenameValue] = useState<string>(""); // Temporary state holding current typed changes
 
+  const [rememberedSlots, setRememberedSlots] =
+    useState<FileItem[]>(activeSlots);
+  const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const settings = useScratchContext();
 
   const activeTab = settings.activeSlot;
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const smallBreakpoint = window.innerWidth < 1280; // Matches Tailwind's 'xl' breakpoint
+      setIsSmallScreen(smallBreakpoint);
+
+      if (smallBreakpoint) {
+        // If we transition down to a small screen, isolate down to exactly 1 active tab slot
+        const currentActiveSlot = activeSlots[activeTab];
+        if (currentActiveSlot && activeSlots.length > 1) {
+          // Store a backup copy of your current open files layout first
+          setRememberedSlots(activeSlots);
+          setActiveSlots([currentActiveSlot]);
+          settings.setActiveSlot(0); // Reset slot pointer to the single open slot safely
+        }
+      } else {
+        // When maximized back out, restore your original refilled tabs structure smoothly
+        if (rememberedSlots.length > 0 && activeSlots.length === 1) {
+          setActiveSlots(rememberedSlots);
+
+          // Re-find where the current file name sits inside the restored array mapping
+          const currentActiveName = activeSlots[0]?.name;
+          const restoredIndex = rememberedSlots.findIndex(
+            (s) => s.name === currentActiveName,
+          );
+          if (restoredIndex !== -1) {
+            settings.setActiveSlot(restoredIndex);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    // Execute an initial check right on load setup to configure layout boundaries
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, [activeTab, activeSlots, rememberedSlots, settings, setActiveSlots]);
 
   // Auto-focus the rename input layout box when F2 is triggered
   useEffect(() => {
@@ -52,9 +94,14 @@ const Pages: React.FC<Props> = ({
     return () => document.removeEventListener("mousedown", clickOutside);
   }, []);
 
-  const hiddenPads = allPads.filter(
-    (pad) => !activeSlots.some((slot) => slot.name === pad.name),
-  );
+  const hiddenPads = allPads.filter((pad) => {
+    if (isSmallScreen) {
+      // On small screens, hide everything except the single active tab from the main toolbar list
+      return pad.name !== activeSlots[0]?.name;
+    }
+    // On wide screens, filter out any pad that is currently open in activeSlots
+    return !activeSlots.some((slot) => slot.name === pad.name);
+  });
   const currentActiveName = activeSlots[activeTab]
     ? activeSlots[activeTab].name
     : "";
@@ -252,17 +299,20 @@ const Pages: React.FC<Props> = ({
                   <div
                     key={index}
                     onClick={() => {
-                      const updatedSlots = [...activeSlots];
-
-                      if (activeSlots.length < 3) {
-                        setActiveSlots([...activeSlots, item]);
-                        settings.setActiveSlot(activeSlots.length);
+                      if (isSmallScreen) {
+                        setActiveSlots([item]);
+                        settings.setActiveSlot(0);
                       } else {
-                        if (activeTab !== 2) updatedSlots[2] = item;
-                        else updatedSlots[1] = item;
-                        setActiveSlots(updatedSlots);
+                        const updatedSlots = [...activeSlots];
+                        if (activeSlots.length < 3) {
+                          setActiveSlots([...activeSlots, item]);
+                          settings.setActiveSlot(activeSlots.length);
+                        } else {
+                          if (activeTab !== 2) updatedSlots[2] = item;
+                          else updatedSlots[1] = item;
+                          setActiveSlots(updatedSlots);
+                        }
                       }
-
                       setIsOpen(false);
                     }}
                     className={`
@@ -285,17 +335,24 @@ const Pages: React.FC<Props> = ({
               className={`border-t px-2 py-1.5 ${darkMode ? "border-[#3c3c3c] bg-[#121212]" : "border-gray-200 bg-gray-50"}`}
             >
               <button
-                onClick={() => {
+                disabled={isCreating}
+                onClick={async () => {
+                  // 1. Turn on the loading spinner state instantly
+                  setIsCreating(true);
+
+                  // 2. Add a tiny delay (300ms) for a premium, intentional app transition feel
+                  await new Promise((resolve) => setTimeout(resolve, 300));
+
                   const nextNum = allPads.length + 1;
                   const newName = `Scratch ${nextNum}`;
 
-                  // 1. Define a cleanly structured new pad item object
+                  // Define a cleanly structured new pad item object
                   const newPadItem: FileItem = {
                     name: newName,
-                    isSaved: false,
+                    isSaved: true,
                   };
 
-                  // 2. Add it to your global tracking array
+                  // Add it to your global tracking array
                   setAllPads([...allPads, newPadItem]);
 
                   if (activeSlots.length < 3) {
@@ -303,24 +360,38 @@ const Pages: React.FC<Props> = ({
                     setActiveSlots([...activeSlots, newPadItem]);
                     settings.setActiveSlot(activeSlots.length);
                   } else {
-                    // ✨ FIX: Clone your slots array and replace the active index with the new OBJECT structure
                     const updatedSlotsCopy = [...activeSlots];
                     updatedSlotsCopy[activeTab] = newPadItem;
                     setActiveSlots(updatedSlotsCopy);
                   }
+
+                  // 3. Reset states and close menu drawer smoothly
+                  setIsCreating(false);
                   setIsOpen(false);
                 }}
                 className={`
-                  flex items-center justify-center gap-1.5 w-full py-1 rounded text-xs font-medium transition-colors
-                  ${
-                    darkMode
-                      ? "bg-[#181818] text-gray-200 hover:bg-[#212121] hover:text-white"
-                      : "bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900"
-                  }
-                `}
+      flex items-center justify-center gap-1.5 w-full py-1.5 rounded text-xs font-medium transition-all duration-150
+      ${isCreating ? "opacity-70 cursor-not-allowed" : ""}
+      ${
+        darkMode
+          ? "bg-[#181818] text-gray-200 hover:bg-[#212121] hover:text-white"
+          : "bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900"
+      }
+    `}
               >
-                <IoMdAdd className="w-3.5 h-3.5" />
-                Add New Pad
+                {isCreating ? (
+                  /* 🟢 PREMIUM SPINNING LOADER LOOP IF ACTIVE */
+                  <>
+                    <CgSpinner className="animate-spin h-3.5 w-3.5" />
+                    <span>Creating Pad...</span>
+                  </>
+                ) : (
+                  /* STATIC DEFAULT STATE */
+                  <>
+                    <IoMdAdd className="w-3.5 h-3.5" />
+                    <span>Add New Pad</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

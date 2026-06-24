@@ -18,7 +18,7 @@ export const Cards = ({
       {/* POWERTOYS HORIZONTAL CARD 1: AUTO SAVE DELAY SLIDER */}
       <div
         className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-150 ${
-          darkMode ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
+          darkMode ? "bg-[#121212] border-zinc-800" : "bg-white border-zinc-200"
         }`}
       >
         <div className="flex w-3xl gap-3 items-center">

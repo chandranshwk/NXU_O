@@ -69,7 +69,7 @@ export const Settings = () => {
         <div
           className={`uppercase w-full z-20 h-max flex justify-center tracking-widest border-b py-5 font-semibold fixed top-0 shrink-0 ${
             darkMode
-              ? "bg-[#18181b] text-zinc-100 border-zinc-800/80 shadow-lg shadow-zinc-950/20"
+              ? "bg-[#141414] text-zinc-100 border-zinc-800/80 shadow-lg shadow-zinc-950/20"
               : "bg-[#f4f4f5] text-zinc-800 border-zinc-200 shadow-sm shadow-zinc-200/20"
           }`}
         >
@@ -78,7 +78,7 @@ export const Settings = () => {
         <div
           className={`w-[calc(50%+15rem)] mt-16 overflow-x-hidden relative left-[calc(15%+3rem)] border h-full flex-1 py-6 px-4 transition-all duration-200 overflow-y-auto ${
             darkMode
-              ? "bg-[#18181b] text-zinc-100 border-zinc-800/80 shadow-zinc-950/40"
+              ? "bg-[#141414] text-zinc-100 border-zinc-800/80 shadow-zinc-950/40"
               : "bg-[#f4f4f5] text-zinc-800 border-zinc-200 shadow-zinc-200/50"
           }`}
         >
