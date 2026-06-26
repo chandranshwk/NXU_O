@@ -1,7 +1,6 @@
 import { useOutletContext, useParams } from "react-router-dom";
 import SimpleToolBar from "../components/SimpleToolBar";
 import { EditorProvider, useEditorContext } from "../contexts/editorContext";
-import EditorDoc from "../components/EditorDoc";
 
 const NewDocumentContent = () => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
@@ -30,8 +29,6 @@ const NewDocumentContent = () => {
           context={context}
         />
       </div>
-      {/* Your note content text canvas goes here */}
-      <EditorDoc size="short" />
     </div>
   );
 };

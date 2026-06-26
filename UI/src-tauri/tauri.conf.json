@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "nxu_o",
-  "version": "0.1.0",
+  "productName": "NXU_O",
+  "version": "1.0.5",
   "identifier": "com.nxuo.app",
   "build": {
     "frontendDist": "../dist",

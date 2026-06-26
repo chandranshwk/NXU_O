@@ -38,7 +38,7 @@ const ScratchPadContent = () => {
         </div>
       </div>
 
-      {/* 🟢 WORKSPACE CANVAS: This is the ONLY element allowed to absorb the remaining screen height */}
+      {/*  WORKSPACE CANVAS: This is the ONLY element allowed to absorb the remaining screen height */}
       <div className="flex-1 overflow-y-auto focus:outline-none pb-12 mt-4 w-full">
         {settings.activeSlots.length > 0 ? (
           <EditorDoc size="full" content={settings.info} />
