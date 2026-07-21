@@ -177,7 +177,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         ${
           size === "small"
             ? "w-full rounded-lg  flex-1 border my-2 mb-0 shadow-sm backdrop-blur-md"
-            : "w-full border-b"
+            : "w-full border-b rounded-lg"
         }
       `}
     >

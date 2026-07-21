@@ -14,7 +14,7 @@ interface props {
   content: string;
 }
 
-const EditorDoc: React.FC<props> = ({ size, content }) => {
+const DocumentEditorDoc: React.FC<props> = ({ size, content }) => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const context = useEditorContext();
   const settings = useSettings();
@@ -38,7 +38,6 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
       const currentHTML = currentEditor.getHTML();
-      // Only call setInfo if text actually changed to prevent render loops
       if (scratch.info !== currentHTML) {
         scratch.setInfo(currentHTML);
       }
@@ -91,7 +90,6 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
   useEffect(() => {
     if (editor) {
       context.setEditor(editor);
-      // context.setReadText(() => handleReadScratchpadText);
     }
   }, [editor, context]);
 
@@ -103,7 +101,6 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
 
   return (
     <div
-      /* DISMISS ON CLICK AWAY: Clears the popup if clicking blank space */
       onClick={closeContextMenu}
       className={`flex flex-col overflow-hidden transition-all outline-none duration-200 relative ${
         size === "full"
@@ -115,18 +112,14 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
     >
       <div
         className="flex-1 h-[120vh] overflow-y-auto px-10 py-0  pt-0 focus:outline-none"
-        /* THE RIGHT-CLICK INTERCEPTOR INTERACTION */
         onContextMenu={(e) => {
           if (!editor) return;
 
-          // Detect if the target click element node is inside a table layout cell
           const targetElement = e.target as HTMLElement;
           const isClickedOnTable = targetElement.closest("table") !== null;
 
           if (isClickedOnTable) {
-            e.preventDefault(); // Stifles native gray system browser context popups
-
-            // Capture exact mouse viewport coordinate locations
+            e.preventDefault();
             setContextMenu({
               x: e.clientX,
               y: e.clientY,
@@ -137,7 +130,7 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
         }}
         onClick={() => {
           if (editor && !editor.isFocused) {
-            editor.commands.focus("end"); // Places the flashing typing cursor neatly at the end of the text
+            editor.commands.focus("end");
           }
         }}
       >
@@ -175,4 +168,4 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
   );
 };
 
-export default EditorDoc;
+export default DocumentEditorDoc;
