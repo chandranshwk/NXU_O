@@ -1,3 +1,13 @@
+// 🚀 FIXED: Added clear structural shapes to completely avoid 'any' casting metrics
+export interface ShortcutObject {
+  label?: string;
+  keys: string | string[];
+  description?: string;
+  icon?: React.ReactNode;
+}
+
+export type ShortcutInput = string | string[] | ShortcutObject;
+
 /**
  * Verifies if a physical hardware KeyboardEvent matches a specified shortcut configuration.
  * Supports strings ("ctrl+alt+t"), arrays (["shift", "d"]), or objects with a .keys property.
@@ -8,19 +18,21 @@
  */
 export const matchShortcut = (
   event: KeyboardEvent,
-  shortcutInput: any,
+  shortcutInput: ShortcutInput,
 ): boolean => {
   if (!shortcutInput) return false;
 
-  let tokens: string[] = [];
+  // 🚀 FIXED: Initialize without useless baseline variable assignment space maps
+  let tokens: string[];
 
   // 1. Safely extract and clean shortcut tokens from any data structure
   if (Array.isArray(shortcutInput)) {
     tokens = shortcutInput.map((t) => String(t).toLowerCase().trim());
   } else if (typeof shortcutInput === "string") {
+    // Standardize token splits down across both dash and plus configurations smoothly
     tokens = shortcutInput
       .toLowerCase()
-      .split(/[-]/)
+      .split(/[+-]/)
       .map((t) => t.trim());
   } else if (
     shortcutInput &&

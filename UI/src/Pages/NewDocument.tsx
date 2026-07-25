@@ -20,13 +20,28 @@ const NewDocumentContent = () => {
 
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
-      if (matchShortcut(e, settings.textModeShortcut)) {
-        e.preventDefault();
+      // 🚀 FIXED: Evaluate the strict shortcut matching conditions FIRST before checking targets
+      const isTextMatch = matchShortcut(e, settings.textModeShortcut);
+      const isCanvasMatch = matchShortcut(e, settings.canvasModeShortcut);
+
+      // If either of your custom workspace shortcuts are an exact match, intercept immediately!
+      if (isTextMatch) {
+        e.preventDefault(); // Blocks character insertion or browser address bar overrides
         setEditorMode("text");
-      } else if (matchShortcut(e, settings.canvasModeShortcut)) {
+        console.log("⌨️ Workspace Mode Shifted: Text Mode Active.");
+        return; // Complete execution block pass
+      }
+
+      if (isCanvasMatch) {
         e.preventDefault();
         setEditorMode("draw");
+        console.log("⌨️ Workspace Mode Shifted: Canvas Mode Active.");
+        return;
       }
+
+      // 🚀 NATIVE PASS-THROUGH FALLBACK:
+      // If the keystroke wasn't an exact shortcut match, let everything else pass through
+      // untouched so your letters, caps lock, backspaces, and spacing work naturally.
     };
 
     window.addEventListener("keydown", handleGlobalKeys);

@@ -125,9 +125,9 @@ export const SettingsProvider = ({
   const [defaultSavingFolder, setDefaultSavingFolder] =
     useState<string>("C:\\Desktop");
   const [textModeShortcut, setTextModeShortcut] =
-    useState<string>("Shift-Alt-T");
+    useState<string>("Ctrl-Shift-Q");
   const [canvasModeShortcut, setCanvasModeShortcut] =
-    useState<string>("Shift-Alt-C");
+    useState<string>("Ctrl-Shift-C");
 
   useEffect(() => {
     console.log(textModeShortcut);
