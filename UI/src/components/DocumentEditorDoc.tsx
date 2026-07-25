@@ -1,75 +1,41 @@
 import { useOutletContext } from "react-router-dom";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { EditorContent } from "@tiptap/react";
 import "regenerator-runtime/runtime";
 
-import { useEffect, useRef, useState } from "react";
-import { getEditorExtensions } from "../assets/TipTapEditor";
+import { useEffect, useState } from "react";
 import { useSettings } from "../contexts/settingsContext";
 import { useEditorContext } from "../contexts/editorContext";
-import { useScratchContext } from "../contexts/scratchContext";
 import ContextMenu from "./ContextMenu";
+import { useStickyEditor } from "../Hooks/useStickyEditor";
+import StickyNote from "./StickyNotes";
+import { useWorkspace } from "../contexts/workspaceContext";
 
 interface props {
   size: "full" | "short";
   content: string;
+  mode?: "text" | "draw"; // Accepted mode parameter hook from the floating capsule tool
 }
 
-const DocumentEditorDoc: React.FC<props> = ({ size, content }) => {
+const DocumentEditorDoc: React.FC<props> = ({
+  size,
+  content,
+  mode = "text",
+}) => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const context = useEditorContext();
   const settings = useSettings();
-  const scratch = useScratchContext();
+
+  const { items, setItems } = useWorkspace();
+
   settings.setDefaultColor(
     size === "full" ? (darkMode ? "#fff" : "#000") : "#000",
   );
-  const isTransitioningRef = useRef<boolean>(false);
 
-  const editor = useEditor({
-    editorProps: {
-      attributes: {
-        className:
-          "prose dark:prose-invert max-w-full w-full break-words [word-break:break-word] outline-none min-h-[500px] px-4 py-2 [&_span[style*='CalibriLocal']]:leading-[0.4]",
-      },
-    },
-
-    extensions: getEditorExtensions({ settings }),
-
-    content: content,
-    onUpdate: ({ editor: currentEditor }) => {
-      if (isTransitioningRef.current) return;
-      const currentHTML = currentEditor.getHTML();
-      if (scratch.info !== currentHTML) {
-        scratch.setInfo(currentHTML);
-      }
-    },
-
-    onSelectionUpdate: ({ editor: currentEditor }) => {
-      context.setIsBold(currentEditor.isActive("bold"));
-      context.setIsItalic(currentEditor.isActive("italic"));
-      context.setIsUnderline(currentEditor.isActive("underline"));
-      context.setIsStrikethrough(currentEditor.isActive("strike"));
-      context.setIsBulletList(currentEditor.isActive("bulletList"));
-      context.setIsOrderedList(currentEditor.isActive("orderedList"));
-      context.setIsBlockquote(currentEditor.isActive("blockquote"));
-      context.setIsCodeBlock(currentEditor.isActive("codeBlock"));
-      const highlightAttrs = currentEditor.getAttributes("highlight");
-      context.setHighlightedColor(highlightAttrs.color || "");
-
-      let activeHeading = 0;
-      for (let i = 1; i <= 6; i++) {
-        if (currentEditor.isActive("heading", { level: i })) {
-          activeHeading = i;
-          break;
-        }
-      }
-
-      context.toggleHeading(activeHeading);
-
-      const attrs = currentEditor.getAttributes("textStyle");
-      context.setFont(attrs.fontFamily || settings.defaultFont);
-      context.setFontSize(attrs.fontSize || settings.defaultFontSize);
-      context.setTextColor(attrs.color || settings.defaultColor);
-    },
+  const { editor, isTransitioningRef } = useStickyEditor({
+    initialContent: content,
+    darkMode: darkMode,
+    autofocus: "end",
+    trackHeaders: true,
   });
 
   useEffect(() => {
@@ -80,18 +46,18 @@ const DocumentEditorDoc: React.FC<props> = ({ size, content }) => {
 
     if (content !== currentHTML && content !== currentText) {
       isTransitioningRef.current = true;
-
       editor.commands.setContent(content);
-
       isTransitioningRef.current = false;
     }
-  }, [content, editor]);
+  }, [content, editor, isTransitioningRef]);
 
+  // Disable text caret focus blocks instantly if drawing canvas mode activates
   useEffect(() => {
-    if (editor) {
-      context.setEditor(editor);
-    }
-  }, [editor, context]);
+    if (!editor) return;
+    editor.setOptions({
+      editable: mode === "text",
+    });
+  }, [mode, editor]);
 
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -99,19 +65,43 @@ const DocumentEditorDoc: React.FC<props> = ({ size, content }) => {
   } | null>(null);
   const closeContextMenu = () => setContextMenu(null);
 
+  const claimDocumentToolbarFocus = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+
+    if (
+      target.closest("[data-sticky-note]") ||
+      target.closest(".SimpleToolBar") ||
+      target.closest(".context-menu") ||
+      target.closest("[custom-header]") ||
+      target.closest("[onmenu]")
+    ) {
+      return;
+    }
+
+    if (editor && context?.setEditor) {
+      context.setEditor(editor);
+    }
+  };
+
   return (
     <div
       onClick={closeContextMenu}
+      onMouseDown={claimDocumentToolbarFocus}
       className={`flex flex-col overflow-hidden transition-all outline-none duration-200 relative ${
+        mode === "draw"
+          ? "pointer-events-none select-none opacity-85" // Pass clicks straight through text lines
+          : "pointer-events-auto"
+      } ${
         size === "full"
-          ? "w-full h-full"
-          : "w-2/3 h-[120vh] top-0 border border-zinc-200/50 relative left-[16.666667%]"
+          ? `w-full h-[80.8%] ${!darkMode ? "border-y border-r border-zinc-950/20 rounded-r-lg" : ""}`
+          : "w-2/3 h-[120vh] top-0 border-5 border-zinc-800 relative left-[16.666667%]"
       } ${
         size === "short" ? "bg-white" : darkMode ? "bg-[#141414]" : "bg-white"
       }`}
     >
       <div
-        className="flex-1 h-[120vh] overflow-y-auto px-10 py-0  pt-0 focus:outline-none"
+        className="flex-1 h-[120vh] overflow-y-auto px-10 py-0 pt-0 focus:outline-none relative"
+        data-id="main-scroll-viewport"
         onContextMenu={(e) => {
           if (!editor) return;
 
@@ -128,12 +118,38 @@ const DocumentEditorDoc: React.FC<props> = ({ size, content }) => {
             closeContextMenu();
           }
         }}
-        onClick={() => {
-          if (editor && !editor.isFocused) {
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+
+          if (
+            target.closest("[data-sticky-note]") ||
+            target.closest(".SimpleToolBar") ||
+            target.closest(".context-menu") ||
+            target.closest("[custom-header]") ||
+            target.closest("[onmenu]")
+          ) {
+            return;
+          }
+
+          if (editor && !editor.isFocused && mode === "text") {
             editor.commands.focus("end");
           }
         }}
       >
+        {items.map((item, idx) => (
+          <StickyNote
+            key={item.id}
+            id={item.id}
+            index={idx}
+            content={item.content}
+            initialX={item.x}
+            initialY={item.y}
+            initialWidth={item.width}
+            initialHeight={item.height}
+            setItems={setItems}
+          />
+        ))}
+
         <EditorContent
           editor={editor}
           className={`w-full ${

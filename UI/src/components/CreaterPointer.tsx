@@ -1,19 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import StickyNote from "./StickyNotes"; // Imported your dedicated sub-component
+import { useWorkspace } from "../contexts/workspaceContext";
 
 interface CreatePointerProps {
   children: React.ReactNode;
   className?: string;
-}
-
-interface ItemsProps {
-  id: number;
-  type: "sticky note" | "canvas";
-  content: string | React.ReactNode;
-  height: number;
-  width: number;
-  x: number;
-  y: number;
 }
 
 const CreaterPointer: React.FC<CreatePointerProps> = ({
@@ -24,7 +14,7 @@ const CreaterPointer: React.FC<CreatePointerProps> = ({
   const [tracking, setTracking] = useState(false);
   const lastClickTime = useRef<number>(0);
   const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 });
-  const [items, setItems] = useState<ItemsProps[]>([]);
+  const { setItems } = useWorkspace();
 
   // Derived values for the live box outline calculations
   const width = tracking ? Math.abs(pointerPosition.x - anchorPosition.x) : 0;
@@ -45,13 +35,13 @@ const CreaterPointer: React.FC<CreatePointerProps> = ({
         return [
           ...prevItems,
           {
-            id: Date.now(),
+            id: Date.now() + Math.floor(Math.random() * 10000),
             type: "sticky note",
             content: "",
             height: height,
             width: width,
-            x: currentX,
-            y: currentY,
+            x: currentX - 5,
+            y: currentY - 5,
           },
         ];
       });
@@ -65,7 +55,7 @@ const CreaterPointer: React.FC<CreatePointerProps> = ({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [tracking, width, height, currentX, currentY]);
+  }, [tracking, width, height, currentX, currentY, setItems]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const target = e.target as HTMLElement;
@@ -91,7 +81,7 @@ const CreaterPointer: React.FC<CreatePointerProps> = ({
 
   return (
     <div
-      className={`${className ?? ""} select-none relative w-full h-screen overflow-hidden`}
+      className={`${className ?? ""} relative select-none w-full h-screen overflow-hidden`}
       onMouseDown={handleMouseDown}
     >
       {children}
@@ -121,18 +111,6 @@ const CreaterPointer: React.FC<CreatePointerProps> = ({
           </div>
         </>
       )}
-
-      {/* Renders your fully independent absolute sticky notes onto the board */}
-      {items.map((item) => (
-        <StickyNote
-          key={item.id}
-          content={item.content}
-          initialX={item.x}
-          initialY={item.y}
-          initialWidth={item.width}
-          initialHeight={item.height}
-        />
-      ))}
     </div>
   );
 };

@@ -42,7 +42,7 @@ const StickyEditor: React.FC<props> = ({ size, content }) => {
       editor.commands.setContent(content);
       isTransitioningRef.current = false;
     }
-  }, [content, editor]);
+  }, [content, editor, isTransitioningRef]);
 
   // ❌ REMOVED: The problematic mount useEffect block is completely gone.
 
@@ -61,7 +61,6 @@ const StickyEditor: React.FC<props> = ({ size, content }) => {
   return (
     <div
       onClick={closeContextMenu}
-      // 🔥 INTERCEPT HERE: Safely claims the toolbar context right when clicked
       onMouseDown={claimToolbarFocus}
       className={`flex flex-col outline-none transition-all duration-200 relative w-full h-full ${
         size === "short"

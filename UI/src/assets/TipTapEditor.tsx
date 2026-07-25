@@ -14,8 +14,8 @@ import Strike from "@tiptap/extension-strike";
 import { Extension, Mark } from "@tiptap/core";
 import Highlight from "@tiptap/extension-highlight";
 import type { settingsContextType } from "../contexts/settingsContext";
+import { CustomHeaderExtension } from "../Extensions/CustomHeaderExtension";
 
-// 🚀 CENTRALIZED BUNDLE SCHEMA CONFIGURATION
 export const getEditorExtensions = ({
   settings,
 }: {
@@ -25,11 +25,11 @@ export const getEditorExtensions = ({
     heading: {
       levels: [1, 2, 3, 4, 5, 6],
     },
-
     strike: false,
     bulletList: false,
     orderedList: false,
   }),
+  CustomHeaderExtension,
 
   TextAlign.configure({
     types: ["heading", "paragraph", "tableCell", "tableHeader"],
@@ -52,7 +52,6 @@ export const getEditorExtensions = ({
     },
   }),
 
-  // This lightweight command interceptor to your extensions array in src/components/EditorDoc.tsx
   Extension.create({
     name: "headingSizingGuard",
     addCommands() {
@@ -70,7 +69,6 @@ export const getEditorExtensions = ({
     },
   }),
 
-  // 3. FIXED: Custom shortcuts component block is pushed inside the extensions array wrapper
   Extension.create({
     name: "customShortcuts",
     addKeyboardShortcuts() {
@@ -78,9 +76,6 @@ export const getEditorExtensions = ({
         "Mod-Alt-1": () => this.editor.commands.toggleHeading({ level: 1 }),
         "Mod-Alt-2": () => this.editor.commands.toggleHeading({ level: 2 }),
         "Mod-Alt-3": () => this.editor.commands.toggleHeading({ level: 3 }),
-
-        // Remove the dead toggleStrike command line from here to clear duplication
-
         "Mod-Shift-s": () => {
           console.log("Custom save shortcut fired from text canvas!");
           return true;
@@ -93,14 +88,13 @@ export const getEditorExtensions = ({
   FontFamily,
   ListItem,
   Highlight.configure({
-    multicolor: true, // Enables choosing different highlighter ink colors later
+    multicolor: true,
   }),
   BulletList.configure({
     HTMLAttributes: {
       class: `list-disc pl-5 my-2 space-y-1`,
     },
   }),
-
   OrderedList.configure({
     HTMLAttributes: {
       class: `list-decimal pl-5 my-2 space-y-1`,
@@ -109,13 +103,11 @@ export const getEditorExtensions = ({
 
   Extension.create({
     name: "fontSize",
-
     addOptions() {
       return {
         types: ["textStyle"],
       };
     },
-
     addGlobalAttributes() {
       return [
         {
@@ -134,7 +126,6 @@ export const getEditorExtensions = ({
         },
       ];
     },
-
     addCommands() {
       return {
         setFontSize:
@@ -159,7 +150,6 @@ export const getEditorExtensions = ({
   TableHeader,
   TableCell.configure({
     HTMLAttributes: {
-      // High-density padding, light system border structures
       class:
         "border border-zinc-300 dark:border-zinc-700/80 px-3 py-1.5 min-w-[80px] text-xs font-sans relative",
     },

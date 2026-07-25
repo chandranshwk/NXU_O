@@ -1,23 +1,124 @@
-import { useEditor } from "@tiptap/react";
+import { Editor, useEditor } from "@tiptap/react";
 import { useRef } from "react";
 import { getEditorExtensions } from "../assets/TipTapEditor";
 import { useSettings } from "../contexts/settingsContext";
-import { useEditorContext } from "../contexts/editorContext";
-import { useScratchContext } from "../contexts/scratchContext";
+import { useWorkspace } from "../contexts/workspaceContext";
+import { Node as ProsemirrorNode } from "@tiptap/pm/model";
+import type { HeaderProps } from "../Helper/Header";
 
 interface UseStickyEditorProps {
   initialContent: string;
   onContentUpdate?: (html: string) => void;
+  autofocus?: "start" | "end" | boolean;
+  darkMode?: boolean;
+  trackHeaders?: boolean;
+  trackToDos?: boolean;
 }
+
+interface Action {
+  pattern: RegExp;
+  exec: (
+    editorInstance: Editor,
+    cursorFrom: number,
+    matchDetails: RegExpExecArray,
+  ) => void;
+}
+
+const getActionTargets = (
+  currentHeaderCount: number,
+  currentToDoCount: number,
+): Action[] => [
+  {
+    pattern: /\[\[\[header:(.+?)\]\]\]$/,
+    exec: (ed, cursorPosition, matchDetails) => {
+      const fullMatchedText = matchDetails[0];
+      const capturedHeaderName = matchDetails[1];
+      const triggerLength = fullMatchedText.length;
+
+      const currentTimestamp = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const currentDatestamp = new Date().toLocaleDateString([], {
+        dateStyle: "medium",
+      });
+
+      ed.chain()
+        .deleteRange({
+          from: cursorPosition - triggerLength,
+          to: cursorPosition,
+        })
+        .insertContent({
+          type: "customHeaderBlock",
+          attrs: {
+            idx: currentHeaderCount,
+            name: capturedHeaderName,
+            time: currentTimestamp,
+            date: currentDatestamp,
+          },
+        })
+        .run();
+    },
+  },
+  {
+    pattern: /\[\[\[todo:(.+?)\]\]\]$/,
+    exec: (ed, cursorPosition, matchDetails) => {
+      const fullMatchedText = matchDetails[0];
+      const capturedToDoName = matchDetails[1];
+      const triggerLength = fullMatchedText.length;
+
+      const currentTimestamp = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const currentDatestamp = new Date().toLocaleDateString([], {
+        dateStyle: "medium",
+      });
+
+      ed.chain()
+        .focus()
+        .deleteRange({
+          from: cursorPosition - triggerLength,
+          to: cursorPosition,
+        })
+        .insertContent({
+          type: "customToDoBlock",
+          attrs: {
+            idx: currentToDoCount,
+            title: capturedToDoName,
+            time: currentTimestamp,
+            date: currentDatestamp,
+            items: [{ id: crypto.randomUUID(), text: "", done: false }],
+          },
+        })
+        .run();
+    },
+  },
+  {
+    pattern: /\[\[\[link\]\]\]$/,
+    exec: (ed, cursorPosition) => {
+      const triggerLength = "[[[link]]]".length;
+      ed.chain()
+        .focus()
+        .deleteRange({
+          from: cursorPosition - triggerLength,
+          to: cursorPosition,
+        })
+        .run();
+    },
+  },
+];
 
 export const useStickyEditor = ({
   initialContent,
   onContentUpdate,
+  autofocus = false,
+  trackHeaders = false,
+  trackToDos = false,
 }: UseStickyEditorProps) => {
-  const context = useEditorContext();
   const settings = useSettings();
-  const scratch = useScratchContext();
   const isTransitioningRef = useRef<boolean>(false);
+  const { setHeaders } = useWorkspace();
 
   const editor = useEditor({
     editorProps: {
@@ -28,50 +129,64 @@ export const useStickyEditor = ({
     },
     extensions: getEditorExtensions({ settings }),
     content: initialContent,
+    autofocus: autofocus,
 
-    onFocus: ({ editor: currentEditor }) => {
-      if (context?.setEditor) {
-        context.setEditor(currentEditor);
-      }
-    },
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
-      const currentHTML = currentEditor.getHTML();
 
-      // Fire local callback if provided, otherwise fallback to global scratchpad
+      const currentHTML = currentEditor.getHTML();
       if (onContentUpdate) {
         onContentUpdate(currentHTML);
-      } else if (scratch?.info !== currentHTML && scratch?.setInfo) {
-        scratch.setInfo(currentHTML);
       }
-    },
-    onSelectionUpdate: ({ editor: currentEditor }) => {
-      if (!context) return;
-      context.setIsBold(currentEditor.isActive("bold"));
-      context.setIsItalic(currentEditor.isActive("italic"));
-      context.setIsUnderline(currentEditor.isActive("underline"));
-      context.setIsStrikethrough(currentEditor.isActive("strike"));
-      context.setIsBulletList(currentEditor.isActive("bulletList"));
-      context.setIsOrderedList(currentEditor.isActive("orderedList"));
-      context.setIsBlockquote(currentEditor.isActive("blockquote"));
-      context.setIsCodeBlock(currentEditor.isActive("codeBlock"));
 
-      const highlightAttrs = currentEditor.getAttributes("highlight");
-      context.setHighlightedColor(highlightAttrs.color || "");
+      const extractedHeaders: HeaderProps[] = [];
+      let headerCounter = 0;
+      let todoCounter = 0;
 
-      let activeHeading = 0;
-      for (let i = 1; i <= 6; i++) {
-        if (currentEditor.isActive("heading", { level: i })) {
-          activeHeading = i;
+      currentEditor.state.doc.descendants((node: ProsemirrorNode) => {
+        if (node.type.name === "customHeaderBlock") {
+          if (trackHeaders) {
+            extractedHeaders.push({
+              idx: headerCounter,
+              name: node.attrs.name,
+              time: node.attrs.time,
+              date: node.attrs.date,
+            });
+          }
+          headerCounter++;
+        }
+
+        if (node.type.name === "customToDoBlock") {
+          todoCounter++;
+        }
+        return true;
+      });
+
+      if (trackHeaders) {
+        setHeaders(extractedHeaders);
+      }
+
+      const { from } = currentEditor.state.selection;
+      const currentLineText = currentEditor.state.doc.textBetween(
+        Math.max(0, from - 60),
+        from,
+        " ",
+      );
+
+      const activeTargets = getActionTargets(
+        trackHeaders ? headerCounter : 0,
+        trackToDos ? todoCounter : 0,
+      );
+
+      for (const target of activeTargets) {
+        const match = target.pattern.exec(currentLineText);
+        if (match) {
+          setTimeout(() => {
+            target.exec(currentEditor, from, match);
+          }, 10);
           break;
         }
       }
-      context.toggleHeading(activeHeading);
-
-      const attrs = currentEditor.getAttributes("textStyle");
-      context.setFont(attrs.fontFamily || settings?.defaultFont);
-      context.setFontSize(attrs.fontSize || settings?.defaultFontSize);
-      context.setTextColor(attrs.color || settings?.defaultColor);
     },
   });
 
