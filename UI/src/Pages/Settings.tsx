@@ -9,6 +9,7 @@ import { useSettings } from "../contexts/settingsContext";
 
 export const Settings = () => {
   const settings = useSettings();
+  console.log(settings.textModeShortcut);
 
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   // Local state tracking placeholders for our PowerToys controls
@@ -44,6 +45,10 @@ export const Settings = () => {
       settings.setScratchpadOpenShortcut(newShortCut);
     } else if (normalizedTitle === "open command bar hotkey") {
       settings.setOpenCommandBarKeys(newShortCut);
+    } else if (normalizedTitle === "switch to text mode") {
+      settings.setTextModeShortcut(newShortCut);
+    } else if (normalizedTitle === "switch to canvas mode") {
+      settings.setCanvasModeShortcut(newShortCut);
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setNewKeys([]);

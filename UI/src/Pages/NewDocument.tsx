@@ -6,7 +6,9 @@ import { ScratchProvider } from "../contexts/scratchContext";
 import CreaterPointer from "../components/CreaterPointer";
 import HeaderSlide from "../components/HeaderSlide";
 import { useState, useEffect } from "react";
-import { FaPencilAlt, FaFont } from "react-icons/fa";
+import { FiFeather, FiType } from "react-icons/fi";
+import { useSettings } from "../contexts/settingsContext";
+import { matchShortcut } from "../utils/matchKey";
 
 const NewDocumentContent = () => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
@@ -14,29 +16,22 @@ const NewDocumentContent = () => {
   const context = useEditorContext();
 
   const [editorMode, setEditorMode] = useState<"text" | "draw">("text");
+  const settings = useSettings();
 
   useEffect(() => {
-    const handleKeyboardModeSwitch = (e: KeyboardEvent) => {
-      const isAltPressed = e.altKey;
-      const isShiftPressed = e.shiftKey;
-
-      if (isAltPressed && isShiftPressed) {
-        const targetKey = e.key.toLowerCase();
-
-        if (targetKey === "t") {
-          e.preventDefault(); // Prevents accidental browser layout behaviors
-          setEditorMode("text");
-        } else if (targetKey === "d") {
-          e.preventDefault();
-          setEditorMode("draw");
-        }
+    const handleGlobalKeys = (e: KeyboardEvent) => {
+      if (matchShortcut(e, settings.textModeShortcut)) {
+        e.preventDefault();
+        setEditorMode("text");
+      } else if (matchShortcut(e, settings.canvasModeShortcut)) {
+        e.preventDefault();
+        setEditorMode("draw");
       }
     };
 
-    window.addEventListener("keydown", handleKeyboardModeSwitch);
-    return () =>
-      window.removeEventListener("keydown", handleKeyboardModeSwitch);
-  }, []);
+    window.addEventListener("keydown", handleGlobalKeys);
+    return () => window.removeEventListener("keydown", handleGlobalKeys);
+  }, [settings.textModeShortcut, settings.canvasModeShortcut]);
 
   return (
     <div
@@ -80,7 +75,7 @@ const NewDocumentContent = () => {
                     : "text-zinc-400 hover:text-zinc-700"
               }`}
             >
-              <FaFont className="w-2.5 h-2.5 opacity-70" />
+              <FiType className="w-2.5 h-2.5 opacity-70" />
               <span>Text</span>
             </button>
 
@@ -97,7 +92,7 @@ const NewDocumentContent = () => {
                     : "text-zinc-400 hover:text-zinc-700"
               }`}
             >
-              <FaPencilAlt className="w-2.5 h-2.5 opacity-70" />
+              <FiFeather className="w-2.5 h-2.5 opacity-70" />
               <span>Canvas</span>
             </button>
           </div>

@@ -40,6 +40,10 @@ export interface settingsContextType {
   setOpenCommandBarKeys: React.Dispatch<SetStateAction<string>>;
   systemView: string;
   setSystemView: React.Dispatch<SetStateAction<string>>;
+  textModeShortcut: string;
+  setTextModeShortcut: React.Dispatch<SetStateAction<string>>;
+  canvasModeShortcut: string;
+  setCanvasModeShortcut: React.Dispatch<SetStateAction<string>>;
 }
 /* eslint-disable react-refresh/only-export-components */
 export const SettingsContext = createContext<settingsContextType | null>(null);
@@ -59,6 +63,8 @@ interface settings {
   defaultStrikeThroughShortcut: string;
   openShortcut: string;
   defaultSavingFolder: string;
+  textModeShortcut: string;
+  canvasModeShortcut: string;
 }
 
 export const SettingsProvider = ({
@@ -118,6 +124,72 @@ export const SettingsProvider = ({
   const [openShortcut, setOpenShortcut] = useState<string>("Mod-Alt-C");
   const [defaultSavingFolder, setDefaultSavingFolder] =
     useState<string>("C:\\Desktop");
+  const [textModeShortcut, setTextModeShortcut] =
+    useState<string>("Shift-Alt-T");
+  const [canvasModeShortcut, setCanvasModeShortcut] =
+    useState<string>("Shift-Alt-C");
+
+  useEffect(() => {
+    console.log(textModeShortcut);
+    console.log(canvasModeShortcut);
+  }, [textModeShortcut, canvasModeShortcut]);
+
+  useEffect(() => {
+    if (!isHydrated.current) return;
+    const dataToSave: settings = {
+      systemView,
+      defaultFontSize,
+      defaultFont,
+      lineHeight,
+      saveTimer,
+      notesViewShortcut,
+      openCommandBarKeys,
+      folderExplorerShortcut,
+      scratchpadOpenShortcut,
+      defaultOLRepresenter,
+      defaultColor,
+      defaultStrikeThroughShortcut,
+      openShortcut,
+      defaultSavingFolder,
+      textModeShortcut,
+      canvasModeShortcut,
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      async function saveFile() {
+        try {
+          // Call the Rust command, passing only the file name and the JSON string
+          console.log(dataToSave);
+          await invoke("save_portable_settings", {
+            filename: "settings.json",
+            contents: JSON.stringify(dataToSave, null, 2),
+          });
+        } catch (error) {
+          console.error("Portable save failed:", error);
+        }
+      }
+      saveFile();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [
+    systemView,
+    defaultFontSize,
+    defaultFont,
+    lineHeight,
+    saveTimer,
+    notesViewShortcut,
+    openCommandBarKeys,
+    folderExplorerShortcut,
+    scratchpadOpenShortcut,
+    defaultOLRepresenter,
+    defaultColor,
+    defaultStrikeThroughShortcut,
+    openShortcut,
+    defaultSavingFolder,
+    textModeShortcut,
+    canvasModeShortcut,
+  ]);
 
   useEffect(() => {
     async function loadSettings() {
@@ -167,6 +239,10 @@ export const SettingsProvider = ({
             setOpenShortcut(savedData.openShortcut);
           if (savedData.defaultSavingFolder !== undefined)
             setDefaultSavingFolder(savedData.defaultSavingFolder);
+          if (savedData.textModeShortcut !== undefined)
+            setTextModeShortcut(savedData.textModeShortcut);
+          if (savedData.canvasModeShortcut !== undefined)
+            setCanvasModeShortcut(savedData.canvasModeShortcut);
         }
       } catch (error) {
         console.error("Failed to fetch settings from Rust file:", error);
@@ -178,58 +254,6 @@ export const SettingsProvider = ({
     }
     loadSettings();
   }, []);
-
-  useEffect(() => {
-    if (!isHydrated.current) return;
-    const dataToSave = {
-      systemView,
-      defaultFontSize,
-      defaultFont,
-      lineHeight,
-      saveTimer,
-      notesViewShortcut,
-      openCommandBarKeys,
-      folderExplorerShortcut,
-      scratchpadOpenShortcut,
-      defaultOLRepresenter,
-      defaultColor,
-      defaultStrikeThroughShortcut,
-      openShortcut,
-      defaultSavingFolder,
-    };
-
-    const delayDebounceFn = setTimeout(() => {
-      async function saveFile() {
-        try {
-          // Call the Rust command, passing only the file name and the JSON string
-          await invoke("save_portable_settings", {
-            filename: "settings.json",
-            contents: JSON.stringify(dataToSave, null, 2),
-          });
-        } catch (error) {
-          console.error("Portable save failed:", error);
-        }
-      }
-      saveFile();
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [
-    systemView,
-    defaultFontSize,
-    defaultFont,
-    lineHeight,
-    saveTimer,
-    notesViewShortcut,
-    openCommandBarKeys,
-    folderExplorerShortcut,
-    scratchpadOpenShortcut,
-    defaultOLRepresenter,
-    defaultColor,
-    defaultStrikeThroughShortcut,
-    openShortcut,
-    defaultSavingFolder,
-  ]);
 
   if (isLoading) {
     return <div style={{ background: "#1a1a1a", height: "100vh" }} />; // Or a spinner matching your app theme
@@ -266,6 +290,10 @@ export const SettingsProvider = ({
     setOpenCommandBarKeys,
     systemView,
     setSystemView,
+    textModeShortcut,
+    setTextModeShortcut,
+    canvasModeShortcut,
+    setCanvasModeShortcut,
   };
 
   return (

@@ -4,8 +4,15 @@ import { MdShortcut } from "react-icons/md";
 import { Cards } from "../../components/Cards";
 import { BiCommand } from "react-icons/bi";
 import type { settingsContextType } from "../../contexts/settingsContext";
-import { FiEdit3, FiFileText, FiTerminal } from "react-icons/fi";
+import {
+  FiEdit3,
+  FiFeather,
+  FiFileText,
+  FiTerminal,
+  FiType,
+} from "react-icons/fi";
 import { LuFolderTree } from "react-icons/lu";
+import { v4 as uuidv4 } from "uuid";
 
 interface props {
   darkMode: boolean;
@@ -64,6 +71,24 @@ const SectionC: React.FC<props> = ({
         "Brings up a floating overlay panel for quick, temporary text entries.",
       icon: <FiEdit3 className="w-4 h-4" />,
     },
+    {
+      label: "Switch to Text Mode",
+      keys: settings.textModeShortcut,
+      description:
+        "Activates the standard rich text editor canvas for standard document writing, paragraphs, and list entries.",
+      icon: (
+        <FiType className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />
+      ),
+    },
+    {
+      label: "Switch to Canvas Mode",
+      keys: settings.canvasModeShortcut,
+      description:
+        "Toggles the infinite sketchpad layer to draw shapes, annotate lines, and position floating elements seamlessly over text entries.",
+      icon: (
+        <FiFeather className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />
+      ),
+    },
   ];
   return (
     <div className="flex flex-col gap-2 mt-2">
@@ -71,52 +96,55 @@ const SectionC: React.FC<props> = ({
         <MdShortcut className="w-3.5 h-3.5" /> Activation Shortcuts
       </h3>
 
-      {sidebarShortcuts.map((item, idx) => (
-        <Cards
-          key={idx}
-          type="normal"
-          title={item.label}
-          description={item.description}
-          darkMode={darkMode}
-          icon={
-            <div
-              className={`p-2 rounded flex items-center justify-center ${darkMode ? "bg-zinc-800 text-zinc-300" : "bg-zinc-200 text-zinc-700"}`}
-            >
-              {item.icon}
-            </div>
-          }
-        >
-          <div className="flex items-center gap-1.5">
-            {item.keys.split("-").map((key, idx) => (
-              <kbd
-                key={idx}
-                className="h-9 px-3 rounded-md flex items-center justify-center bg-[#45a9f5] text-white shadow-[0_2px_0_#2b8cd7] font-sans text-xs font-semibold select-none border-b border-white/20 min-w-"
+      {sidebarShortcuts.map((item) => {
+        const uniqueRowKey = `row-${uuidv4()}`;
+        return (
+          <Cards
+            key={uniqueRowKey}
+            type="normal"
+            title={item.label}
+            description={item.description}
+            darkMode={darkMode}
+            icon={
+              <div
+                className={`p-2 rounded flex items-center justify-center ${darkMode ? "bg-zinc-800 text-zinc-300" : "bg-zinc-200 text-zinc-700"}`}
               >
-                {key.charAt(0).toLocaleUpperCase() +
-                  key.substring(1, key.length)}{" "}
-                {/* Standard Microsoft Windows Fluent Logo Node */}
-              </kbd>
-            ))}
+                {item.icon}
+              </div>
+            }
+          >
+            <div className="flex items-center gap-1.5">
+              {item.keys.split("-").map((key, idx) => (
+                <kbd
+                  key={idx}
+                  className="h-9 px-3 rounded-md flex items-center justify-center bg-[#45a9f5] text-white shadow-[0_2px_0_#2b8cd7] font-sans text-xs font-semibold select-none border-b border-white/20 min-w-"
+                >
+                  {key.charAt(0).toLocaleUpperCase() +
+                    key.substring(1, key.length)}{" "}
+                  {/* Standard Microsoft Windows Fluent Logo Node */}
+                </kbd>
+              ))}
 
-            {/* Fluent Editing Pen Trigger Button */}
-            <button
-              className={`p-2 rounded-md ml-1 transition-colors ${
-                darkMode
-                  ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
-                  : "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800"
-              }`}
-              title="Edit Shortcut"
-              onClick={() => {
-                setOpenKeyEditor(true);
-                setTitleEditor(item.label);
-                setKeys(item.keys);
-              }}
-            >
-              <FaPencilAlt className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </Cards>
-      ))}
+              {/* Fluent Editing Pen Trigger Button */}
+              <button
+                className={`p-2 rounded-md ml-1 transition-colors ${
+                  darkMode
+                    ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                    : "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800"
+                }`}
+                title="Edit Shortcut"
+                onClick={() => {
+                  setOpenKeyEditor(true);
+                  setTitleEditor(item.label);
+                  setKeys(item.keys);
+                }}
+              >
+                <FaPencilAlt className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </Cards>
+        );
+      })}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, type SetStateAction } from "react";
 import { motion } from "framer-motion";
+import { v4 as uuidv4 } from "uuid";
 
 interface KeyEditorProps {
   keys: string;
@@ -33,6 +34,7 @@ export default function KeyEditor({
   return (
     <motion.div
       initial={{ opacity: 0.5, scale: 0.1, y: -150 }}
+      key={uuidv4()}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 10 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
