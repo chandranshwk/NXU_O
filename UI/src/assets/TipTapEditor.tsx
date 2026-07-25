@@ -15,6 +15,7 @@ import { Extension, Mark } from "@tiptap/core";
 import Highlight from "@tiptap/extension-highlight";
 import type { settingsContextType } from "../contexts/settingsContext";
 import { CustomHeaderExtension } from "../Extensions/CustomHeaderExtension";
+import { CustomToDoExtension } from "../Extensions/CustomToDoExtensions";
 
 export const getEditorExtensions = ({
   settings,
@@ -30,6 +31,7 @@ export const getEditorExtensions = ({
     orderedList: false,
   }),
   CustomHeaderExtension,
+  CustomToDoExtension,
 
   TextAlign.configure({
     types: ["heading", "paragraph", "tableCell", "tableHeader"],
