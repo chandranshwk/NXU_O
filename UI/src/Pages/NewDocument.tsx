@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { FiFeather, FiType } from "react-icons/fi";
 import { useSettings } from "../contexts/settingsContext";
 import { matchShortcut } from "../utils/matchKey";
+import { useWorkspace } from "../contexts/workspaceContext";
 
 const NewDocumentContent = () => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
@@ -18,9 +19,10 @@ const NewDocumentContent = () => {
   const [editorMode, setEditorMode] = useState<"text" | "draw">("text");
   const settings = useSettings();
 
+  const workspace = useWorkspace();
+
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
-      // 🚀 FIXED: Evaluate the strict shortcut matching conditions FIRST before checking targets
       const isTextMatch = matchShortcut(e, settings.textModeShortcut);
       const isCanvasMatch = matchShortcut(e, settings.canvasModeShortcut);
 
@@ -28,14 +30,12 @@ const NewDocumentContent = () => {
       if (isTextMatch) {
         e.preventDefault(); // Blocks character insertion or browser address bar overrides
         setEditorMode("text");
-        console.log("⌨️ Workspace Mode Shifted: Text Mode Active.");
         return; // Complete execution block pass
       }
 
       if (isCanvasMatch) {
         e.preventDefault();
         setEditorMode("draw");
-        console.log("⌨️ Workspace Mode Shifted: Canvas Mode Active.");
         return;
       }
 
@@ -126,7 +126,9 @@ const NewDocumentContent = () => {
       <div className="flex-1 relative min-h-0 overflow-hidden mb-1">
         <CreaterPointer className="w-full h-full relative overflow-hidden">
           <div className="h-full flex">
-            <div className="no-drag pointer-events-auto h-full flex">
+            <div
+              className={`no-drag pointer-events-auto h-full flex overflow-hidden ${workspace.headers.length <= 0 ? "w-0" : ""} transition-all duration-200`}
+            >
               <HeaderSlide />
             </div>
 

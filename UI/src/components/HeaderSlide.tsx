@@ -1,4 +1,5 @@
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { motion, AnimatePresence, type Variants } from "framer-motion"; // Added Variants type import
 import { useWorkspace } from "../contexts/workspaceContext";
 import { useSettings } from "../contexts/settingsContext";
 
@@ -6,10 +7,39 @@ const HeaderSlide = () => {
   const { headers, activeHeaderIdx, scrollToHeader } = useWorkspace();
   const { darkMode } = useSettings();
 
+  // Typed explicitly to satisfy Framer Motion constraints
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.04,
+        delayChildren: 0.25,
+      },
+    },
+  };
+
+  // Typed explicitly to bind string literals like "spring"
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, x: -10 },
+    show: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 25,
+      },
+    },
+  };
+
   return (
     <Tooltip.Provider delayDuration={100}>
-      <div
-        className={`min-w-16 sticky top-0 max-w-16 h-[80.9%] z-50 p-3 flex flex-col justify-center rounded-l-xl select-none transition-colors duration-200 ${
+      <motion.div
+        initial={{ width: 0, opacity: 0 }}
+        animate={{ width: 64, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 100, damping: 18 }}
+        className={`sticky top-0 h-[80.9%] z-50 p-3 flex flex-col justify-center rounded-l-xl select-none overflow-hidden transition-colors duration-200 ${
           darkMode
             ? "bg-zinc-950 border-l border-y border-zinc-900"
             : "bg-linear-to-l from-400/30 via-zinc-50/80 to-zinc-200/20 border-x border-y border-zinc-400/80 shadow-[2px_0_20px_rgba(0,0,0,0.01)]"
@@ -22,20 +52,30 @@ const HeaderSlide = () => {
           }`}
         />
 
-        <div className="flex flex-col gap-6 w-full items-center z-10 py-4 max-h-full overflow-y-auto no-scrollbar">
+        {/* Animated list container */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col gap-6 w-10 items-center mx-auto z-10 py-4 max-h-full overflow-y-auto no-scrollbar"
+          layout
+        >
           {headers.map((header) => {
             const isActive = activeHeaderIdx === header.idx;
 
             return (
               <Tooltip.Root key={header.idx}>
                 <Tooltip.Trigger asChild>
-                  <button
+                  <motion.button
+                    variants={itemVariants}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => scrollToHeader(header.idx)}
                     aria-label={`Jump to: ${header.name || "Untitled Section"}`}
                     className="py-2 px-1 cursor-pointer relative flex items-center justify-center w-full transition-all duration-200 group outline-none rounded-md"
                   >
                     {/* Timeline bar indicator element */}
-                    <div
+                    <motion.div
+                      layoutId={`bar-${header.idx}`}
                       className={`rounded-full transition-all duration-300 ease-out ${
                         isActive
                           ? darkMode
@@ -48,16 +88,21 @@ const HeaderSlide = () => {
                     />
 
                     {/* Active glowing micro core status dot */}
-                    {isActive && (
-                      <div
-                        className={`absolute w-1.5 h-1.5 rounded-full top-1/2 -translate-y-1/2 left-2 pointer-events-none animate-pulse duration-700 ${
-                          darkMode
-                            ? "bg-emerald-400 shadow-[0_0_10px_#34d399,0_0_4px_#34d399]"
-                            : "bg-emerald-500 shadow-[0_0_8px_#10b981]"
-                        }`}
-                      />
-                    )}
-                  </button>
+                    <AnimatePresence>
+                      {isActive && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0 }}
+                          className={`absolute w-1.5 h-1.5 rounded-full top-1/2 -translate-y-1/2 left-2 pointer-events-none animate-pulse duration-700 ${
+                            darkMode
+                              ? "bg-emerald-400 shadow-[0_0_10px_#34d399,0_0_4px_#34d399]"
+                              : "bg-emerald-500 shadow-[0_0_8px_#10b981]"
+                          }`}
+                        />
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
                 </Tooltip.Trigger>
 
                 {/* Tooltip Portal Layer */}
@@ -103,8 +148,8 @@ const HeaderSlide = () => {
               </Tooltip.Root>
             );
           })}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </Tooltip.Provider>
   );
 };

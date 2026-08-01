@@ -95,6 +95,29 @@ const getActionTargets = (
     },
   },
   {
+    pattern: /\[\[\[image(?::([^\]]+))?\]\]\]$/,
+    exec: (ed, cursorPosition, matchDetails) => {
+      const fullMatchedText = matchDetails[0];
+      const capturedImageSrc = matchDetails[1] ? matchDetails[1].trim() : "";
+      const triggerLength = fullMatchedText.length;
+
+      ed.chain()
+        .focus()
+        .deleteRange({
+          from: cursorPosition - triggerLength,
+          to: cursorPosition,
+        })
+        .insertCustomImage({
+          src: capturedImageSrc, // Passes the safely parsed web address or falls back to an empty string
+          alt: "",
+          width: "100%",
+          alignment: "center",
+        })
+        .run();
+    },
+  },
+
+  {
     pattern: /\[\[\[link\]\]\]$/,
     exec: (ed, cursorPosition) => {
       const triggerLength = "[[[link]]]".length;

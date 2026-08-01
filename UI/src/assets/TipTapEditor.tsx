@@ -16,6 +16,7 @@ import Highlight from "@tiptap/extension-highlight";
 import type { settingsContextType } from "../contexts/settingsContext";
 import { CustomHeaderExtension } from "../Extensions/CustomHeaderExtension";
 import { CustomToDoExtension } from "../Extensions/CustomToDoExtensions";
+import { CustomImageBlockExtension } from "../Extensions/CustomImageExtension";
 
 export const getEditorExtensions = ({
   settings,
@@ -32,6 +33,7 @@ export const getEditorExtensions = ({
   }),
   CustomHeaderExtension,
   CustomToDoExtension,
+  CustomImageBlockExtension,
 
   TextAlign.configure({
     types: ["heading", "paragraph", "tableCell", "tableHeader"],
