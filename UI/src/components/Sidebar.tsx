@@ -7,7 +7,7 @@ import { FiSettings } from "react-icons/fi";
 import { RiHomeLine } from "react-icons/ri";
 import { getInitials } from "../assets/functions";
 import ProjectIcon from "./ProjectIcon";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   darkMode: boolean;
@@ -72,6 +72,9 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
     icon: React.ReactNode;
   }>({ name: "NXU_O", icon: null }); // Set a safe initial state
 
+  const location = useLocation();
+  const show = location.pathname.startsWith("/document");
+
   useEffect(() => {
     const pathParts = location.pathname.split("/");
 
@@ -126,14 +129,20 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
   }, [isOpen]);
 
   return (
-    <div className="mr-1 xl:block sm:hidden">
+    <div
+      className={`xl:block sm:hidden transition-all duration-300 ease-in-out ${
+        show ? "w-0 overflow-hidden mr-0" : "w-auto mr-1"
+      }`}
+    >
       <motion.div
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => {
           setIsOpen(false);
           setActiveMenu(null);
         }}
-        animate={{ width: isOpen ? "240px" : "55px" }}
+        animate={{
+          width: isOpen ? "240px" : "55px",
+        }}
         /* 1. SINGLE CONTAINER: Essential for consistent animation speed */
         className={`relative h-[calc(100vh-1rem)] justify-evenly gap-2 m-2 mt-2 mx-1 flex flex-col rounded-lg transition-colors duration-300 overflow-visible z-50 border-0`}
       >

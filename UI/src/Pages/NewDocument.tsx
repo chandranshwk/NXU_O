@@ -39,7 +39,6 @@ const NewDocumentContent = () => {
         return;
       }
 
-      // 🚀 NATIVE PASS-THROUGH FALLBACK:
       // If the keystroke wasn't an exact shortcut match, let everything else pass through
       // untouched so your letters, caps lock, backspaces, and spacing work naturally.
     };
@@ -50,7 +49,7 @@ const NewDocumentContent = () => {
 
   return (
     <div
-      className={`h-screen w-full flex flex-col gap-2 pt-2 px-10 overflow-hidden relative ${!darkMode ? "bg-white" : "bg-[#18181b]"}`}
+      className={`h-screen w-full flex flex-col gap-2 pt-2 px-3 overflow-hidden relative ${!darkMode ? "bg-white" : "bg-[#18181b]"}`}
     >
       {/* Top Fixed Toolbar Panel Wrapper */}
       <div
