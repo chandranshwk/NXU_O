@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+import type { editorContextType } from "../contexts/editorContext";
 
 export interface TEXT_ODocument {
   id: number;
@@ -92,3 +93,47 @@ export const ORDEREDLISTRESPRESENTER = [
   ...["alpha", "latin", "roman", "greek"].map((el) => `lower-${el}`),
   ...["alpha", "latin", "roman", "greek"].map((el) => `upper-${el}`),
 ];
+
+export const checkIsActive = (
+  name: string,
+  context: editorContextType,
+): boolean => {
+  switch (name) {
+    case "Bold":
+      return context.isBold;
+    case "Italic":
+      return context.isItalic;
+    case "Underline":
+      return context.isUnderline;
+    case "Strikethrough":
+      return context.isStrikethrough;
+    case "Bullet List":
+      return context.isBulletList;
+    case "Ordered List":
+      return context.isOrderedList;
+    case "Blockquote":
+      return context.isBlockquote;
+    case "Code Block":
+      return context.isCodeBlock;
+    case "Left Align":
+      return context.alignment === "left";
+    case "Center Align":
+      return context.alignment === "center";
+    case "Right Align":
+      return context.alignment === "right";
+    case "Heading 1":
+      return context.isHeading(1);
+    case "Heading 2":
+      return context.isHeading(2);
+    case "Heading 3":
+      return context.isHeading(3);
+    case "Heading 4":
+      return context.isHeading(4);
+    case "Heading 5":
+      return context.isHeading(5);
+    case "Heading 6":
+      return context.isHeading(6);
+    default:
+      return false;
+  }
+};

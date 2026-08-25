@@ -33,7 +33,8 @@
     "react-dom": "^19.2.6",
     "react-speech-recognition": "^4.0.1",
     "regenerator-runtime": "^0.14.1",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

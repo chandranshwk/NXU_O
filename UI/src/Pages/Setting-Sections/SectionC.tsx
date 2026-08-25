@@ -8,6 +8,7 @@ import {
   FiEdit3,
   FiFeather,
   FiFileText,
+  FiMoon,
   FiTerminal,
   FiType,
 } from "react-icons/fi";
@@ -58,7 +59,7 @@ const SectionC: React.FC<props> = ({
       icon: <FiFileText className="w-4 h-4" />,
     },
     {
-      label: "Folder Explorer Open Foramtting",
+      label: "Folder Explorer Open Formatting",
       keys: settings.folderExplorerShortcut,
       description:
         "Toggles the directory tree panel to browse workspaces and notebook groups.",
@@ -87,6 +88,15 @@ const SectionC: React.FC<props> = ({
         "Toggles the infinite sketchpad layer to draw shapes, annotate lines, and position floating elements seamlessly over text entries.",
       icon: (
         <FiFeather className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />
+      ),
+    },
+    {
+      label: "Toggle Zen Mode",
+      keys: settings.zenModeShortcut,
+      description:
+        "Toggles the zen mode for a distraction-free writing experience.",
+      icon: (
+        <FiMoon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />
       ),
     },
   ];

@@ -44,6 +44,10 @@ export interface settingsContextType {
   setTextModeShortcut: React.Dispatch<SetStateAction<string>>;
   canvasModeShortcut: string;
   setCanvasModeShortcut: React.Dispatch<SetStateAction<string>>;
+  zenModeShortcut: string;
+  setZenModeShortcut: React.Dispatch<SetStateAction<string>>;
+  zenMode: boolean;
+  setZenMode: React.Dispatch<SetStateAction<boolean>>;
 }
 /* eslint-disable react-refresh/only-export-components */
 export const SettingsContext = createContext<settingsContextType | null>(null);
@@ -65,6 +69,8 @@ interface settings {
   defaultSavingFolder: string;
   textModeShortcut: string;
   canvasModeShortcut: string;
+  zenModeShortcut: string;
+  zenMode: string;
 }
 
 export const SettingsProvider = ({
@@ -129,10 +135,21 @@ export const SettingsProvider = ({
   const [canvasModeShortcut, setCanvasModeShortcut] =
     useState<string>("Ctrl-Shift-C");
 
+  const [zenModeShortcut, setZenModeShortcut] =
+    useState<string>("Ctrl-Shift-Z");
+  const [zenMode, setZenMode] = useState<boolean>(false);
+
   useEffect(() => {
     console.log(textModeShortcut);
     console.log(canvasModeShortcut);
-  }, [textModeShortcut, canvasModeShortcut]);
+    console.log(zenModeShortcut);
+  }, [textModeShortcut, canvasModeShortcut, zenModeShortcut]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!darkMode) setDefaultColor("#000000");
+    else setDefaultColor("#ffffff");
+  }, [darkMode]);
 
   useEffect(() => {
     if (!isHydrated.current) return;
@@ -153,6 +170,8 @@ export const SettingsProvider = ({
       defaultSavingFolder,
       textModeShortcut,
       canvasModeShortcut,
+      zenModeShortcut,
+      zenMode: zenMode ? "true" : "false",
     };
 
     const delayDebounceFn = setTimeout(() => {
@@ -189,6 +208,8 @@ export const SettingsProvider = ({
     defaultSavingFolder,
     textModeShortcut,
     canvasModeShortcut,
+    zenModeShortcut,
+    zenMode,
   ]);
 
   useEffect(() => {
@@ -243,6 +264,10 @@ export const SettingsProvider = ({
             setTextModeShortcut(savedData.textModeShortcut);
           if (savedData.canvasModeShortcut !== undefined)
             setCanvasModeShortcut(savedData.canvasModeShortcut);
+          if (savedData.zenModeShortcut !== undefined)
+            setZenModeShortcut(savedData.zenModeShortcut);
+          if (savedData.zenMode !== undefined)
+            setZenMode(savedData.zenMode === "true");
         }
       } catch (error) {
         console.error("Failed to fetch settings from Rust file:", error);
@@ -294,6 +319,10 @@ export const SettingsProvider = ({
     setTextModeShortcut,
     canvasModeShortcut,
     setCanvasModeShortcut,
+    zenModeShortcut,
+    setZenModeShortcut,
+    zenMode,
+    setZenMode,
   };
 
   return (

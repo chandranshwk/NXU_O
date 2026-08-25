@@ -39,7 +39,7 @@ export const Settings = () => {
       settings.setDefaultStrikeThroughShortcut(newShortCut);
     } else if (normalizedTitle === "notes view formatting") {
       settings.setNotesViewShortcut(newShortCut);
-    } else if (normalizedTitle === "folder explorer open foramtting") {
+    } else if (normalizedTitle === "folder explorer open formatting") {
       settings.setFolderExplorerShortcut(newShortCut);
     } else if (normalizedTitle === "scratchpad open formatting") {
       settings.setScratchpadOpenShortcut(newShortCut);
@@ -49,6 +49,8 @@ export const Settings = () => {
       settings.setTextModeShortcut(newShortCut);
     } else if (normalizedTitle === "switch to canvas mode") {
       settings.setCanvasModeShortcut(newShortCut);
+    } else if (normalizedTitle === "toggle zen mode") {
+      settings.setZenModeShortcut(newShortCut);
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setNewKeys([]);

@@ -1,139 +1,205 @@
-import { useOutletContext, useParams } from "react-router-dom";
-import SimpleToolBar from "../components/SimpleToolBar";
-import { EditorProvider, useEditorContext } from "../contexts/editorContext";
-import DocumentEditorDoc from "../components/DocumentEditorDoc";
+import { useEffect, useState } from "react";
+import {
+  useNavigate,
+  useOutletContext,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import { EditorProvider } from "../contexts/editorContext";
 import { ScratchProvider } from "../contexts/scratchContext";
-import CreaterPointer from "../components/CreaterPointer";
-import HeaderSlide from "../components/HeaderSlide";
-import { useState, useEffect } from "react";
-import { FiFeather, FiType } from "react-icons/fi";
+import Toolbar from "./Document/Toolbar";
+import type { MockPage, MockSection } from "../assets/SAMPLE";
+import { useNotebookStore } from "../contexts/notebook";
+import { RightSideDocument } from "../components/RightSideDocument";
 import { useSettings } from "../contexts/settingsContext";
-import { matchShortcut } from "../utils/matchKey";
-import { useWorkspace } from "../contexts/workspaceContext";
 
 const NewDocumentContent = () => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const { id } = useParams<{ id: string }>();
-  const context = useEditorContext();
+  const [searchParams] = useSearchParams();
+  const targetPageId = searchParams.get("page");
+  const [showSidebar, setShowSidebar] = useState(true);
+  const navigate = useNavigate();
 
-  const [editorMode, setEditorMode] = useState<"text" | "draw">("text");
+  const { activeNotebook, setActiveNotebookById, initializeData } =
+    useNotebookStore();
+  const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const settings = useSettings();
+  // Sync data arrays safely on mount
+  useEffect(() => {
+    initializeData();
+    if (id) {
+      setActiveNotebookById(id);
+    }
+  }, [id, initializeData, setActiveNotebookById]);
 
-  const workspace = useWorkspace();
+  // Sync default active section if navigating to a specific sub-page directly
+  useEffect(() => {
+    if (activeNotebook && targetPageId) {
+      activeNotebook.sections.forEach((sec: MockSection, idx: number) => {
+        if (sec.pages.some((p) => p.id === targetPageId)) {
+          setActiveSectionIdx(idx);
+        }
+      });
+    }
+  }, [activeNotebook, targetPageId]);
 
   useEffect(() => {
-    const handleGlobalKeys = (e: KeyboardEvent) => {
-      const isTextMatch = matchShortcut(e, settings.textModeShortcut);
-      const isCanvasMatch = matchShortcut(e, settings.canvasModeShortcut);
+    const handleCommands = (e: KeyboardEvent) => {
+      // 1. Break down your custom string shortcut into a manageable array
+      const dynamicKeys = settings.zenModeShortcut.toLowerCase().split("-");
 
-      // If either of your custom workspace shortcuts are an exact match, intercept immediately!
-      if (isTextMatch) {
-        e.preventDefault(); // Blocks character insertion or browser address bar overrides
-        setEditorMode("text");
-        return; // Complete execution block pass
-      }
+      // 2. Evaluate individual modifier flags dynamically based on your array contents
+      const requiresMod =
+        dynamicKeys.includes("mod") || dynamicKeys.includes("ctrl");
+      const requiresShift = dynamicKeys.includes("shift");
+      const requiresAlt = dynamicKeys.includes("alt");
 
-      if (isCanvasMatch) {
+      // 3. Find the action character key (the array element that isn't a modifier)
+      const primaryKeyToken = dynamicKeys.find(
+        (token) =>
+          !["mod", "ctrl", "shift", "alt", "win", "cmd"].includes(token),
+      );
+
+      // 4. Verify that the hardware matches your configuration perfectly
+      const modMatch = requiresMod
+        ? e.ctrlKey || e.metaKey
+        : !(e.ctrlKey || e.metaKey);
+      const shiftMatch = requiresShift ? e.shiftKey : !e.shiftKey;
+      const altMatch = requiresAlt ? e.altKey : !e.altKey;
+
+      const primaryKeyMatch = e.key.toLowerCase() === primaryKeyToken;
+
+      // 5. Fire the toggle command only if every condition passes
+      if (modMatch && shiftMatch && altMatch && primaryKeyMatch) {
         e.preventDefault();
-        setEditorMode("draw");
-        return;
+        setShowSidebar((prev) => !prev);
       }
-
-      // If the keystroke wasn't an exact shortcut match, let everything else pass through
-      // untouched so your letters, caps lock, backspaces, and spacing work naturally.
     };
 
-    window.addEventListener("keydown", handleGlobalKeys);
-    return () => window.removeEventListener("keydown", handleGlobalKeys);
-  }, [settings.textModeShortcut, settings.canvasModeShortcut]);
+    window.addEventListener("keydown", handleCommands);
+
+    // Clean up the active event listener to prevent event stacking memory leaks
+    return () => window.removeEventListener("keydown", handleCommands);
+  }, [settings.zenModeShortcut]);
+
+  // CRITICAL STRUCTURAL GUARD: Kept cleanly placed right before calculations to protect layout boundaries
+  if (!activeNotebook) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center text-zinc-500 bg-zinc-950">
+        Locating active workspace node...
+      </div>
+    );
+  }
+
+  // Compute active variables safely with optional fallbacks
+  const currentSection = activeNotebook.sections[activeSectionIdx];
+  const currentPage =
+    currentSection?.pages.find((p) => p.id === targetPageId) ||
+    currentSection?.pages[0];
+
+  const handleNavigation = (pageId: string) => {
+    navigate(`/document/${activeNotebook.id}?page=${pageId}`);
+  };
 
   return (
     <div
-      className={`h-screen w-full flex flex-col gap-2 pt-2 px-3 overflow-hidden relative ${!darkMode ? "bg-white" : "bg-[#18181b]"}`}
+      className={`h-screen w-full flex flex-col overflow-hidden relative ${
+        !darkMode ? "bg-white text-zinc-900" : "bg-[#18181b] text-zinc-100"
+      }`}
     >
-      {/* Top Fixed Toolbar Panel Wrapper */}
-      <div
-        className={`flex flex-col gap-4 shrink-0 rounded-sm ${darkMode ? "bg-zinc-600/5" : "bg-zinc-300/10"} p-5 pb-4`}
-      >
-        <div className="flex items-center justify-between w-full h-10">
-          <div className="flex flex-col">
-            <h1
-              className={`text-base font-bold leading-tight ${darkMode ? "text-zinc-50" : "text-zinc-800"}`}
-            >
-              Editing Document
-            </h1>
-            <p
-              className={`text-[10px] opacity-80 ${darkMode ? "text-zinc-400" : "text-zinc-500"} font-mono mt-0.5`}
-            >
-              Doc ID: {id}
-            </p>
-          </div>
+      {/* 1. Global Toolbar */}
+      <Toolbar />
 
+      {/* 2. Primary Workspace Split */}
+      <div className="h-full w-full flex flex-1 overflow-hidden">
+        {/* Left Side: 1/6 Width Navigation Column */}
+        {showSidebar && (
           <div
-            className={`flex items-center gap-5 py-1.5 px-3 rounded-lg select-none border transition-colors duration-200 ${
+            className={`h-full w-1/6 min-w-55 max-w-[320px] border-r flex flex-col p-4 gap-4 ${
               darkMode
-                ? "bg-zinc-900/60 border-zinc-800/80 shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
-                : "bg-zinc-100/80 border-zinc-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                ? "bg-zinc-950/80 border-zinc-800"
+                : "bg-zinc-50 border-zinc-200"
             }`}
           >
-            <button
-              onClick={() => setEditorMode("text")}
-              title="Text Mode (Mod+Alt+T)"
-              className={`flex items-center gap-1.5 px-3 py-1 text-[12px] font-semibold rounded-lg transition-all duration-150 cursor-pointer outline-none ${
-                editorMode === "text"
-                  ? darkMode
-                    ? "bg-zinc-800 text-zinc-100 shadow-xs"
-                    : "bg-white text-zinc-900 font-bold shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-                  : darkMode
-                    ? "text-zinc-500 hover:text-zinc-300"
-                    : "text-zinc-400 hover:text-zinc-700"
-              }`}
-            >
-              <FiType className="w-2.5 h-2.5 opacity-70" />
-              <span>Text</span>
-            </button>
-
-            <button
-              onClick={() => setEditorMode("draw")}
-              title="Canvas Mode (Mod+Alt+D)"
-              className={`flex items-center gap-1.5 px-3 py-1 text-[12px] font-semibold rounded-lg transition-all duration-150 cursor-pointer outline-none ${
-                editorMode === "draw"
-                  ? darkMode
-                    ? "bg-emerald-500 text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
-                    : "bg-emerald-500/10 text-emerald-600 font-bold border border-emerald-500/10"
-                  : darkMode
-                    ? "text-zinc-500 hover:text-zinc-300"
-                    : "text-zinc-400 hover:text-zinc-700"
-              }`}
-            >
-              <FiFeather className="w-2.5 h-2.5 opacity-70" />
-              <span>Canvas</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Text formatting options toolbar stays isolated below */}
-        <SimpleToolBar
-          darkMode={darkMode}
-          type="rich"
-          size="full"
-          context={context}
-        />
-      </div>
-
-      {/* Primary Workspace Viewport Container */}
-      <div className="flex-1 relative min-h-0 overflow-hidden mb-1">
-        <CreaterPointer className="w-full h-full relative overflow-hidden">
-          <div className="h-full flex">
-            <div
-              className={`no-drag pointer-events-auto h-full flex overflow-hidden ${workspace.headers.length <= 0 ? "w-0" : ""} transition-all duration-200`}
-            >
-              <HeaderSlide />
+            <div>
+              <h2 className="text-sm font-bold truncate">
+                {activeNotebook.title}
+              </h2>
+              <span className="text-[10px] opacity-40 font-mono block truncate">
+                {activeNotebook.id}
+              </span>
             </div>
 
-            <DocumentEditorDoc size="full" content="" mode={editorMode} />
+            <div className="flex flex-col gap-1.5 overflow-y-auto flex-1">
+              <span className="text-[10px] uppercase font-bold tracking-wider opacity-40">
+                Section Pages
+              </span>
+
+              {currentSection?.pages.map((page: MockPage) => {
+                const isSelectedPage = page.id === targetPageId;
+                return (
+                  <div
+                    key={page.id}
+                    onClick={() => handleNavigation(page.id)}
+                    className={`text-xs p-2 rounded-md transition-all truncate cursor-pointer font-medium ${
+                      isSelectedPage
+                        ? "bg-blue-600 text-white shadow"
+                        : darkMode
+                          ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                          : "hover:bg-zinc-200 text-zinc-600"
+                    }`}
+                  >
+                    {String(page.title)}
+                  </div>
+                );
+              })}
+
+              {/* Create New Page Functional Interface Trigger Block */}
+              <div
+                onClick={() => {
+                  if (!currentSection) return;
+                  const defaultTitle = "Untitled Page";
+
+                  const { addPageToSection } = useNotebookStore.getState();
+                  addPageToSection(
+                    activeNotebook.id,
+                    currentSection.id,
+                    defaultTitle,
+                  );
+
+                  const latestPages =
+                    useNotebookStore.getState().activeNotebook?.sections[
+                      activeSectionIdx
+                    ]?.pages;
+                  if (latestPages && latestPages.length > 0) {
+                    const newlyCreatedPage =
+                      latestPages[latestPages.length - 1];
+                    handleNavigation(newlyCreatedPage.id);
+                  }
+                }}
+                className={`text-xs p-2 rounded-md transition-all truncate cursor-pointer font-medium text-center border border-dashed border-transparent hover:border-zinc-700 ${
+                  darkMode
+                    ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                    : "hover:bg-zinc-200 text-zinc-600"
+                }`}
+              >
+                + Add New Page
+              </div>
+            </div>
           </div>
-        </CreaterPointer>
+        )}
+
+        {/* Right Side Viewport: Injected child component with clean parameter wiring */}
+        <RightSideDocument
+          darkMode={darkMode}
+          activeNotebook={activeNotebook}
+          currentSection={currentSection}
+          currentPage={currentPage}
+          activeSectionIdx={activeSectionIdx}
+          setActiveSectionIdx={setActiveSectionIdx}
+          handleNavigation={handleNavigation}
+        />
       </div>
     </div>
   );

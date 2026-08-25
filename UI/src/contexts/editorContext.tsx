@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/core";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSettings } from "./settingsContext";
+import type { CanvasToolName } from "../Pages/Document/Toolbar";
 
 // 1. The data blueprint for your workspace features
 export interface editorContextType {
@@ -44,6 +45,10 @@ export interface editorContextType {
   setIsBlockquote: React.Dispatch<React.SetStateAction<boolean>>;
   isCodeBlock: boolean;
   setIsCodeBlock: React.Dispatch<React.SetStateAction<boolean>>;
+  activeCanvasTool: CanvasToolName | "Select";
+  setActiveCanvasTool: React.Dispatch<
+    React.SetStateAction<CanvasToolName | "Select">
+  >;
 }
 
 // Initialize the raw capsule bucket setting an explicit null entry point
@@ -53,6 +58,7 @@ export const EditorContext = createContext<editorContextType | null>(null);
 // The self-contained state manager component
 export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
   const settings = useSettings();
+  const darkMode = settings.darkMode;
 
   const [editor, setEditor] = useState<Editor | undefined>();
   const [isBold, setIsBold] = useState(false);
@@ -88,6 +94,26 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
   const toggleHeading = (level: number) => {
     setActiveHeadingLevel(level);
   };
+
+  const [activeCanvasTool, setActiveCanvasTool] = useState<
+    CanvasToolName | "Select"
+  >("Select");
+
+  useEffect(() => {
+    const reset = () => {
+      if (activeCanvasTool === "Clear") {
+        setActiveCanvasTool("Select");
+      }
+    };
+
+    setTimeout(reset, 100);
+  }, [activeCanvasTool]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!darkMode) setTextColor("#000000");
+    else setTextColor("#ffffff");
+  }, [darkMode]);
 
   const editorContextValue: editorContextType = {
     editor,
@@ -127,6 +153,8 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
     setIsBlockquote,
     isCodeBlock,
     setIsCodeBlock,
+    activeCanvasTool,
+    setActiveCanvasTool,
   };
 
   return (
