@@ -18,7 +18,16 @@ import type { settingsContextType } from "../contexts/settingsContext";
 import { CustomHeaderExtension } from "../Extensions/CustomHeaderExtension";
 import { CustomToDoExtension } from "../Extensions/CustomToDoExtensions";
 import { CustomImageBlockExtension } from "../Extensions/CustomImageExtension";
-import { suggestionConfig } from "./Suggestion";
+import { suggestionConfig } from "../assets/Suggestion";
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    textStyleColors: {
+      unsetColor: () => ReturnType;
+      unsetBackgroundColor: () => ReturnType;
+    };
+  }
+}
 
 export const getEditorExtensions = ({
   settings,
@@ -94,7 +103,7 @@ export const getEditorExtensions = ({
         ...this.parent?.(),
         backgroundColor: {
           default: null,
-          parseHTML: (element) => element.style.backgroundColor,
+          parseHTML: (element) => element.style.backgroundColor || null,
           renderHTML: (attributes) => {
             if (!attributes.backgroundColor) return {};
             return { style: `background-color: ${attributes.backgroundColor}` };
@@ -102,7 +111,43 @@ export const getEditorExtensions = ({
         },
       };
     },
+    addCommands() {
+      return {
+        unsetColor:
+          () =>
+          ({ chain }) => {
+            return chain()
+              .setMark("textStyle", { color: "" })
+              .updateAttributes("textStyle", { color: null })
+              .run();
+          },
+        unsetBackgroundColor:
+          () =>
+          ({ chain, state, dispatch }) => {
+            if (dispatch) {
+              const { tr } = state;
+              const { from, to } = state.selection;
+
+              // Direct ProseMirror state cleanup injection to sweep left-over styles away
+              tr.addMark(
+                from,
+                to,
+                state.schema.marks.textStyle.create({ backgroundColor: null }),
+              );
+
+              tr.removeMark(from, to, state.schema.marks.textStyle);
+              dispatch(tr);
+            }
+
+            return chain()
+              .setMark("textStyle", { backgroundColor: "" })
+              .updateAttributes("textStyle", { backgroundColor: null })
+              .run();
+          },
+      };
+    },
   }),
+
   Color,
   FontFamily,
   BulletList.configure({

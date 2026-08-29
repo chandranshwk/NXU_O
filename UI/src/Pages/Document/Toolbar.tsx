@@ -14,7 +14,7 @@ import { ToolbarDropdown } from "../../components/ToolBarDropdown";
 import { formatName } from "../../assets/functions";
 import { checkIsActive, COLORS, FONTS } from "../../assets/assets";
 import { getEditorTools } from "../../assets/Tools";
-import { ColorNames, HighLighterNames } from "../../assets/utils";
+import { ColorNames, HighLighterNames } from "../../assets/Utils";
 
 interface ToolProps {
   name: CanvasToolName;
@@ -178,9 +178,23 @@ const Toolbar = () => {
           />
         ))}
         <button
+          type="button"
           onClick={() => {
-            context.editor?.chain().focus().unsetColor().run();
-            context.setTextColor("");
+            if (context.editor) {
+              // 1. Wipe custom color inline style parameters from the document node selection tree
+              context.editor
+                .chain()
+                .focus()
+                .setMark("textStyle", { color: "" })
+                .updateAttributes("textStyle", { color: null })
+                .run();
+
+              // 2. Fall back cleanly to your application default theme color variables
+              // (Matches the exact default tracking values you pass inside your main EditorDoc file)
+              context.setTextColor(
+                setting.defaultColor || (darkMode ? "#fff" : "#000"),
+              );
+            }
           }}
           className={resetBtnClass}
         >
@@ -213,9 +227,12 @@ const Toolbar = () => {
           />
         ))}
         <button
+          type="button"
           onClick={() => {
-            context.editor?.chain().focus().unsetHighlight().run();
-            context.setHighlightedColor("");
+            if (context.editor) {
+              context.editor.chain().focus().unsetBackgroundColor().run();
+              context.setHighlightedColor(""); // Highlights go back to a completely blank string (transparent)
+            }
           }}
           className={resetBtnClass}
         >

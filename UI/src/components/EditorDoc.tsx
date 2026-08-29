@@ -55,7 +55,6 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
       const isBlockquote = currentEditor.isActive("blockquote");
       const isCodeBlock = currentEditor.isActive("codeBlock");
 
-      // FIX: Guard parent state triggers to prevent mid-transaction lifecycle crashes
       if (context.isBold !== isBold) context.setIsBold(isBold);
       if (context.isItalic !== isItalic) context.setIsItalic(isItalic);
       if (context.isUnderline !== isUnderline)
@@ -90,7 +89,6 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
         }
       }
 
-      // FIX: Bypassed checking 'context.activeHeading' which was throwing TS 2339.
       // We invoke 'toggleHeading' directly, letting the context handle its internal routing.
       context.toggleHeading(activeHeading);
 
