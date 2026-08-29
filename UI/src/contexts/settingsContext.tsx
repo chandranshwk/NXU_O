@@ -140,12 +140,6 @@ export const SettingsProvider = ({
   const [zenMode, setZenMode] = useState<boolean>(false);
 
   useEffect(() => {
-    console.log(textModeShortcut);
-    console.log(canvasModeShortcut);
-    console.log(zenModeShortcut);
-  }, [textModeShortcut, canvasModeShortcut, zenModeShortcut]);
-
-  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!darkMode) setDefaultColor("#000000");
     else setDefaultColor("#ffffff");
@@ -178,7 +172,7 @@ export const SettingsProvider = ({
       async function saveFile() {
         try {
           // Call the Rust command, passing only the file name and the JSON string
-          console.log(dataToSave);
+
           await invoke("save_portable_settings", {
             filename: "settings.json",
             contents: JSON.stringify(dataToSave, null, 2),
@@ -279,6 +273,45 @@ export const SettingsProvider = ({
     }
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    const handleCommands = (e: KeyboardEvent) => {
+      // 1. Break down your custom string shortcut into a manageable array
+      const dynamicKeys = zenModeShortcut.toLowerCase().split("-");
+
+      // 2. Evaluate individual modifier flags dynamically based on your array contents
+      const requiresMod =
+        dynamicKeys.includes("mod") || dynamicKeys.includes("ctrl");
+      const requiresShift = dynamicKeys.includes("shift");
+      const requiresAlt = dynamicKeys.includes("alt");
+
+      // 3. Find the action character key (the array element that isn't a modifier)
+      const primaryKeyToken = dynamicKeys.find(
+        (token) =>
+          !["mod", "ctrl", "shift", "alt", "win", "cmd"].includes(token),
+      );
+
+      // 4. Verify that the hardware matches your configuration perfectly
+      const modMatch = requiresMod
+        ? e.ctrlKey || e.metaKey
+        : !(e.ctrlKey || e.metaKey);
+      const shiftMatch = requiresShift ? e.shiftKey : !e.shiftKey;
+      const altMatch = requiresAlt ? e.altKey : !e.altKey;
+
+      const primaryKeyMatch = e.key.toLowerCase() === primaryKeyToken;
+
+      // 5. Fire the toggle command only if every condition passes
+      if (modMatch && shiftMatch && altMatch && primaryKeyMatch) {
+        e.preventDefault();
+        setZenMode((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleCommands);
+
+    // Clean up the active event listener to prevent event stacking memory leaks
+    return () => window.removeEventListener("keydown", handleCommands);
+  }, [zenModeShortcut]);
 
   if (isLoading) {
     return <div style={{ background: "#1a1a1a", height: "100vh" }} />; // Or a spinner matching your app theme

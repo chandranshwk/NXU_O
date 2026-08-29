@@ -19,7 +19,11 @@ export const ColorNames = ({
   return (
     <button
       onClick={() => {
-        context.editor?.chain().focus().setColor(color).run();
+        context.editor
+          ?.chain()
+          .focus()
+          .setMark("textStyle", { color: color.toLowerCase() })
+          .run();
         context.setTextColor(color);
       }}
       className={`size-10 flex items-center justify-center text-xs p-1  rounded-md ${
@@ -34,6 +38,7 @@ export const ColorNames = ({
   );
 };
 
+// 🖍️ SUB-COMPONENT B: UNIFIED BACKGROUND HIGHLIGHTER ACTIONS
 export const HighLighterNames = ({
   darkMode,
   color,
@@ -50,8 +55,11 @@ export const HighLighterNames = ({
   return (
     <button
       onClick={() => {
-        // 🚀 COMPLIANT ATOMIC CALLS: Mutates TipTap data trees and syncs string token variables
-        context.editor?.chain().focus().setHighlight({ color }).run();
+        context.editor
+          ?.chain()
+          .focus()
+          .setMark("textStyle", { backgroundColor: color.toLowerCase() })
+          .run();
         context.setHighlightedColor(color);
       }}
       className={`size-10 flex items-center justify-center text-xs p-1 rounded-md ${

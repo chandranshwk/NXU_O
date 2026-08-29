@@ -169,7 +169,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         ))}
         <button
           onClick={() => {
-            context.editor?.chain().focus().unsetHighlight().run();
+            context.editor?.chain().focus().unsetBackgroundColor().run();
             context.setHighlightedColor("");
           }}
           className={`w-full text-left text-xs px-2 py-1.5 rounded border-t mt-1 transition-colors ${

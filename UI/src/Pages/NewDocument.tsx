@@ -114,7 +114,7 @@ const NewDocumentContent = () => {
       {/* 2. Primary Workspace Split */}
       <div className="h-full w-full flex flex-1 overflow-hidden">
         {/* Left Side: 1/6 Width Navigation Column */}
-        {showSidebar && (
+        {showSidebar && !settings.zenMode && (
           <div
             className={`h-full w-1/6 min-w-55 max-w-[320px] border-r flex flex-col p-4 gap-4 ${
               darkMode

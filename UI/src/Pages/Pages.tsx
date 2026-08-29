@@ -174,7 +174,7 @@ const Pages: React.FC<Props> = ({
                 className={`
                   flex items-center justify-between 
                   w-40 h-9 px-3 text-xs font-medium shrink-0 select-none group relative
-                  ${isEditing ? "cursor-default" : "cursor-grab active:cursor-grabbing"}
+                  ${isEditing ? "cursor-default" : "cursor-grab "}
                   ${isActive ? "flex items-center justify-between w-40" : "hidden xl:flex items-center justify-between w-40"}
                   ${
                     darkMode

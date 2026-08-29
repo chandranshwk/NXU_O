@@ -232,9 +232,7 @@ const ToDoBoard: React.FC<ToDoBoardProps> = ({
       onClick={(e) => e.stopPropagation()}
       style={{ transform: `translate(${positionX}px, 0px)` }}
       className={`p-4 rounded-xl border flex flex-col gap-3 w-full max-w-xl mx-auto select-none transition-shadow duration-150 custom-todo-board-${idx} ${
-        isDragging
-          ? "cursor-grabbing shadow-xl z-50 ring-2 ring-emerald-500/20"
-          : "cursor-grab shadow-sm"
+        isDragging ? "shadow-xl z-50 ring-2 ring-emerald-500/20" : "shadow-sm"
       } ${darkMode ? "bg-zinc-900/40 border-zinc-800/80 text-zinc-100" : "bg-zinc-50 border-zinc-200/60 text-zinc-800"} resize overflow-hidden`}
     >
       <ToDoHeader

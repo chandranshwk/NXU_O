@@ -1,5 +1,32 @@
 import { faker } from "@faker-js/faker";
 
+// Extended color palette with soft pastels for backgrounds
+const PRESET_COLORS = [
+  // Vibrant accents (for section headers)
+  "#3b82f6", // blue
+  "#f97316", // orange
+  "#10b981", // emerald
+  "#a855f7", // purple
+  "#ec4899", // pink
+  "#eab308", // yellow
+  "#ef4444", // red
+  "#8b5cf6", // violet
+  "#06b6d4", // cyan
+  "#f59e0b", // amber
+
+  // Soft pastels (for node backgrounds)
+  "#fef3c7", // light yellow
+  "#fce7f3", // light pink
+  "#e0f2fe", // light blue
+  "#d1fae5", // light green
+  "#ede9fe", // light purple
+  "#fed7aa", // light orange
+  "#fecaca", // light red
+  "#cffafe", // light cyan
+  "#e5e7eb", // light gray
+  "#f3f4f6", // off-white
+];
+
 export interface MockPageNode {
   id: string;
   type: "text" | "calendar" | "map" | "todo";
@@ -8,6 +35,7 @@ export interface MockPageNode {
   width: number;
   height?: number;
   content: string;
+  backgroundColor?: string; // NEW: background color for the node
 }
 
 export interface MockPage {
@@ -15,7 +43,7 @@ export interface MockPage {
   sectionId: string;
   title: string;
   createdDate: string;
-  createdTime: string; // Truncated time tracker (HH:MM)
+  createdTime: string;
   nodes: MockPageNode[];
 }
 
@@ -33,20 +61,13 @@ export interface MockNotebook {
   sections: MockSection[];
 }
 
+const pickRandomColor = (): string => faker.helpers.arrayElement(PRESET_COLORS);
+
 export const generateMockNotebookData = (
   notebookCount: number = 2,
   sectionsPerPage: number = 3,
   pagesPerSection: number = 4,
 ): MockNotebook[] => {
-  const presetHexColors = [
-    "#3b82f6",
-    "#f97316",
-    "#10b981",
-    "#a855f7",
-    "#ec4899",
-    "#eab308",
-  ];
-
   return Array.from({ length: notebookCount }, (): MockNotebook => {
     const notebookId = faker.string.uuid();
 
@@ -60,20 +81,17 @@ export const generateMockNotebookData = (
           id: sectionId,
           notebookId,
           title: faker.commerce.productName(),
-          colorHex: faker.helpers.arrayElement(presetHexColors),
+          colorHex: pickRandomColor(), // vibrant accent for section
           pages: Array.from({ length: pagesPerSection }, (): MockPage => {
             const pageId = faker.string.uuid();
             const rawDateInstance = faker.date.recent();
 
-            // Extract the standard YYYY-MM-DD string
             const createdDate = rawDateInstance.toISOString().split("T")[0];
-
-            // FIXED: Extract HH:MM:SS, split by colons, and join only hours and minutes
             const rawTimeParts = rawDateInstance
               .toTimeString()
               .split(" ")[0]
               .split(":");
-            const createdTime = `${rawTimeParts[0]}:${rawTimeParts[1]}`; // Outputs: "20:59"
+            const createdTime = `${rawTimeParts[0]}:${rawTimeParts[1]}`;
 
             return {
               id: pageId,
@@ -88,24 +106,11 @@ export const generateMockNotebookData = (
                   x: faker.number.int({ min: 50, max: 200 }),
                   y: faker.number.int({ min: 50, max: 200 }),
                   width: 550,
-                  content: JSON.stringify({
-                    type: "doc",
-                    content: [
-                      {
-                        type: "heading",
-                        attrs: { level: 2 },
-                        content: [
-                          { type: "text", text: faker.company.catchPhrase() },
-                        ],
-                      },
-                      {
-                        type: "paragraph",
-                        content: [
-                          { type: "text", text: faker.lorem.paragraph() },
-                        ],
-                      },
-                    ],
-                  }),
+                  // Random pastel background for text nodes
+                  backgroundColor: pickRandomColor(),
+                  content: JSON.stringify(
+                    `<h2>${faker.company.catchPhrase()}</h2><p>${faker.lorem.paragraph()}</p>`,
+                  ),
                 },
                 {
                   id: faker.string.uuid(),
@@ -114,6 +119,8 @@ export const generateMockNotebookData = (
                   y: faker.number.int({ min: 100, max: 400 }),
                   width: 320,
                   height: 350,
+                  // Different random background for widget nodes
+                  backgroundColor: pickRandomColor(),
                   content: JSON.stringify({ title: faker.hacker.noun() }),
                 },
               ],

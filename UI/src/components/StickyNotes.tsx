@@ -160,8 +160,8 @@ const StickyNote: React.FC<StickyNoteProps> = ({
       onMouseDown={handleDragStart}
       className={`absolute group bg-yellow-200 text-slate-800 shadow-md border transition-shadow duration-100 rounded p-2 overflow-hidden flex flex-col ${
         isDragging
-          ? "cursor-grabbing shadow-xl z-50 border-blue-400 border-2"
-          : "cursor-grab z-30 border-yellow-300/40"
+          ? "shadow-xl z-50 border-blue-400 border-2"
+          : " z-30 border-yellow-300/40"
       }`}
       style={{
         left: `${position.x}px`,

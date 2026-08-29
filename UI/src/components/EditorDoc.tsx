@@ -19,6 +19,7 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
   const context = useEditorContext();
   const settings = useSettings();
   const scratch = useScratchContext();
+
   settings.setDefaultColor(
     size === "full" ? (darkMode ? "#fff" : "#000") : "#000",
   );
@@ -38,23 +39,48 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
       const currentHTML = currentEditor.getHTML();
-      // Only call setInfo if text actually changed to prevent render loops
       if (scratch.info !== currentHTML) {
         scratch.setInfo(currentHTML);
       }
     },
 
-    onSelectionUpdate: ({ editor: currentEditor }) => {
-      context.setIsBold(currentEditor.isActive("bold"));
-      context.setIsItalic(currentEditor.isActive("italic"));
-      context.setIsUnderline(currentEditor.isActive("underline"));
-      context.setIsStrikethrough(currentEditor.isActive("strike"));
-      context.setIsBulletList(currentEditor.isActive("bulletList"));
-      context.setIsOrderedList(currentEditor.isActive("orderedList"));
-      context.setIsBlockquote(currentEditor.isActive("blockquote"));
-      context.setIsCodeBlock(currentEditor.isActive("codeBlock"));
-      const highlightAttrs = currentEditor.getAttributes("highlight");
-      context.setHighlightedColor(highlightAttrs.color || "");
+    onTransaction: ({ editor: currentEditor }) => {
+      // 1. Compute target toggle booleans
+      const isBold = currentEditor.isActive("bold");
+      const isItalic = currentEditor.isActive("italic");
+      const isUnderline = currentEditor.isActive("underline");
+      const isStrike = currentEditor.isActive("strike");
+      const isBullet = currentEditor.isActive("bulletList");
+      const isOrdered = currentEditor.isActive("orderedList");
+      const isBlockquote = currentEditor.isActive("blockquote");
+      const isCodeBlock = currentEditor.isActive("codeBlock");
+
+      // FIX: Guard parent state triggers to prevent mid-transaction lifecycle crashes
+      if (context.isBold !== isBold) context.setIsBold(isBold);
+      if (context.isItalic !== isItalic) context.setIsItalic(isItalic);
+      if (context.isUnderline !== isUnderline)
+        context.setIsUnderline(isUnderline);
+      if (context.isStrikethrough !== isStrike)
+        context.setIsStrikethrough(isStrike);
+      if (context.isBulletList !== isBullet) context.setIsBulletList(isBullet);
+      if (context.isOrderedList !== isOrdered)
+        context.setIsOrderedList(isOrdered);
+      if (context.isBlockquote !== isBlockquote)
+        context.setIsBlockquote(isBlockquote);
+      if (context.isCodeBlock !== isCodeBlock)
+        context.setIsCodeBlock(isCodeBlock);
+
+      const attrs = currentEditor.getAttributes("textStyle");
+      const targetHighlight = attrs.backgroundColor || "";
+      const targetColor = attrs.color || settings.defaultColor;
+
+      // 2. ONLY propagate color values up if they genuinely deviate from current context states
+      if (context.highlightedColor !== targetHighlight) {
+        context.setHighlightedColor(targetHighlight);
+      }
+      if (context.textColor !== targetColor) {
+        context.setTextColor(targetColor);
+      }
 
       let activeHeading = 0;
       for (let i = 1; i <= 6; i++) {
@@ -64,12 +90,16 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
         }
       }
 
+      // FIX: Bypassed checking 'context.activeHeading' which was throwing TS 2339.
+      // We invoke 'toggleHeading' directly, letting the context handle its internal routing.
       context.toggleHeading(activeHeading);
 
-      const attrs = currentEditor.getAttributes("textStyle");
-      context.setFont(attrs.fontFamily || settings.defaultFont);
-      context.setFontSize(attrs.fontSize || settings.defaultFontSize);
-      context.setTextColor(attrs.color || settings.defaultColor);
+      const targetFont = attrs.fontFamily || settings.defaultFont;
+      const targetFontSize = attrs.fontSize || settings.defaultFontSize;
+
+      if (context.font !== targetFont) context.setFont(targetFont);
+      if (context.fontSize !== targetFontSize)
+        context.setFontSize(targetFontSize);
     },
   });
 
@@ -81,9 +111,7 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
 
     if (content !== currentHTML && content !== currentText) {
       isTransitioningRef.current = true;
-
       editor.commands.setContent(content);
-
       isTransitioningRef.current = false;
     }
   }, [content, editor]);
@@ -91,7 +119,6 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
   useEffect(() => {
     if (editor) {
       context.setEditor(editor);
-      // context.setReadText(() => handleReadScratchpadText);
     }
   }, [editor, context]);
 
@@ -103,7 +130,6 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
 
   return (
     <div
-      /* DISMISS ON CLICK AWAY: Clears the popup if clicking blank space */
       onClick={closeContextMenu}
       className={`flex flex-col overflow-hidden transition-all outline-none duration-200 relative ${
         size === "full"
@@ -114,19 +140,15 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
       }`}
     >
       <div
-        className="flex-1 h-[120vh] overflow-y-auto px-10 py-0  pt-0 focus:outline-none"
-        /* THE RIGHT-CLICK INTERCEPTOR INTERACTION */
+        className="flex-1 h-[120vh] overflow-y-auto px-10 py-0 pt-0 focus:outline-none"
         onContextMenu={(e) => {
           if (!editor) return;
 
-          // Detect if the target click element node is inside a table layout cell
           const targetElement = e.target as HTMLElement;
           const isClickedOnTable = targetElement.closest("table") !== null;
 
           if (isClickedOnTable) {
-            e.preventDefault(); // Stifles native gray system browser context popups
-
-            // Capture exact mouse viewport coordinate locations
+            e.preventDefault();
             setContextMenu({
               x: e.clientX,
               y: e.clientY,
@@ -137,7 +159,7 @@ const EditorDoc: React.FC<props> = ({ size, content }) => {
         }}
         onClick={() => {
           if (editor && !editor.isFocused) {
-            editor.commands.focus("end"); // Places the flashing typing cursor neatly at the end of the text
+            editor.commands.focus("end");
           }
         }}
       >
