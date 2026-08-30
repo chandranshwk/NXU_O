@@ -50,8 +50,6 @@ export const WorkspaceProvider: React.FC<{ children: ReactNode }> = ({
   const count = headers.length - 1;
 
   const deleteItem = (id: number) => {
-    console.log("Attempting to delete ID:", id, "Type:", typeof id);
-
     setItems((prevItems) => {
       // 1. Force strict numerical evaluation to eliminate type mismatch bugs
       const filtered = prevItems.filter(

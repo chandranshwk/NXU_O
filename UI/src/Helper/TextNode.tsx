@@ -15,66 +15,19 @@ import ContextMenu from "../components/ContextMenu";
 import FloatingToolbar from "./FloatingToolbar";
 import { Editor } from "@tiptap/react";
 import { SortableParagraphBlock } from "./SortableParagraphBlock";
+import { extractParagraphsToBlocks, type BlockItem } from "./TextNode.helper";
 
 interface TextNodeProps {
   content: string;
   nodeId: string;
+  hasPreset?: boolean;
 }
 
-interface BlockItem {
-  id: string;
-  html: string;
-}
-
-// Fixed Extract Function: Now extracts complete HTML blocks to preserve headings/lists natively
-function extractParagraphsToBlocks(html: string): BlockItem[] {
-  if (!html) return [{ id: `b-init-${Math.random()}`, html: "<p></p>" }];
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-  const body = doc.body;
-  const blocks: BlockItem[] = [];
-
-  const generateId = () =>
-    `block-${Math.random().toString(36).substring(2, 9)}`;
-
-  for (const node of body.childNodes) {
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const el = node as HTMLElement;
-      const tag = el.tagName.toLowerCase();
-
-      if (
-        ["p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote"].includes(tag)
-      ) {
-        if (el.textContent?.trim()) {
-          blocks.push({ id: generateId(), html: el.outerHTML });
-        }
-      } else if (tag === "ul" || tag === "ol") {
-        const items = el.querySelectorAll("li");
-        for (const li of items) {
-          if (li.textContent?.trim()) {
-            blocks.push({
-              id: generateId(),
-              html: `<${tag}>${li.outerHTML}</${tag}>`,
-            });
-          }
-        }
-      }
-    }
-  }
-
-  if (blocks.length === 0) {
-    const text = body.innerHTML.trim();
-    blocks.push({
-      id: generateId(),
-      html: text ? `<p>${text}</p>` : "<p></p>",
-    });
-  }
-
-  return blocks;
-}
-
-export const TextNode: React.FC<TextNodeProps> = ({ content, nodeId }) => {
+export const TextNode: React.FC<TextNodeProps> = ({
+  content,
+  nodeId,
+  hasPreset,
+}) => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const settings = useSettings();
   const context = useEditorContext();
@@ -122,10 +75,7 @@ export const TextNode: React.FC<TextNodeProps> = ({ content, nodeId }) => {
         // Notify tracking delta context system of new HTML sequence layout
         if (activeEditor) {
           const combinedHTML = updated.map((b) => b.html).join("");
-          console.log(
-            `Node ${nodeId} drag layout sequence updated:`,
-            combinedHTML,
-          );
+          console.log(combinedHTML);
         }
         return updated;
       });
@@ -158,12 +108,8 @@ export const TextNode: React.FC<TextNodeProps> = ({ content, nodeId }) => {
   };
 
   // YOUR CONTEXT SYNC & ACCURATE MATH LOGIC PRESERVED HERE NATIVELY
-  const handleBlockTransaction = (
-    currentEditor: Editor,
-    blockElement: HTMLElement,
-  ) => {
+  const handleBlockTransaction = (currentEditor: Editor) => {
     const { selection } = currentEditor.state;
-    console.log(blockElement);
 
     if (selection.empty) {
       setSelected(undefined);
@@ -231,14 +177,17 @@ export const TextNode: React.FC<TextNodeProps> = ({ content, nodeId }) => {
   };
 
   return (
-    <div className="w-full h-full relative z-10 -top-5 resize">
+    /* FIXED: Removed 'resize' and 'min-h-full' constraints. 
+       Changed layout to 'h-auto w-full' so it inflates fluidly based on paragraph count */
+    <div className="w-full h-auto relative z-10 -top-5 overflow-visible ">
       <div
         ref={containerRef}
         onClick={closeContextMenu}
-        className="flex flex-col overflow-visible transition-all outline-none duration-200 relative w-full h-full"
+        /* FIXED: Changed from 'h-full' to 'h-auto' to ensure the wrapper container pushes down naturally */
+        className="flex flex-col overflow-visible transition-all outline-none duration-200 relative w-full h-auto"
       >
         <div
-          className="flex-1 w-full focus:outline-none space-y-1"
+          className="flex-1 w-full focus:outline-none space-y-1 h-auto"
           onContextMenu={(e) => {
             const targetElement = e.target as HTMLElement;
             if (targetElement.closest("table")) {
@@ -260,6 +209,7 @@ export const TextNode: React.FC<TextNodeProps> = ({ content, nodeId }) => {
               {blocks.map((block) => (
                 <SortableParagraphBlock
                   key={block.id}
+                  hasPreset={hasPreset}
                   id={block.id}
                   html={block.html}
                   darkMode={darkMode}

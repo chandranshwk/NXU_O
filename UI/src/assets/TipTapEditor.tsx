@@ -10,7 +10,7 @@ import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import Strike from "@tiptap/extension-strike";
-import { Extension, Mark, type ChainedCommands } from "@tiptap/core";
+import { Extension, Mark } from "@tiptap/core";
 import { BubbleMenu } from "@tiptap/extension-bubble-menu";
 import Suggestion from "@tiptap/suggestion";
 
@@ -26,6 +26,10 @@ declare module "@tiptap/core" {
       unsetColor: () => ReturnType;
       unsetBackgroundColor: () => ReturnType;
     };
+    fontSize: {
+      setFontSize: (fontSize: string) => ReturnType;
+      unsetFontSize: () => ReturnType;
+    };
   }
 }
 
@@ -37,6 +41,11 @@ export const getEditorExtensions = ({
   StarterKit.configure({
     heading: {
       levels: [1, 2, 3, 4, 5, 6],
+    },
+    paragraph: {
+      HTMLAttributes: {
+        class: "transition-colors duration-150 rounded-lg",
+      },
     },
     strike: false,
     bulletList: false,
@@ -72,7 +81,7 @@ export const getEditorExtensions = ({
       return {
         toggleHeading:
           (attributes: { level: number }) =>
-          ({ chain }: { chain: () => ChainedCommands }) => {
+          ({ chain }) => {
             return chain()
               .updateAttributes("textStyle", { fontSize: null })
               .toggleNode("heading", "paragraph", attributes)
@@ -128,7 +137,6 @@ export const getEditorExtensions = ({
               const { tr } = state;
               const { from, to } = state.selection;
 
-              // Direct ProseMirror state cleanup injection to sweep left-over styles away
               tr.addMark(
                 from,
                 to,
@@ -190,12 +198,12 @@ export const getEditorExtensions = ({
       return {
         setFontSize:
           (fontSize: string) =>
-          ({ chain }: { chain: () => ChainedCommands }) => {
+          ({ chain }) => {
             return chain().setMark("textStyle", { fontSize }).focus().run();
           },
         unsetFontSize:
           () =>
-          ({ chain }: { chain: () => ChainedCommands }) => {
+          ({ chain }) => {
             return chain()
               .updateAttributes("textStyle", { fontSize: null })
               .focus()
@@ -224,6 +232,33 @@ export const getEditorExtensions = ({
   }),
 
   BubbleMenu.configure({}),
+
+  Extension.create({
+    name: "blockStylePersistenceSchema",
+    addGlobalAttributes() {
+      return [
+        {
+          types: ["paragraph", "heading"],
+          attributes: {
+            backgroundColor: {
+              default: null,
+              parseHTML: (element) =>
+                element.getAttribute("data-background-color") ||
+                element.style.backgroundColor ||
+                null,
+              renderHTML: (attributes) => {
+                if (!attributes.backgroundColor) return {};
+                return {
+                  "data-background-color": attributes.backgroundColor,
+                  style: `background-color: ${attributes.backgroundColor}; padding: 4px 8px; border-radius: 6px;`,
+                };
+              },
+            },
+          },
+        },
+      ];
+    },
+  }),
 
   Extension.create<{ suggestion: Record<string, unknown> }>({
     name: "slashCommands",

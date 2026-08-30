@@ -9,7 +9,6 @@ import { useSettings } from "../contexts/settingsContext";
 
 export const Settings = () => {
   const settings = useSettings();
-  console.log(settings.textModeShortcut);
 
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   // Local state tracking placeholders for our PowerToys controls
@@ -31,7 +30,6 @@ export const Settings = () => {
     const normalizedTitle = titleEditor.toLowerCase();
 
     const newShortCut = newKeys.join("-");
-    console.log("Newly generated string:", newShortCut);
 
     if (normalizedTitle === "open nxu_o key formatting") {
       settings.setOpenShortcut(newShortCut);

@@ -57,7 +57,7 @@ const FloatingToolbar: React.FC<props> = ({
         top: `${coords.top}px`,
         left: `${coords.left}px`,
       }}
-      className={`flex items-center gap-1.5 p-1 rounded-md border shadow-xl w-max absolute -translate-x-1/2 z-555 px-4 select-none font-sans antialiased animate-in fade-in zoom-in-95 duration-100
+      className={`flex items-center gap-1.5 p-1 rounded-md z-9999 border shadow-xl w-max absolute -translate-x-1/2 px-4 select-none font-sans antialiased animate-in fade-in zoom-in-95 duration-100
         ${
           darkMode
             ? "bg-zinc-900 border-zinc-800 text-zinc-100 shadow-black/40"

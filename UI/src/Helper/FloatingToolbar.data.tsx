@@ -317,7 +317,6 @@ export const useToolbarConfigs = ({
         ],
       },
     ];
-
     return { TOOLS, TYPES, TEXTSTYLE };
     // Hook triggers recalculations ONLY when context dependencies alter state
   }, [properties, editor, darkMode]);

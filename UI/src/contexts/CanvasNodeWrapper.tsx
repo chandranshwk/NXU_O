@@ -1,11 +1,14 @@
-import React, { useRef, useState } from "react";
-import { createPortal } from "react-dom";
+// src/components/CanvasNodeWrapper.tsx
+import React, { useRef, useState, useEffect } from "react";
 import { useNotebookStore } from "../contexts/notebook";
 import type { MockPageNode } from "../assets/SAMPLE";
+import {
+  CanvasNodeSettingsDialog,
+  type AdaptableColor,
+} from "./CanvasNodeSettingsDialog";
+import { CanvasNodeDragHandle } from "./CanvasNodeDragHandle";
+import { useCanvasNodeHandlers } from "./useCanvasNodeHandlers";
 
-// =========================================================================
-// TYPE DEFINITIONS
-// =========================================================================
 export type NodeComponentType = "text" | "calendar" | "map" | "todo";
 
 export interface CanvasNodeData {
@@ -30,19 +33,17 @@ interface CanvasNodeWrapperProps {
   children: React.ReactNode;
 }
 
-// =========================================================================
-// COMPONENT
-// =========================================================================
-export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = ({
-  node,
-  notebookId,
-  sectionId,
-  pageId,
-  darkMode,
-  isSelected,
-  onSelect,
-  children,
-}) => {
+export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
+  const {
+    node,
+    notebookId,
+    sectionId,
+    pageId,
+    darkMode,
+    isSelected,
+    children,
+  } = props;
+
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -52,114 +53,65 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = ({
     width: number;
     height: number;
   } | null>(null);
-  const [dialogOffset, setDialogOffset] = useState({ x: 0, y: 0 });
-  const [isDraggingDialog, setIsDraggingDialog] = useState(false);
-
-  // Dialog local state
-  const [dialogColor, setDialogColor] = useState(
-    node.backgroundColor || "#ffffff",
-  );
-  const [dialogWidth, setDialogWidth] = useState(node.width);
-  const [dialogHeight, setDialogHeight] = useState(node.height || 150);
 
   const nodeRef = useRef<HTMLDivElement>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const resizeHandleRef = useRef<HTMLDivElement>(null);
-  const dialogHeaderRef = useRef<HTMLDivElement>(null);
 
-  const dragStartRef = useRef({ x: 0, y: 0 });
-  const nodeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
-  const dialogDragStartRef = useRef({ x: 0, y: 0 });
-  const dialogOffsetStartRef = useRef({ x: 0, y: 0 });
+  const handlers = useCanvasNodeHandlers({
+    ...props,
+    setIsDragging,
+    setIsResizing,
+    isDragging,
+    isResizing,
+    nodeRef,
+    dragHandleRef,
+    resizeHandleRef,
+  });
 
-  // ----- Drag handlers for node -----
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (resizeHandleRef.current?.contains(e.target as Node)) return;
-    if (!dragHandleRef.current?.contains(e.target as Node)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect(node.id);
-    setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-    nodeStartRef.current = {
-      x: node.x,
-      y: node.y,
-      width: node.width,
-      height: node.height || 0,
-    };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
+  const presetColors: AdaptableColor[] = [
+    { name: "White/Charcoal", light: "#ffffff", dark: "#1f1f1f" },
+    { name: "Gray", light: "#f3f4f6", dark: "#2d3139" },
+    { name: "Silver", light: "#e5e7eb", dark: "#3a3f4b" },
+    { name: "Amber/Yellow", light: "#fef3c7", dark: "#975314" },
+    { name: "Pink", light: "#fce7f3", dark: "#4c283a" },
+    { name: "Blue", light: "#e0f2fe", dark: "#1e3a5f" },
+    { name: "Emerald/Green", light: "#d1fae5", dark: "#1a4731" },
+    { name: "Purple", light: "#ede9fe", dark: "#3c2d61" },
+    { name: "Orange", light: "#fed7aa", dark: "#4c2d1a" },
+    { name: "Red", light: "#fecaca", dark: "#542323" },
+    { name: "Cyan", light: "#cffafe", dark: "#164e63" },
+    { name: "Violet", light: "#f3e8ff", dark: "#3b2261" },
+  ];
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isDragging) {
-      e.stopPropagation();
-      const deltaX = e.clientX - dragStartRef.current.x;
-      const deltaY = e.clientY - dragStartRef.current.y;
-      const { updateNodePosition } = useNotebookStore.getState();
-      updateNodePosition(
-        notebookId,
-        sectionId,
-        pageId,
-        node.id,
-        Math.round(nodeStartRef.current.x + deltaX),
-        Math.round(nodeStartRef.current.y + deltaY),
-      );
-    } else if (isResizing) {
-      e.stopPropagation();
-      const deltaX = e.clientX - dragStartRef.current.x;
-      const deltaY = e.clientY - dragStartRef.current.y;
-      const targetWidth = Math.max(
-        150,
-        Math.round(nodeStartRef.current.width + deltaX),
-      );
-      const targetHeight = Math.max(
-        80,
-        Math.round(nodeStartRef.current.height + deltaY),
-      );
-      const { updateNodeSize } = useNotebookStore.getState();
-      if (updateNodeSize) {
-        updateNodeSize(
-          notebookId,
-          sectionId,
-          pageId,
-          node.id,
-          targetWidth,
-          targetHeight,
-        );
+  useEffect(() => {
+    if (!node.backgroundColor || node.backgroundColor === "transparent") return;
+
+    const matchedColor = presetColors.find(
+      (c) =>
+        c.light.toLowerCase() === node.backgroundColor?.toLowerCase() ||
+        c.dark.toLowerCase() === node.backgroundColor?.toLowerCase(),
+    );
+
+    if (matchedColor) {
+      const targetColorHex = darkMode ? matchedColor.dark : matchedColor.light;
+
+      if (node.backgroundColor !== targetColorHex) {
+        const { updateNodeBackgroundColor } = useNotebookStore.getState();
+        if (updateNodeBackgroundColor) {
+          updateNodeBackgroundColor(
+            notebookId,
+            sectionId,
+            pageId,
+            node.id,
+            targetColorHex,
+          );
+        }
       }
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [darkMode, node.id, notebookId, sectionId, pageId, node.backgroundColor]);
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isDragging) {
-      setIsDragging(false);
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } else if (isResizing) {
-      setIsResizing(false);
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-  };
-
-  const handleResizeDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect(node.id);
-    setIsResizing(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-    const currentHeight =
-      node.height ||
-      e.currentTarget.parentElement?.getBoundingClientRect().height ||
-      150;
-    nodeStartRef.current = {
-      x: node.x,
-      y: node.y,
-      width: node.width,
-      height: currentHeight,
-    };
-    e.currentTarget.parentElement?.setPointerCapture(e.pointerId);
-  };
-
-  // ----- Dialog handlers -----
   const handleOpenDialog = (e: React.MouseEvent) => {
     e.stopPropagation();
     const rect = nodeRef.current?.getBoundingClientRect();
@@ -171,98 +123,47 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = ({
         height: rect.height,
       });
     }
-    setDialogColor(node.backgroundColor || "#ffffff");
-    setDialogWidth(node.width);
-    setDialogHeight(node.height || 150);
-    setDialogOffset({ x: 0, y: 0 }); // reset position when opened
     setDialogOpen(true);
   };
 
-  const handleCloseDialog = () => setDialogOpen(false);
-
-  const handleApplyChanges = () => {
-    if (dialogWidth < 150 || dialogHeight < 80) {
-      alert("Width must be at least 150px and height at least 80px.");
-      return;
-    }
+  const handleApplyChanges = (
+    width: number,
+    height: number,
+    backgroundColor: string,
+  ) => {
     const { updateNodeSize, updateNodeBackgroundColor } =
       useNotebookStore.getState();
-    updateNodeSize(
-      notebookId,
-      sectionId,
-      pageId,
-      node.id,
-      dialogWidth,
-      dialogHeight,
-    );
-    updateNodeBackgroundColor(
-      notebookId,
-      sectionId,
-      pageId,
-      node.id,
-      dialogColor,
-    );
+    updateNodeSize(notebookId, sectionId, pageId, node.id, width, height);
+    if (updateNodeBackgroundColor) {
+      updateNodeBackgroundColor(
+        notebookId,
+        sectionId,
+        pageId,
+        node.id,
+        backgroundColor,
+      );
+    }
     setDialogOpen(false);
   };
 
-  // ----- Dialog drag handlers -----
-  const handleDialogPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    if (!dialogRect) return;
-    setIsDraggingDialog(true);
-    dialogDragStartRef.current = { x: e.clientX, y: e.clientY };
-    dialogOffsetStartRef.current = { x: dialogOffset.x, y: dialogOffset.y };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const handleDialogPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingDialog || !dialogRect) return;
-    const deltaX = e.clientX - dialogDragStartRef.current.x;
-    const deltaY = e.clientY - dialogDragStartRef.current.y;
-    setDialogOffset({
-      x: dialogOffsetStartRef.current.x + deltaX,
-      y: dialogOffsetStartRef.current.y + deltaY,
-    });
-  };
-
-  const handleDialogPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isDraggingDialog) {
-      setIsDraggingDialog(false);
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    }
-  };
-
-  // ----- Preset colors -----
-  const presetColors = [
-    "#ffffff",
-    "#f3f4f6",
-    "#e5e7eb",
-    "#fef3c7",
-    "#fce7f3",
-    "#e0f2fe",
-    "#d1fae5",
-    "#ede9fe",
-    "#fed7aa",
-    "#fecaca",
-    "#cffafe",
-    "#f3e8ff",
-  ];
-
-  // =========================================================================
-  // RENDER
-  // =========================================================================
   return (
     <>
       <div
         ref={nodeRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
+        onPointerDown={handlers.handlePointerDown}
+        onPointerMove={handlers.handlePointerMove}
+        onPointerUp={handlers.handlePointerUp}
         style={{
           position: "absolute",
           transform: `translate3d(${node.x}px, ${node.y}px, 0)`,
           width: `${node.width}px`,
-          height: node.height ? `${node.height}px` : "auto",
+          height:
+            node.type === "text"
+              ? "auto"
+              : node.height
+                ? `${node.height}px`
+                : "auto",
+          minHeight: "max-content",
           zIndex: isSelected || isDragging || isResizing ? 50 : 10,
           touchAction: "none",
           backgroundColor: node.backgroundColor || "transparent",
@@ -279,25 +180,13 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = ({
               : "bg-white border-zinc-200 text-zinc-900 hover:border-zinc-300"
         }`}
       >
-        {/* Drag Handle */}
-        <div
-          ref={dragHandleRef}
-          className={`absolute w-[calc(100%-7rem)] left-1/2 -translate-x-1/2 -top-2 z-30 flex items-center justify-center px-3 py-1 rounded-full select-none transition-all duration-200 ${
-            isDragging ? "cursor-grabbing" : "cursor-grab"
-          } ${
-            darkMode
-              ? "bg-zinc-700 hover:bg-zinc-600 text-zinc-300 border border-zinc-600"
-              : "bg-zinc-200 hover:bg-zinc-300 text-zinc-700 border border-zinc-300"
-          } ${isSelected ? "opacity-100" : "opacity-80 group-hover:opacity-100"}`}
-        >
-          <div className="flex gap-1.5 pointer-events-none">
-            <span className="size-1 rounded-full bg-current" />
-            <span className="size-1 rounded-full bg-current" />
-            <span className="size-1 rounded-full bg-current" />
-          </div>
-        </div>
+        <CanvasNodeDragHandle
+          isDragging={isDragging}
+          isSelected={isSelected}
+          darkMode={darkMode}
+          innerRef={dragHandleRef}
+        />
 
-        {/* Node type label – click to open dialog */}
         <div
           className={`absolute -top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-mono border uppercase z-30 cursor-pointer ${
             darkMode
@@ -309,221 +198,67 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = ({
           <span>{node.type}</span>
         </div>
 
-        {/* Node content */}
         <div
-          className={`w-full h-full select-text relative z-20 mt-2 ${
-            isDragging || isResizing
-              ? "pointer-events-none"
-              : "pointer-events-auto"
-          }`}
+          className={`w-full h-full select-text relative z-20 mt-2 ${isDragging || isResizing ? "pointer-events-none" : "pointer-events-auto"}`}
         >
           {children}
         </div>
 
-        {/* Resize Handle */}
         <div
           ref={resizeHandleRef}
-          onPointerDown={handleResizeDown}
-          className={`absolute bottom-1 right-1 w-3.5 h-3.5 cursor-se-resize flex items-end justify-end p-0.5 rounded-br-md z-30 transition-opacity duration-150 ${
-            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
-          }`}
+          onPointerDown={handlers.handleResizeDown}
+          className={`absolute bottom-1 right-1 w-3.5 h-3.5 flex items-end justify-end p-0.5 rounded-br-md z-30 transition-opacity duration-150 ${
+            node.type === "text" ? "cursor-ew-resize" : "cursor-se-resize"
+          } ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"}`}
         >
-          <svg
-            width="8"
-            height="8"
-            viewBox="0 0 10 10"
-            className={darkMode ? "text-zinc-600" : "text-zinc-400"}
-          >
-            <line
-              x1="10"
-              y1="2"
-              x2="2"
-              y2="10"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
+          {node.type === "text" ? (
+            <div
+              className={`w-1 h-3 rounded-full ${darkMode ? "bg-zinc-600" : "bg-zinc-400"}`}
             />
-            <line
-              x1="10"
-              y1="6"
-              x2="6"
-              y2="10"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          ) : (
+            <svg
+              width="8"
+              height="8"
+              viewBox="0 0 10 10"
+              className={darkMode ? "text-zinc-600" : "text-zinc-400"}
+            >
+              <line
+                x1="10"
+                y1="2"
+                x2="2"
+                y2="10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <line
+                x1="10"
+                y1="6"
+                x2="6"
+                y2="10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          )}
         </div>
       </div>
 
-      {/* ============================================================
-          DIALOG – draggable, positioned relative to the node
-          ============================================================ */}
-      {dialogOpen &&
-        dialogRect &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-9999 flex items-center justify-center "
-            onClick={handleCloseDialog}
-          >
-            <div
-              className="rounded-md shadow-2xl p-5 w-72 max-w-[90vw]"
-              style={{
-                position: "fixed",
-                top: dialogRect.top + dialogRect.height / 2 + dialogOffset.y,
-                left: dialogRect.left + dialogRect.width / 2 + dialogOffset.x,
-                transform: "translate(-50%, -50%)",
-                backgroundColor: darkMode ? "#1e1e1e" : "#ffffff",
-                border: darkMode ? "1px solid #3d3d3d" : "1px solid #e5e5e5",
-                userSelect: isDraggingDialog ? "none" : "auto",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Dialog Drag Handle (Title bar) */}
-              <div
-                ref={dialogHeaderRef}
-                className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing select-none"
-                onPointerDown={handleDialogPointerDown}
-                onPointerMove={handleDialogPointerMove}
-                onPointerUp={handleDialogPointerUp}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-0.5">
-                    <span className="w-1 h-1 rounded-full bg-current opacity-40" />
-                    <span className="w-1 h-1 rounded-full bg-current opacity-40" />
-                    <span className="w-1 h-1 rounded-full bg-current opacity-40" />
-                  </div>
-                  <h4
-                    className="text-sm font-medium"
-                    style={{ color: darkMode ? "#e0e0e0" : "#1a1a1a" }}
-                  >
-                    Node Settings
-                  </h4>
-                </div>
-              </div>
-
-              {/* Preset Colors */}
-              <div className="mb-3">
-                <label
-                  className="block text-xs font-medium mb-1.5"
-                  style={{ color: darkMode ? "#aaa" : "#666" }}
-                >
-                  Background Color
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {presetColors.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      className="w-6 h-6 rounded-full border-2 transition-all hover:scale-110"
-                      style={{
-                        backgroundColor: color,
-                        borderColor:
-                          dialogColor === color
-                            ? "#3b82f6"
-                            : darkMode
-                              ? "#444"
-                              : "#ddd",
-                      }}
-                      onClick={() => setDialogColor(color)}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all hover:scale-110"
-                    style={{
-                      borderColor:
-                        dialogColor === "#ffffff"
-                          ? "#3b82f6"
-                          : darkMode
-                            ? "#444"
-                            : "#ddd",
-                      color: darkMode ? "#aaa" : "#666",
-                      backgroundColor: "transparent",
-                    }}
-                    onClick={() => setDialogColor("#ffffff")}
-                    title="Reset to transparent"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-
-              {/* Width & Height */}
-              <div className="flex gap-3 mb-4">
-                <div className="flex-1">
-                  <label
-                    className="block text-xs font-medium mb-1"
-                    style={{ color: darkMode ? "#aaa" : "#666" }}
-                  >
-                    Width (px)
-                  </label>
-                  <input
-                    type="number"
-                    value={dialogWidth}
-                    min="150"
-                    step="10"
-                    className="w-full rounded-lg border px-3 py-1.5 text-sm"
-                    style={{
-                      backgroundColor: darkMode ? "#2d2d2d" : "#f9fafb",
-                      borderColor: darkMode ? "#3d3d3d" : "#d1d5db",
-                      color: darkMode ? "#e0e0e0" : "#1a1a1a",
-                    }}
-                    onChange={(e) =>
-                      setDialogWidth(parseInt(e.target.value, 10) || 150)
-                    }
-                  />
-                </div>
-                <div className="flex-1">
-                  <label
-                    className="block text-xs font-medium mb-1"
-                    style={{ color: darkMode ? "#aaa" : "#666" }}
-                  >
-                    Height (px)
-                  </label>
-                  <input
-                    type="number"
-                    value={dialogHeight}
-                    min="80"
-                    step="10"
-                    className="w-full rounded-lg border px-3 py-1.5 text-sm"
-                    style={{
-                      backgroundColor: darkMode ? "#2d2d2d" : "#f9fafb",
-                      borderColor: darkMode ? "#3d3d3d" : "#d1d5db",
-                      color: darkMode ? "#e0e0e0" : "#1a1a1a",
-                    }}
-                    onChange={(e) =>
-                      setDialogHeight(parseInt(e.target.value, 10) || 80)
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={handleCloseDialog}
-                  className="px-4 py-1.5 text-sm rounded-lg transition-colors"
-                  style={{
-                    backgroundColor: darkMode ? "#3d3d3d" : "#f3f4f6",
-                    color: darkMode ? "#ccc" : "#333",
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleApplyChanges}
-                  className="px-4 py-1.5 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+      <CanvasNodeSettingsDialog
+        isOpen={dialogOpen}
+        darkMode={darkMode}
+        nodeType={node.type}
+        initialColor={node.backgroundColor || "transparent"}
+        initialWidth={node.width}
+        initialHeight={node.height || 150}
+        anchorRect={dialogRect}
+        presetColors={presetColors}
+        onClose={() => setDialogOpen(false)}
+        onApply={handleApplyChanges}
+      />
     </>
   );
 };
+
+export default CanvasNodeWrapper;

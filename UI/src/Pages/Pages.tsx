@@ -159,8 +159,6 @@ const Pages: React.FC<Props> = ({
             const targetPad = allPads.find((p) => p.name === tabStringName);
             const isSaved = targetPad ? targetPad.isSaved : true;
 
-            console.log(activeSlots);
-
             return (
               <Reorder.Item
                 key={tabStringName}
