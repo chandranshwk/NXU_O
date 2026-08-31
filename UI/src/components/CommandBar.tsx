@@ -266,6 +266,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, filteredActions, selectedIndex]);
 
   // Auto-focus input fields immediately upon open transitions

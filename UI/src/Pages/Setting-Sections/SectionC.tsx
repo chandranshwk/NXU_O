@@ -33,7 +33,7 @@ interface props {
   darkMode: boolean;
   /** Global settings context tracking all active user-configured macro strings */
   settings: settingsContextType;
-  /** State modifier showing or hiding the floating keycap recorder modal overlay */
+  /** State modifier showing or hiding the floating key-cap recorder modal overlay */
   setOpenKeyEditor: React.Dispatch<SetStateAction<boolean>>;
   /** State modifier forwarding the name of the target hotkey being adjusted */
   setTitleEditor: React.Dispatch<SetStateAction<string>>;
@@ -150,7 +150,7 @@ const SectionC: React.FC<props> = ({
             }
           >
             {/* ==========================================
-                RIGHT CARD RAIL: RENDERED HOTKEY KEYCAP BADGES
+                RIGHT CARD RAIL: RENDERED HOTKEY KEY-CAP BADGES
                 ========================================== */}
             <div className="flex items-center gap-1.5">
               {item.keys.split("-").map((key, idx) => (

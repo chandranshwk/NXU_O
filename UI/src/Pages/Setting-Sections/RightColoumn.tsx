@@ -1,5 +1,5 @@
 /**
- * @file RightColoumn.tsx
+ * @file RightColumn.tsx
  * @component RightColumn
  * @description A side panel information card tracking application-wide navigation shortcuts.
  * It renders card items that match configuration settings to let users quickly look up
@@ -8,7 +8,7 @@
  * @architecture
  * - Plugs in on the right edge of viewports alongside main settings sections.
  * - Employs absolute-positioned dashed borders to draw separator paths behind typography labels.
- * - Maps custom shortcuts down to styled `kbd` keycap badge component rows.
+ * - Maps custom shortcuts down to styled `kbd` key-cap badge component rows.
  */
 
 import React from "react";
@@ -100,7 +100,7 @@ export const RightColumn: React.FC<props> = ({ darkMode }) => {
               INTERACTIVE FOOTER ROW: HOTKEYS & CONTROLS
               ========================================== */}
           <div className="flex items-center justify-between mt-0.5">
-            {/* Left Box Cluster: Keyboard Keycap badging + Modification Triggers */}
+            {/* Left Box Cluster: Keyboard Key-cap badging + Modification Triggers */}
             <div className="flex items-center gap-1.5">
               {item.keys.map((key, idx) => (
                 <kbd

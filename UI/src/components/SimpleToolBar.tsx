@@ -36,7 +36,7 @@ interface props {
 
 /**
  * @component SimpleToolBar
- * @description Renders the formatting bar, synchronises state indicators, and pipes
+ * @description Renders the formatting bar, synchronizes state indicators, and pipes
  * typography, font color, selection grid highlighting, and dimension commands down to TipTap.
  */
 const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {

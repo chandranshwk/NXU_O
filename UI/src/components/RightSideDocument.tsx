@@ -6,7 +6,7 @@
  * section creation pipelines.
  *
  * @architecture
- * - Synchronises active workspace page data arrays using references from `useNotebookStore`.
+ * - Synchronizes active workspace page data arrays using references from `useNotebookStore`.
  * - Employs a focus hook array setup to switch section labels between text inputs and static triggers on F2 keypress events.
  * - Seamlessly respects global `zenMode` modifiers to collapse the section bar layout when focused.
  */

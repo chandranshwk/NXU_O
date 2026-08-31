@@ -28,7 +28,7 @@ import { useSettings } from "../contexts/settingsContext";
 /**
  * @component NewDocumentContent
  * @description Coordinates notebook navigation arrays, sidebar view states,
- * page initialization lifecycles, and hotkey actions.
+ * page initialization life-cycles, and hotkey actions.
  */
 const NewDocumentContent = () => {
   /** Accesses global app theme preferences passed from the shell root template */
@@ -238,7 +238,7 @@ const NewDocumentContent = () => {
         )}
 
         {/* ==========================================
-            RIGHT SIDEVIEWPORT: ACTIVE CANVAS CORE
+            RIGHT SIDE-VIEWPORT: ACTIVE CANVAS CORE
             ========================================== */}
         <RightSideDocument
           darkMode={darkMode}
