@@ -1,4 +1,14 @@
-// FloatingToolbar.data.tsx
+/**
+ * @file FloatingToolbar.data.tsx
+ * @description Centralised configuration registry mapping text tools, node block types,
+ * and custom color grids for the rich text editor.
+ *
+ * @architecture
+ * - Packs data layouts inside a `useMemo` hook to isolate schema mappings from page draw loops.
+ * - Stores operational commands (`action`), style tags (`isActive`), and icons in key arrays.
+ * - Manages color strings tailored to maintain high contrast over dark or light backdrops.
+ */
+
 import { useMemo } from "react";
 import type { Editor } from "@tiptap/core";
 import { BsParagraph, BsBlockquoteLeft } from "react-icons/bs";
@@ -23,19 +33,32 @@ import {
 } from "react-icons/lu";
 
 export interface EditorProperties {
+  /** Active status flag for bold typography styles */
   isBold: boolean;
+  /** Active status flag for italic typography styles */
   isItalic: boolean;
+  /** Active status flag for underline text decoration styles */
   isUnderline: boolean;
+  /** Active status flag for strikethrough text decoration styles */
   isStrikeThrough: boolean;
+  /** Tracks active text alignment layouts ('left' | 'center' | 'right') */
   alignment: string;
 }
 
 interface UseToolbarConfigsProps {
+  /** Target TipTap core editor reference receiving chained text actions */
   editor: Editor;
+  /** Live layout properties describing current cursor highlighting metrics */
   properties: EditorProperties;
+  /** Shared dark mode setting flag used to switch visual palette modes */
   darkMode: boolean;
 }
 
+/**
+ * @hook useToolbarConfigs
+ * @description Combines configuration maps for inline character settings (TOOLS),
+ * node structural layout options (TYPES), and background color arrays (TEXTSTYLE).
+ */
 export const useToolbarConfigs = ({
   editor,
   properties,
@@ -48,6 +71,9 @@ export const useToolbarConfigs = ({
       return darkMode ? "rgb(161, 161, 170)" : "black"; // zinc-400 for dark mode, black for light mode
     };
 
+    // ==========================================
+    // TOOLS: INLINE CHARACTER LAYOUT CONTROLS
+    // ==========================================
     const TOOLS = [
       {
         label: "Bold",
@@ -146,6 +172,9 @@ export const useToolbarConfigs = ({
       },
     ];
 
+    // ==========================================
+    // TYPES: NODE TRANSFORM SCHEMA CONTROLS
+    // ==========================================
     const TYPES = [
       {
         id: "paragraph",
@@ -239,6 +268,9 @@ export const useToolbarConfigs = ({
       },
     ];
 
+    // ==========================================
+    // TEXTSTYLE: THEME SELECTION COLOR ARRAYS
+    // ==========================================
     const TEXTSTYLE = [
       {
         name: "Text",

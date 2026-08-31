@@ -1,3 +1,16 @@
+/**
+ * @file Sidebar.tsx (Snippet 1)
+ * @component Sidebar
+ * @description The application's left navigation sidebar. It features a responsive,
+ * expanding grid width layout that scales dynamically on mouse hover, combining project workspaces,
+ * page routers, and global preference quick-links.
+ *
+ * @architecture
+ * - Leverages `framer-motion` to handle sidebar panel expansions between 55px and 240px width frames.
+ * - Monitors window router addresses using `useLocation` to compute active site icon overlays.
+ * - Collapses itself to 0px width states when deeply nested inside whiteboards (`/document` routes).
+ */
+
 import { useEffect, useState } from "react";
 import { LuNotepadText } from "react-icons/lu";
 
@@ -10,17 +23,21 @@ import ProjectIcon from "./ProjectIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 
 interface SidebarProps {
+  /** Shared dark mode setting flag used to switch visual palette layouts */
   darkMode: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
+  /** Visibility toggle flag controlling expandable layout widths on mouse interactions */
   const [isOpen, setIsOpen] = useState(false);
   const fullName = "User";
   const email = "johndoe@gmail.com";
+  /** Tracks the index pointer identifying which sub-menu branch stands toggled open */
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [, setOpenDialog] = useState<boolean>(false);
   const navigate = useNavigate();
 
+  /** Static parameter list mapping active project directories and gradient backgrounds */
   const NAVITEMS = [
     {
       label: "Grifty",
@@ -44,6 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
     },
   ];
 
+  /** Static parameters grouping the application's root pages and navigation icons */
   const PAGES = [
     {
       icon: <RiHomeLine size={22} />,
@@ -67,14 +85,23 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
     },
   ];
 
+  /** Local state tracking the current workspace identity payload in view */
   const [currentSite, setCurrentSide] = useState<{
     name: string;
     icon: React.ReactNode;
-  }>({ name: "NXU_O", icon: null }); // Set a safe initial state
+  }>({ name: "NXU_O", icon: null });
 
   const location = useLocation();
+  /** Collapse modifier reporting true if deeply nested inside fullscreen document panels */
   const show = location.pathname.startsWith("/document");
 
+  // ==========================================
+  // LIFECYCLE 1: WORKSPACE SITE IDENTITY ALIGNER
+  // ==========================================
+  /**
+   * Evaluates location URL parameters on router changes. Scrapes current path branches
+   * to automatically synchronize header title text labels and gradient icon layouts.
+   */
   useEffect(() => {
     const pathParts = location.pathname.split("/");
 
@@ -82,43 +109,46 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
     if (location.pathname.startsWith("/project") && pathParts[2]) {
       const projectId = pathParts[2];
 
-      // Find the matching item in NAVITEMS to get its specific color
       const matchedProject = NAVITEMS.find(
         (item) => item.link === `/project/${projectId}`,
       );
 
       if (matchedProject) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setCurrentSide({
-          name: matchedProject.label,
-          icon: (
-            <div
-              className={`h-8 w-8 rounded-full hover:scale-110 relative shrink-0 size-5 transition-transform duration-300 group-hover:scale-110 border bg-linear-to-br ${matchedProject.color} p-px rounded-full flex items-center justify-center shadow-lg shadow-orange-500/10`}
-            />
-          ),
-        });
-        return; // Exit early if found
+        setTimeout(() => {
+          setCurrentSide({
+            name: matchedProject.label,
+            icon: (
+              <div
+                className={`h-8 w-8 rounded-full hover:scale-110 relative shrink-0 size-5 transition-transform duration-300 group-hover:scale-110 border bg-linear-to-br ${matchedProject.color} p-px rounded-full flex items-center justify-center shadow-lg shadow-orange-500/10`}
+              />
+            ),
+          });
+        }, 0);
+        return; // Exit sequence early if matched project context settles
       }
     }
 
-    // 2. Default Fallback (OXU_O)
-    setCurrentSide({
-      name: "NXU_O",
-      icon: (
-        <img
-          src="/icon-OXU_O.png"
-          alt="Logo"
-          className={`h-8 w-8 rounded-full border transition-transform duration-300 group-hover:scale-110 relative ${
-            darkMode
-              ? "border-slate-700 shadow-lg"
-              : "border-slate-200 shadow-sm"
-          }`}
-        />
-      ),
-    });
+    // 2. Default Fallback Brand Core (OXU_O)
+    setTimeout(() => {
+      setCurrentSide({
+        name: "NXU_O",
+        icon: (
+          <img
+            src="/icon-OXU_O.png"
+            alt="Logo"
+            className={`h-8 w-8 rounded-full border transition-transform duration-300 group-hover:scale-110 relative ${
+              darkMode
+                ? "border-slate-700 shadow-lg"
+                : "border-slate-200 shadow-sm"
+            }`}
+          />
+        ),
+      });
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, darkMode]);
 
+  /** Filters out active matching links to list closed sibling channels in dropdown paths */
   const filteredItems = NAVITEMS.filter(
     (item) => item.link !== location.pathname,
   );
@@ -129,11 +159,13 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
   }, [isOpen]);
 
   return (
+    /* MAIN SHIELD WRAPPER: Collapses panel down to 0px width whenever open documents take focus */
     <div
       className={`xl:block sm:hidden transition-all duration-300 ease-in-out ${
         show ? "w-0 overflow-hidden mr-0" : "w-auto mr-1"
       }`}
     >
+      {/* EXPANDABLE MOTION BOUNDARY LAYOUT CORE */}
       <motion.div
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => {
@@ -143,13 +175,15 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
         animate={{
           width: isOpen ? "240px" : "55px",
         }}
-        /* 1. SINGLE CONTAINER: Essential for consistent animation speed */
         className={`relative h-[calc(100vh-1rem)] justify-evenly gap-2 m-2 mt-2 mx-1 flex flex-col rounded-lg transition-colors duration-300 overflow-visible z-50 border-0`}
       >
-        {/* TOP SECTION: Project Switcher */}
+        {/* ==========================================
+            TOP HEADER AREA: WORKSPACE SWAPPER TRACK CARD
+            ========================================== */}
         <div
           className={`flex items-center p-3 gap-3 h-16 shrink-0 border-b border-transparent rounded-lg ${darkMode ? "bg-[#141414] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
         >
+          {/* Workspace Accent Icon Block */}
           <div className="relative shrink-0 flex items-center justify-center">
             {currentSite.icon}
             {darkMode && (
@@ -157,6 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
             )}
           </div>
 
+          {/* Animate text visibility inline transformations with smooth spring weights */}
           <AnimatePresence>
             {isOpen && (
               <motion.div
@@ -177,13 +212,15 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
           </AnimatePresence>
         </div>
 
-        {/* NAVIGATION BODY: Scrollable area */}
+        {/* ==========================================
+            MIDDLE NAVIGATION RAILS BODY: LINK LISTINGS
+            ========================================== */}
         <div
           className={`flex-1 overflow-y-auto rounded-lg overflow-x-hidden justify-between flex flex-col p-3 pt-2 custom-scrollbar ${darkMode ? "bg-[#141414] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
         >
           <div>
             <div className="flex flex-col gap-2 mt-2">
-              {/* Main Divider */}
+              {/* Category Partition Segment Line */}
               <div className="flex items-center h-2 pt-2 w-full px-1 mb-2">
                 {isOpen ? (
                   <div className="flex items-center gap-3 w-full opacity-60">
@@ -200,7 +237,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                 )}
               </div>
 
-              {/* PAGES Mapping */}
+              {/* ROUTER PAGES MAPPING LIST STREAMS */}
               {PAGES.map((item, index) => {
                 const isExpanded = activeMenu === index && isOpen;
 
@@ -217,6 +254,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                       className={`flex items-center py-3 w-full gap-4 my-0 transition-all duration-300 cursor-pointer group p-2 rounded-xl 
                   ${isOpen ? (darkMode ? "justify-start hover:bg-[#27272bd4]" : "justify-start hover:bg-slate-50") : "justify-center"}`}
                     >
+                      {/* Interactive graphic visual marker link */}
                       <div
                         className={`shrink-0 ${darkMode ? "text-slate-200 group-hover:text-white" : "text-slate-600 group-hover:text-indigo-600"}`}
                       >
@@ -245,10 +283,13 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
               })}
             </div>
 
+            {/* ==========================================
+                CATEGORY MATRIX B: RECENT PROJECT WORKSPACES
+                ========================================== */}
             <div
               className={`flex flex-col mt-4 ${isOpen ? "gap-1" : "gap-3"} justify-center item-center w-full`}
             >
-              {/* Divider / Section Label */}
+              {/* Category Partition Segment Line */}
               <div className="flex items-center h-6 w-full">
                 {isOpen ? (
                   <div className="flex items-center gap-3 w-full opacity-60">
@@ -265,15 +306,14 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                 )}
               </div>
 
-              {/* Projects Items */}
+              {/* RECENT PROJECT WORKSPACE GRID ELEMENT LINKS CONTAINER */}
               <div className="flex flex-col gap-1">
-                {/* 1. MAP PROJECT ITEMS */}
                 <div className="flex flex-col gap-1">
                   <AnimatePresence initial={false}>
                     {filteredItems.map((item) => (
                       <motion.div
-                        layout // 1. CRITICAL: Smoothly slides other items into new positions
-                        key={item.label} // 2. MUST use a unique ID (not index) for layout to work
+                        layout // Retains layout positions dynamically when active addresses swap indices
+                        key={item.label} // Utilizes explicit string labels instead of simple loop index numbers to safeguard keys
                         initial={{ opacity: 0, scale: 0.9, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{
@@ -285,6 +325,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                         className={`flex items-center w-full gap-4 cursor-pointer group transition-all duration-300 ${isOpen ? "justify-start px-2 py-1.5 rounded-xl" : "justify-center p-2 py-1 rounded-2xl"} ${darkMode ? "hover:bg-[#27272bd4]" : "hover:bg-slate-50"} `}
                         onClick={() => {}}
                       >
+                        {/* Custom Project Identity Icon Swatch */}
                         <div className="shrink-0 flex items-center justify-center w-6">
                           <ProjectIcon color={item.color} />
                         </div>
@@ -292,7 +333,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                         <AnimatePresence mode="wait">
                           {isOpen && (
                             <motion.span
-                              layout // Ensures text stays aligned with the sliding container
+                              layout // Ensures text typography stays locked directly inline with sliding bounds
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: -5 }}
@@ -310,18 +351,23 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
               </div>
             </div>
           </div>{" "}
+          {/* ==========================================
+              BOTTOM FOOTER ROW: PROFILE ACCOUNT IDENTITY BADGE
+              ========================================== */}
           <div
             className={`flex flex-col gap-3.5 w-full text-nowrap border-t pt-4 mt-auto transition-all duration-300 ${
               isOpen ? "" : "px-0 items-center"
             } ${darkMode ? "border-slate-800/60" : "border-slate-100"}`}
           >
-            {/* ITEM 2: User Profile Action Badge */}
+            {/* User Profile Action Account Trigger Card */}
             <button
-              title={!isOpen ? `${fullName} (${email})` : undefined}
+              type="button"
+              title={!isOpen ? `${fullName} (${email})` : undefined} // Spawn tooltip metadata info only if sidebar hits compressed 55px modes
               className={`flex items-center rounded-xl py-1 transition-all duration-200 group text-left outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 ${
                 isOpen ? "w-full gap-4" : "w-10 justify-center"
               }`}
             >
+              {/* Profile Avatar Initials Swatch Block */}
               <div
                 className={`size-9 rounded-xl shrink-0 flex items-center justify-center uppercase font-bold text-[11px] tracking-wider transition-all duration-200 group-hover:scale-105 ${
                   darkMode
@@ -332,6 +378,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                 {getInitials(fullName)}
               </div>
 
+              {/* Animate text credentials panel layout viewports with cross-fade adjustments */}
               <AnimatePresence mode="wait">
                 {isOpen && (
                   <motion.div

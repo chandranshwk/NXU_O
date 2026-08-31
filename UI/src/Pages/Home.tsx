@@ -1,3 +1,15 @@
+/**
+ * @file Home.tsx
+ * @component Home
+ * @description The landing page or dashboard for the application. It lists all
+ * available notebooks, sections, and sub-pages in a dense repository grid view.
+ *
+ * @architecture
+ * - Connects to the local data store using `useNotebookStore`.
+ * - Displays a grid where clicking a card goes to a specific notebook.
+ * - Allows direct deep-linking into individual sub-pages via query parameters.
+ */
+
 import { useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -5,12 +17,20 @@ import type { MockSection } from "../assets/SAMPLE";
 import { useNotebookStore } from "../contexts/notebook";
 
 const Home = () => {
+  /** Accesses dark mode state provided globally by the main layout shell */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const navigate = useNavigate();
 
-  // Connect to our central state engine
+  /** Connects to our central notebook data store and data loader methods */
   const { notebooks, initializeData } = useNotebookStore();
 
+  // ==========================================
+  // LIFECYCLE: DATA REPOSITORY INITIALIZER
+  // ==========================================
+  /**
+   * Automatically initializes and refreshes notebook data on component mount
+   * to ensure local files stay perfectly synced with the repository view.
+   */
   useEffect(() => {
     initializeData();
   }, [initializeData]);
@@ -21,7 +41,9 @@ const Home = () => {
         darkMode ? "bg-zinc-950 text-white" : "bg-gray-50 text-gray-800"
       }`}
     >
-      {/* Top Header Section */}
+      {/* ==========================================
+          HEADER SECTION (TITLE & ACTION CONTROL)
+          ========================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6 mb-8 border-zinc-800">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">
@@ -33,6 +55,8 @@ const Home = () => {
             Local-first database workspace manager
           </p>
         </div>
+
+        {/* ACTION TRIGGER: SPAWN BLANK NEW LOGICAL NOTE ELEMENT */}
         <button
           className="px-5 py-2.5 bg-blue-600 text-white font-medium text-sm rounded-lg hover:bg-blue-500 shadow-md transition-all"
           onClick={() => navigate(`document/${uuidv4()}`)}
@@ -41,7 +65,9 @@ const Home = () => {
         </button>
       </div>
 
-      {/* Grid Wrapper */}
+      {/* ==========================================
+          WORKSPACE GRID LAYER (NOTEBOOK REPOSITORY)
+          ========================================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {notebooks.map((notebook) => (
           <div
@@ -53,6 +79,7 @@ const Home = () => {
                 : "bg-white border-gray-200"
             }`}
           >
+            {/* Card Metadata Header Block */}
             <div className="mb-4">
               <span
                 className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full ${
@@ -69,6 +96,7 @@ const Home = () => {
               </p>
             </div>
 
+            {/* Embedded Structural Nested Sections Stream */}
             <div className="flex flex-col gap-4 mt-2">
               {notebook.sections.map((section: MockSection) => (
                 <div
@@ -76,6 +104,7 @@ const Home = () => {
                   className="border-l-2 pl-4 py-1"
                   style={{ borderLeftColor: section.colorHex }}
                 >
+                  {/* Section Title Header Badge */}
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-sm">{section.title}</h3>
                     <div
@@ -84,12 +113,14 @@ const Home = () => {
                     />
                   </div>
 
+                  {/* Section Child Pages List Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                     {section.pages.map((page) => (
                       <div
                         key={page.id}
                         onClick={(e) => {
-                          e.stopPropagation(); // Stops parent notebook navigation card click from firing
+                          // Prevent parent card clicks from launching notebook navigation shortcuts
+                          e.stopPropagation();
                           navigate(`document/${notebook.id}?page=${page.id}`);
                         }}
                         className={`text-xs p-2 rounded border cursor-pointer font-medium transition-all truncate ${

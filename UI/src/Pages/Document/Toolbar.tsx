@@ -1,3 +1,16 @@
+/**
+ * @file Toolbar.tsx (Snippet 1)
+ * @component Toolbar
+ * @description The structural document toolbar for the notebook workspace.
+ * Combines dropdown font loaders, custom size controls, text and background highlight color
+ * picker swatches, and inline text formatting action blocks into a sticky top control rail.
+ *
+ * @architecture
+ * - Collects application preference settings via the shared `useSettings` context hook.
+ * - Extracts inline character style flags directly from global text monitors via `useEditorContext`.
+ * - Employs a decoupled structure supporting both traditional form selects and grid swatches.
+ */
+
 import React from "react";
 import { BiBrush, BiEraser, BiLayer, BiShapePolygon } from "react-icons/bi";
 import { BsCrosshair, BsCursor, BsHandIndexThumb } from "react-icons/bs";
@@ -17,8 +30,11 @@ import { getEditorTools } from "../../assets/Tools";
 import { ColorNames, HighLighterNames } from "../../assets/Utils";
 
 interface ToolProps {
+  /** The unique key name identifying the purpose of the action tool */
   name: CanvasToolName;
+  /** Graphic visual snippet element bound to the menu button container */
   icon: React.ReactNode;
+  /** Optional activation command executed when tapping the action button */
   exec?: () => void;
 }
 
@@ -37,11 +53,13 @@ export type CanvasToolName =
 const Toolbar = () => {
   const setting = useSettings();
   const context = useEditorContext();
+  /** Extracts rich formatting text item data mappings directly out of shared asset registries */
   const ELEMENTS = getEditorTools("rich", context);
 
   const darkMode = setting.darkMode;
   const activeCanvasTool = context.activeCanvasTool || "Select";
 
+  /** Config array defining mock action handles and graphic icon snippets for whiteboards */
   const tool: ToolProps[] = [
     {
       name: "Select",
@@ -95,7 +113,10 @@ const Toolbar = () => {
     },
   ];
 
-  // Shared utility function to compute dynamic style states cleanly
+  // ==========================================
+  // VISUAL COMPILER HELPER CLASS BUILDERS
+  // ==========================================
+  /** Generates button layout style rules based on active selection state indicators */
   const getBtnClass = (isActive: boolean) => {
     if (isActive) {
       return "bg-blue-600 text-white font-semibold shadow-md";
@@ -125,7 +146,9 @@ const Toolbar = () => {
           : "bg-white border-zinc-200 text-zinc-800"
       }`}
     >
-      {/* Font Family Dropdown */}
+      {/* ==========================================
+          DROPDOWN MODULE 1: GLOBAL FONT FAMILY SELECTION
+          ========================================== */}
       <div className="flex items-center">
         <select
           value={setting.defaultFont}
@@ -140,13 +163,16 @@ const Toolbar = () => {
         </select>
       </div>
 
-      {/* Font Size Dropdown */}
+      {/* ==========================================
+          DROPDOWN MODULE 2: FONT SIZE PIXEL SELECTOR
+          ========================================== */}
       <div className="flex items-center mr-2">
         <select
           value={setting.defaultFontSize}
           onChange={(e) => setting.setDefaultFontSize(e.target.value)}
           className={selectDropdownClass}
         >
+          {/* Dynamically build option rows from 1px up to 100px values */}
           {Array.from({ length: 100 }, (_, i) => i + 1).map((size) => (
             <option key={size} value={`${size}px`}>
               {size}px
@@ -155,9 +181,11 @@ const Toolbar = () => {
         </select>
       </div>
 
-      {/* Text Color Picker Dropdown */}
+      {/* ==========================================
+          SWATCH DROPDOWN 3: INLINE FONT TEXT COLOR
+          ========================================== */}
       <ToolbarDropdown
-        type="blocks"
+        type="blocks" // Displays a compact icon matrix grid format
         title="Text Color"
         darkMode={darkMode}
         icon={
@@ -177,6 +205,7 @@ const Toolbar = () => {
             idx={idx}
           />
         ))}
+        {/* Reset Action: Erases text styles back to theme default conditions */}
         <button
           type="button"
           onClick={() => {
@@ -189,8 +218,7 @@ const Toolbar = () => {
                 .updateAttributes("textStyle", { color: null })
                 .run();
 
-              // 2. Fall back cleanly to your application default theme color variables
-              // (Matches the exact default tracking values you pass inside your main EditorDoc file)
+              // 2. Fall back cleanly to application default theme color variables
               context.setTextColor(
                 setting.defaultColor || (darkMode ? "#fff" : "#000"),
               );
@@ -202,7 +230,9 @@ const Toolbar = () => {
         </button>
       </ToolbarDropdown>
 
-      {/* Text Highlighter Picker Dropdown */}
+      {/* ==========================================
+          SWATCH DROPDOWN 4: CHARACTER BACKGROUND HIGHLIGHT
+          ========================================== */}
       <ToolbarDropdown
         type="blocks"
         title="Highlight Color"
@@ -226,12 +256,13 @@ const Toolbar = () => {
             idx={idx}
           />
         ))}
+        {/* Reset Action: Wipes active mark textures back to full transparency */}
         <button
           type="button"
           onClick={() => {
             if (context.editor) {
               context.editor.chain().focus().unsetBackgroundColor().run();
-              context.setHighlightedColor(""); // Highlights go back to a completely blank string (transparent)
+              context.setHighlightedColor("");
             }
           }}
           className={resetBtnClass}
@@ -240,18 +271,21 @@ const Toolbar = () => {
         </button>
       </ToolbarDropdown>
 
-      {/* Structural Separator */}
+      {/* Vertical boundary layout partition line */}
       <div
         className={`w-px h-6 mx-2 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
       />
 
-      {/* Rich Text Elements Blocks Array Loop */}
+      {/* ==========================================
+          INLINE BUTTON TRACK 5: FORMATTING ELEMENT MODIFIERS
+          ========================================== */}
       <div className="flex items-center gap-1">
         {ELEMENTS.map((el, idx) => {
           const isActive = checkIsActive(el.name, context);
           return (
             <button
               key={idx}
+              type="button"
               title={el.name}
               aria-label={el.name}
               className={`p-2 rounded transition-colors duration-150 outline-none ${
@@ -271,15 +305,54 @@ const Toolbar = () => {
         })}
       </div>
 
-      {/* Structural Separator */}
+      {/* Vertical partitioning layout line */}
       <div
         className={`w-px h-6 mx-2 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
       />
 
-      {/* Native Canvas Actions Blocks Array Loop */}
+      {/* ==========================================
+          TRACK SYSTEM A: RICH TEXT FORMATTING BUTTONS LOOP
+          ========================================== */}
+      <div className="flex items-center gap-1">
+        {ELEMENTS.map((el, idx) => {
+          const isActive = checkIsActive(el.name, context);
+          return (
+            <button
+              key={idx}
+              type="button"
+              title={el.name}
+              aria-label={el.name}
+              className={`p-2 rounded transition-colors duration-150 outline-none ${
+                isActive
+                  ? "bg-blue-500 text-white shadow-inner font-semibold"
+                  : `${darkMode ? "hover:bg-white hover:text-black" : "hover:bg-zinc-950 hover:text-white"}`
+              }`}
+              onClick={() => {
+                el.onClick(context.editor!, context);
+              }}
+            >
+              <div className="w-4 h-4 flex items-center justify-center text-base">
+                {el.icon}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Vertical partitioning layout line */}
+      <div
+        className={`w-px h-6 mx-2 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
+      />
+
+      {/* ==========================================
+          TRACK SYSTEM B: WHITEBOARD SPATIAL CONTROL BUTTONS LOOP
+          ========================================== */}
       <div className="flex items-center gap-1">
         {tool.map((item, idx) => {
+          // Verify if the loop item matches the canvas tool currently selected by the user
           const isToolActive = activeCanvasTool === item.name;
+
+          // Switch contrast styles depending on theme conditions when item is toggled active
           const activeStyle = isToolActive
             ? darkMode
               ? "bg-zinc-100 text-zinc-950 shadow-md font-semibold"
@@ -291,10 +364,12 @@ const Toolbar = () => {
               key={idx}
               className="relative group flex items-center justify-center"
             >
+              {/* Spatial Action Trigger Button */}
               <button
+                type="button"
                 onClick={() => {
                   context.setActiveCanvasTool(item.name);
-                  if (item.exec) item.exec();
+                  if (item.exec) item.exec(); // Execute the dummy action handle if mapped
                 }}
                 title={item.name}
                 className={`w-8 h-8 flex items-center justify-center rounded-md text-base transition-all duration-150 outline-none ${activeStyle}`}
@@ -302,7 +377,9 @@ const Toolbar = () => {
                 {item.icon}
               </button>
 
-              {/* Tooltip Overlay */}
+              {/* ==========================================
+                  INTERFACE ACCENT: FLOATING HOVER TOOLTIP
+                  ========================================== */}
               <span
                 className={`text-[10px] tracking-wide pointer-events-none hidden group-hover:block absolute px-2 py-1 rounded shadow-md top-10 whitespace-nowrap z-50 transition-colors ${
                   darkMode

@@ -1,3 +1,16 @@
+/**
+ * @file SectionB.tsx
+ * @component SectionB
+ * @description The configurations panel for layout typography rules and default fonts.
+ * Manages default font sizing scales, paragraph line lead settings, base text colors,
+ * and sequence listing symbols across text canvas environments.
+ *
+ * @architecture
+ * - Leverages the reusable layout template module `<Cards />` to bundle setting rows.
+ * - Extracts font metadata configurations directly out of shared asset files (`src/assets/assets.ts`).
+ * - Cleans technical system font identifiers into readable display titles using regex conversion maps.
+ */
+
 import React from "react";
 import { Cards } from "../../components/Cards";
 import { FiType } from "react-icons/fi";
@@ -6,18 +19,28 @@ import { COLORS, FONTS, ORDEREDLISTRESPRESENTER } from "../../assets/assets";
 import { formatName } from "../../assets/functions";
 
 interface props {
+  /** Shared dark mode setting flag used to switch interface theme style variables */
   darkMode: boolean;
+  /** Global preferences settings context tracking fallback font properties and list symbols */
   settings: settingsContextType;
 }
 
+/**
+ * @component SectionB
+ * @description Renders layout preference adjustments targeting font scales, line leading multipliers,
+ * core type families, and list symbol strings.
+ */
 const SectionB: React.FC<props> = ({ darkMode, settings }) => {
   return (
     <div className="flex flex-col gap-2 mt-2">
+      {/* Category Section Group Label Title */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 px-1">
         <FiType className="w-3.5 h-3.5" /> Typography & Font Mapping
       </h3>
 
-      {/* POWERTOYS HORIZONTAL CARD 3: DEFAULT FONT SIZE */}
+      {/* ==========================================
+          ROW OPTION 1: DEFAULT BASE TEXT SCALE
+          ========================================== */}
       <Cards
         type="normal"
         title="Base Text Scale Default"
@@ -28,7 +51,6 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
           value={settings.defaultFontSize}
           onChange={(e) => {
             const nextFontSize = e.target.value;
-
             settings.setDefaultFontSize(nextFontSize);
           }}
           className={`text-xs px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer ${
@@ -43,8 +65,9 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
         </select>
       </Cards>
 
-      {/* POWERTOYS HORIZONTAL CARD 4: LINE LEADING */}
-
+      {/* ==========================================
+          ROW OPTION 2: LINE SPLAY HEIGHT PADDING
+          ========================================== */}
       <Cards
         type="normal"
         title="Line Splay Padding Scale"
@@ -55,7 +78,6 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
           value={settings.lineHeight}
           onChange={(e) => {
             const nextLineHeight = parseFloat(e.target.value);
-
             settings.setLineHeight(nextLineHeight);
           }}
           className={`text-xs px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer ${
@@ -71,19 +93,19 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
         </select>
       </Cards>
 
-      {/* POWERTOYS HORIZONTAL CARD 4: FONT FAMILY */}
-
+      {/* ==========================================
+          ROW OPTION 3: PRIMARY TYPE FAMILY EXTENSIONS
+          ========================================== */}
       <Cards
         type="normal"
-        title="Line Splay Padding Scale"
-        description="Fine-tune vertical line height proportions across active rich text paragraph views."
+        title="Default Font Family"
+        description="Choose the primary typeface family assigned to new text entry notes by default."
         darkMode={darkMode}
       >
         <select
           value={settings.defaultFont}
           onChange={(e) => {
             const font = e.target.value;
-
             settings.setDefaultFont(font);
           }}
           className={`text-xs px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer ${
@@ -100,19 +122,19 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
         </select>
       </Cards>
 
-      {/* POWERTOYS HORIZONTAL CARD 4: TEXT COLOR */}
-
+      {/* ==========================================
+          ROW OPTION 4: BASELINE FOREGROUND TEXT COLOR
+          ========================================== */}
       <Cards
         type="normal"
         title="Font Color"
-        description="Select a color, to quick-start your thinking with (list representers will reflect only the default color)."
+        description="Select a color to quick-start your thinking with (list representers will reflect only the default color)."
         darkMode={darkMode}
       >
         <select
           value={settings.defaultColor}
           onChange={(e) => {
             const color = e.target.value;
-
             settings.setDefaultColor(color);
           }}
           className={`text-xs px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer ${
@@ -130,8 +152,9 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
         </select>
       </Cards>
 
-      {/* POWERTOYS HORIZONTAL CARD 5: ORDERED LIST REPRESENTATIVE */}
-
+      {/* ==========================================
+          ROW OPTION 5: ORDERED LIST NUMBER SYMBOL FORMAT
+          ========================================== */}
       <Cards
         type="normal"
         title="Ordered List Representer"
@@ -142,7 +165,6 @@ const SectionB: React.FC<props> = ({ darkMode, settings }) => {
           value={settings.defaultOLRepresenter}
           onChange={(e) => {
             const font = e.target.value;
-
             settings.setDefaultOLRepresenter(font);
           }}
           className={`text-xs px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer ${

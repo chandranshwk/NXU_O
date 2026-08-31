@@ -1,3 +1,16 @@
+/**
+ * @file Pages.tsx (Snippet 1)
+ * @component Pages
+ * @description Tab manager header for scratchpads. It handles tab switching,
+ * horizontal dragging for reordering, multi-device screen breakpoints, and
+ * page renaming utilities.
+ *
+ * @architecture
+ * - Leverages `motion/react` (Framer Motion) `Reorder` components to handle x-axis sorting.
+ * - Monitors screen width metrics using an optimized `resize` event handler break loop.
+ * - Forces tab truncation onto single slots when window footprints drop beneath xl (1280px) bounds.
+ */
+
 import React, { useRef, useEffect, useState } from "react";
 import { FaChevronDown } from "react-icons/fa";
 import { IoMdClose, IoMdAdd } from "react-icons/io";
@@ -7,10 +20,15 @@ import { useScratchContext, type FileItem } from "../contexts/scratchContext";
 import { CgSpinner } from "react-icons/cg";
 
 interface Props {
+  /** Shared dark mode setting flag used to switch visual palette ranges */
   darkMode: boolean;
+  /** Comprehensive directory list array housing all existing scratchpad records */
   allPads: FileItem[];
+  /** Upstream state dispatcher modifying global file storage registry items */
   setAllPads: React.Dispatch<React.SetStateAction<FileItem[]>>;
+  /** Collection mapping pad rows actively opened in tabs across the bar */
   activeSlots: FileItem[];
+  /** Upstream state dispatcher modifying open tab row configurations */
   setActiveSlots: React.Dispatch<React.SetStateAction<FileItem[]>>;
 }
 
@@ -21,28 +39,46 @@ const Pages: React.FC<Props> = ({
   activeSlots,
   setActiveSlots,
 }) => {
+  /** Visibility toggle flag controlling the dropdown overflow menu layout pane */
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
-  const [editingTabName, setEditingTabName] = useState<string | null>(null); // Tracks tab name being renamed
-  const [renameValue, setRenameValue] = useState<string>(""); // Temporary state holding current typed changes
+  /** Tracks the specific string filename currently chosen for inline renaming */
+  const [editingTabName, setEditingTabName] = useState<string | null>(null);
+  /** Local text input state tracking active typing buffers inside rename inputs */
+  const [renameValue, setRenameValue] = useState<string>("");
 
+  /** Backup variable caching open tab structures before screen constraints downscale widths */
   const [rememberedSlots, setRememberedSlots] =
     useState<FileItem[]>(activeSlots);
+  /** Breakpoint indicator reporting true if window footprints fall below 1280px boundaries */
   const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
 
+  /** Root anchor reference monitoring click bounds across dropdown list cards */
   const dropdownRef = useRef<HTMLDivElement>(null);
+  /** Focus link target used to capture text text highlights when editing fields launch */
   const inputRef = useRef<HTMLInputElement>(null);
+  /** Core state provider tracking scratchpad variables and disk command actions */
   const settings = useScratchContext();
 
+  /** Index position pointing to the active targeted tab row */
   const activeTab = settings.activeSlot;
+  /** Activity flag tracking background write loading streams */
   const [isCreating, setIsCreating] = useState<boolean>(false);
 
+  // ==========================================
+  // LIFECYCLE 1: RESPONSIBLE RESPONSIVE RE-FLOW
+  // ==========================================
+  /**
+   * Screen Boundary Monitoring Hook: Monitors window modifications [31/08/2026].
+   * If screen real estate drops below 1280px, it isolates focus down to exactly
+   * 1 visible slot; it restores the full tab array once window fields maximize.
+   */
   useEffect(() => {
     const handleResize = () => {
       const smallBreakpoint = window.innerWidth < 1280; // Matches Tailwind's 'xl' breakpoint
       setIsSmallScreen(smallBreakpoint);
 
       if (smallBreakpoint) {
-        // If we transition down to a small screen, isolate down to exactly 1 active tab slot
+        // If transitioning down to compact views, isolate down to exactly the active tab
         const currentActiveSlot = activeSlots[activeTab];
         if (currentActiveSlot && activeSlots.length > 1) {
           // Store a backup copy of your current open files layout first
@@ -51,11 +87,11 @@ const Pages: React.FC<Props> = ({
           settings.setActiveSlot(0); // Reset slot pointer to the single open slot safely
         }
       } else {
-        // When maximized back out, restore your original refilled tabs structure smoothly
+        // When maximized back out, restore the original multi-tab structure smoothly
         if (rememberedSlots.length > 0 && activeSlots.length === 1) {
           setActiveSlots(rememberedSlots);
 
-          // Re-find where the current file name sits inside the restored array mapping
+          // Locate where the current filename position maps inside the re-aligned index
           const currentActiveName = activeSlots[0]?.name;
           const restoredIndex = rememberedSlots.findIndex(
             (s) => s.name === currentActiveName,
@@ -68,12 +104,15 @@ const Pages: React.FC<Props> = ({
     };
 
     window.addEventListener("resize", handleResize);
-    // Execute an initial check right on load setup to configure layout boundaries
+    // Execute an initial check on load to configure proper layout constraints
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, [activeTab, activeSlots, rememberedSlots, settings, setActiveSlots]);
 
-  // Auto-focus the rename input layout box when F2 is triggered
+  // ==========================================
+  // LIFECYCLE 2: AUTOMATED TEXT FOCUS SECTOR
+  // ==========================================
+  /** Shifts typing focus parameters directly down to rename elements on command triggers */
   useEffect(() => {
     if (editingTabName && inputRef.current) {
       inputRef.current.focus();
@@ -81,6 +120,10 @@ const Pages: React.FC<Props> = ({
     }
   }, [editingTabName]);
 
+  // ==========================================
+  // LIFECYCLE 3: OVERLAY PANEL DISMISSAL CAPTURE
+  // ==========================================
+  /** Automatically dismisses the file picker dropdown if clicking background elements */
   useEffect(() => {
     const clickOutside = (e: MouseEvent) => {
       if (
@@ -94,18 +137,22 @@ const Pages: React.FC<Props> = ({
     return () => document.removeEventListener("mousedown", clickOutside);
   }, []);
 
+  /** Filters out active tab instances to list closed document targets inside overflow paths */
   const hiddenPads = allPads.filter((pad) => {
     if (isSmallScreen) {
-      // On small screens, hide everything except the single active tab from the main toolbar list
       return pad.name !== activeSlots[0]?.name;
     }
-    // On wide screens, filter out any pad that is currently open in activeSlots
     return !activeSlots.some((slot) => slot.name === pad.name);
   });
+
   const currentActiveName = activeSlots[activeTab]
     ? activeSlots[activeTab].name
     : "";
 
+  // ==========================================
+  // ARRANGEMENT HANDLERS: DRAG REORDER SYNC
+  // ==========================================
+  /** Updates the array order when dragging operations complete on tab items */
   const handleReorder = (newOrderStrings: string[]) => {
     const restructuredSlots = newOrderStrings.map((stringName) => {
       const existingObj = activeSlots.find((slot) => slot.name === stringName);
@@ -120,7 +167,10 @@ const Pages: React.FC<Props> = ({
     }
   };
 
-  // Submits the name change to Tauri backend disk system
+  // ==========================================
+  // BACKEND DISPATCH: TAURI SYSTEM RENAME
+  // ==========================================
+  /** Validates entry strings, checks for collisions, and writes updates down to disk */
   const submitRename = async (oldName: string) => {
     const cleanedName = renameValue.trim();
     if (!cleanedName || cleanedName === oldName) {
@@ -204,6 +254,7 @@ const Pages: React.FC<Props> = ({
                       onBlur={() => submitRename(tabStringName)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") submitRename(tabStringName);
+                        // Escape Hatch: Closes the editing input wrapper without saving changes
                         if (e.key === "Escape") setEditingTabName(null);
                       }}
                       className={`w-full outline-none font-medium bg-transparent text-xs ${
@@ -211,22 +262,28 @@ const Pages: React.FC<Props> = ({
                       }`}
                     />
                   ) : (
+                    /* STATIC NAME LABEL SEGMENT */
                     <span className="truncate pointer-events-none">
                       {slotItem.name}
                     </span>
                   )}
                 </div>
 
+                {/* ==========================================
+                    TAB CLOSURE INTERACTION ROUTER CONTROL
+                    ========================================== */}
                 {!isEditing && (
                   <div className="flex items-center justify-center w-5 h-5 relative shrink-0">
+                    {/* Tab Close Trigger Button */}
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
+                        e.stopPropagation(); // Block focus changes from triggering on the background tab card row
                         const nextSlots = activeSlots.filter(
                           (_, i) => i !== idx,
                         );
                         setActiveSlots(nextSlots);
 
+                        // Structural index correction: prevents active slots from falling beyond array lengths
                         if (activeTab >= nextSlots.length) {
                           settings.setActiveSlot(
                             Math.max(0, nextSlots.length - 1),
@@ -243,6 +300,7 @@ const Pages: React.FC<Props> = ({
                       <IoMdClose className="w-3.5 h-3.5" />
                     </button>
 
+                    {/* Unsaved indicator circle (hidden when mouse hovers over options) */}
                     {!isSaved && (
                       <div
                         className={`w-1.5 h-1.5 rounded-full group-hover:hidden ${
@@ -250,13 +308,16 @@ const Pages: React.FC<Props> = ({
                         }`}
                       />
                     )}
+
+                    {/* ==========================================
+                        REAL-TIME CORE DISK MONITOR SWATCH
+                        ========================================== */}
                     {isActive && settings.saveStatus && (
                       <span
                         className={`absolute z-20 inline-flex items-center justify-center w-6 h-5 rounded-md shadow-sm animate-in fade-in zoom-in-95 slide-in-from-bottom-1 duration-200 group-hover:hidden`}
                       >
-                        {/* DYNAMIC REACT-ICONS SWITCHER */}
                         {settings.saveStatus === "Saving..." && (
-                          /* PURE BUFFER SPINNER LOADER */
+                          /* Spinning Loader Swatch Loop */
                           <CgSpinner className="animate-spin h-3.5 w-3.5 text-amber-200" />
                         )}
                       </span>
@@ -269,8 +330,11 @@ const Pages: React.FC<Props> = ({
         </AnimatePresence>
       </Reorder.Group>
 
-      {/* DROPDOWN TRACK */}
+      {/* ==========================================
+          OVERFLOW NAVIGATION TRACK SYSTEM
+          ========================================== */}
       <div className="relative" ref={dropdownRef}>
+        {/* Overflow Trigger Arrow Actuator */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`
@@ -284,6 +348,7 @@ const Pages: React.FC<Props> = ({
           />
         </button>
 
+        {/* OVERFLOW DRAWER OVERLAY MATRIX BOX */}
         {isOpen && (
           <div
             className={`
@@ -294,6 +359,7 @@ const Pages: React.FC<Props> = ({
             <div className="max-h-48 overflow-y-auto pb-1">
               {hiddenPads.length > 0 ? (
                 hiddenPads.map((item, index) => (
+                  /* HIDDEN ELEMENT LIST ROW ITEM */
                   <div
                     key={index}
                     onClick={() => {
@@ -302,10 +368,12 @@ const Pages: React.FC<Props> = ({
                         settings.setActiveSlot(0);
                       } else {
                         const updatedSlots = [...activeSlots];
+                        // Limit visible tab slots strictly to a maximum configuration of 3 rows
                         if (activeSlots.length < 3) {
                           setActiveSlots([...activeSlots, item]);
                           settings.setActiveSlot(activeSlots.length);
                         } else {
+                          // Swap out non-focused rows cleanly to clear placement spaces
                           if (activeTab !== 2) updatedSlots[2] = item;
                           else updatedSlots[1] = item;
                           setActiveSlots(updatedSlots);
@@ -323,38 +391,38 @@ const Pages: React.FC<Props> = ({
                   </div>
                 ))
               ) : (
+                /* FALLBACK STATE MAP CARD VALUE */
                 <div className="px-3 py-2 text-xs italic text-gray-500">
                   All pads are active
                 </div>
               )}
             </div>
 
+            {/* ==========================================
+                ACTION ELEMENT ROAD: ASYNC SPAN NEW DRAFT PAGE
+                ========================================== */}
             <div
               className={`border-t px-2 py-1.5 ${darkMode ? "border-[#3c3c3c] bg-[#121212]" : "border-gray-200 bg-gray-50"}`}
             >
               <button
                 disabled={isCreating}
                 onClick={async () => {
-                  // 1. Turn on the loading spinner state instantly
                   setIsCreating(true);
 
-                  // 2. Add a tiny delay (300ms) for a premium, intentional app transition feel
+                  // Injects a deliberate 300ms aesthetic frame freeze to simulate desktop file allocation threads
                   await new Promise((resolve) => setTimeout(resolve, 300));
 
                   const nextNum = allPads.length + 1;
                   const newName = `Scratch ${nextNum}`;
 
-                  // Define a cleanly structured new pad item object
                   const newPadItem: FileItem = {
                     name: newName,
                     isSaved: true,
                   };
 
-                  // Add it to your global tracking array
                   setAllPads([...allPads, newPadItem]);
 
                   if (activeSlots.length < 3) {
-                    // If there's room, append the new object cleanly to the end of the tabs bar
                     setActiveSlots([...activeSlots, newPadItem]);
                     settings.setActiveSlot(activeSlots.length);
                   } else {
@@ -363,28 +431,27 @@ const Pages: React.FC<Props> = ({
                     setActiveSlots(updatedSlotsCopy);
                   }
 
-                  // 3. Reset states and close menu drawer smoothly
                   setIsCreating(false);
                   setIsOpen(false);
                 }}
                 className={`
-      flex items-center justify-center gap-1.5 w-full py-1.5 rounded text-xs font-medium transition-all duration-150
-      ${isCreating ? "opacity-70 cursor-not-allowed" : ""}
-      ${
-        darkMode
-          ? "bg-[#181818] text-gray-200 hover:bg-[#212121] hover:text-white"
-          : "bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900"
-      }
-    `}
+                  flex items-center justify-center gap-1.5 w-full py-1.5 rounded text-xs font-medium transition-all duration-150
+                  ${isCreating ? "opacity-70 cursor-not-allowed" : ""}
+                  ${
+                    darkMode
+                      ? "bg-[#181818] text-gray-200 hover:bg-[#212121] hover:text-white"
+                      : "bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900"
+                  }
+                `}
               >
                 {isCreating ? (
-                  /* 🟢 PREMIUM SPINNING LOADER LOOP IF ACTIVE */
+                  /* ASYNC WRITING LOADING STATE INDICATOR DISPLAY LOOP */
                   <>
                     <CgSpinner className="animate-spin h-3.5 w-3.5" />
                     <span>Creating Pad...</span>
                   </>
                 ) : (
-                  /* STATIC DEFAULT STATE */
+                  /* STANDARD STATIC INVITATION ACCENT */
                   <>
                     <IoMdAdd className="w-3.5 h-3.5" />
                     <span>Add New Pad</span>

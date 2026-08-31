@@ -1,3 +1,15 @@
+/**
+ * @file settingsContext.tsx (Snippet 1)
+ * @description Central shared configuration state manager that controls app-wide preferences.
+ * It manages hardware-level dark mode synchronization, debounced Rust backend persistence saves,
+ * and hydrates system values on startup.
+ *
+ * @architecture
+ * - Coordinates settings serialization parameters into atomic structured objects.
+ * - Communicates directly with Tauri backend storage systems via `invoke("save_portable_settings")`.
+ * - Uses matching media query event captures to track OS system color schemes in real time.
+ */
+
 import React, {
   createContext,
   useContext,
@@ -10,45 +22,65 @@ import { FONTS, ORDEREDLISTRESPRESENTER } from "../assets/assets";
 import { invoke } from "@tauri-apps/api/core";
 
 export interface settingsContextType {
+  /** Baseline fallback typography font sizing metric layout rule */
   defaultFontSize: string;
   setDefaultFontSize: React.Dispatch<SetStateAction<string>>;
+  /** Active keyboard hotkey token sequence used to strike line strings */
   defaultStrikeThroughShortcut: string;
   setDefaultStrikeThroughShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Root operating system directory path for saving project documents */
   defaultSavingFolder: string;
   setDefaultSavingFolder: React.Dispatch<SetStateAction<string>>;
+  /** Active typeface family name string loaded on canvas load sequences */
   defaultFont: string;
   setDefaultFont: React.Dispatch<SetStateAction<string>>;
+  /** Vertical line height leading multiplier across rich text blocks */
   lineHeight: number;
   setLineHeight: React.Dispatch<SetStateAction<number>>;
+  /** Debounce timer setting seconds counts before background disk commits fire */
   saveTimer: number;
   setSaveTimer: React.Dispatch<SetStateAction<number>>;
+  /** Global hotkey combination used to trigger the application window shell open */
   openShortcut: string;
   setOpenShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Prefix sequence symbol format loaded on numbered item blocks */
   defaultOLRepresenter: string;
   setDefaultOLRepresenter: React.Dispatch<SetStateAction<string>>;
+  /** Base text color Hex parameter matching typography strings */
   defaultColor: string;
   setDefaultColor: React.Dispatch<SetStateAction<string>>;
+  /** Shared dark mode setting flag used to switch app stylesheet variants */
   darkMode: boolean;
   setDarkMode: React.Dispatch<SetStateAction<boolean>>;
+  /** Hotkey combination used to focus document notes navigation views */
   notesViewShortcut: string;
   setNotesViewShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Hotkey combination used to focus workspace directory panels */
   folderExplorerShortcut: string;
   setFolderExplorerShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Hotkey combination used to spawn scratchpad tab overlays */
   scratchpadOpenShortcut: string;
   setScratchpadOpenShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Hotkey combination used to focus desktop spotlight search overlays */
   openCommandBarKeys: string;
   setOpenCommandBarKeys: React.Dispatch<SetStateAction<string>>;
+  /** String layout theme identifier rule ('Dark Mode' | 'Light Mode' | 'System-Settings') */
   systemView: string;
   setSystemView: React.Dispatch<SetStateAction<string>>;
+  /** Hotkey combination used to shift nodes to text mode views */
   textModeShortcut: string;
   setTextModeShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Hotkey combination used to shift nodes to whiteboard canvas views */
   canvasModeShortcut: string;
   setCanvasModeShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Hotkey combination used to toggle zen distraction shielding layers */
   zenModeShortcut: string;
   setZenModeShortcut: React.Dispatch<SetStateAction<string>>;
+  /** Activity flag tracking if zen layer mode remains focused */
   zenMode: boolean;
   setZenMode: React.Dispatch<SetStateAction<boolean>>;
 }
+
 /* eslint-disable react-refresh/only-export-components */
 export const SettingsContext = createContext<settingsContextType | null>(null);
 
@@ -73,17 +105,25 @@ interface settings {
   zenMode: string;
 }
 
+/**
+ * @component SettingsProvider
+ * @description State layer parsing system preference arrays, syncing OS theme adjustments,
+ * and implementing a debounced file persistence layer to prevent heavy write operations on disk.
+ */
 export const SettingsProvider = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
+  /** Hydration status indicator tracking when database loading finishes */
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  /** Integrity lock preventing state updates from triggering premature empty saves on mount */
   const isHydrated = useRef<boolean>(false);
 
   const [systemView, setSystemView] = useState<string>("Dark Mode");
 
+  /** Evaluation logic verifying if dark mode applies matching theme properties or system preferences */
   const isDarkMode =
     systemView === "Dark Mode" ||
     (systemView === "System-Settings" &&
@@ -91,11 +131,20 @@ export const SettingsProvider = ({
 
   const [darkMode, setDarkMode] = useState<boolean>(isDarkMode);
 
+  // ==========================================
+  // LIFECYCLE 1: INTERNAL THEME RESYNC
+  // ==========================================
+  /** Automatically updates theme flags whenever workspace style selectors adjust */
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDarkMode(isDarkMode);
+    setTimeout(() => {
+      setDarkMode(isDarkMode);
+    }, 0);
   }, [systemView, isDarkMode]);
 
+  // ==========================================
+  // LIFECYCLE 2: OS SYSTEM PREFERENCE LISTENER
+  // ==========================================
+  /** Binds native system hardware listener loops if System-Settings rule is selected */
   useEffect(() => {
     if (systemView !== "System-Settings") return;
 
@@ -139,12 +188,29 @@ export const SettingsProvider = ({
     useState<string>("Ctrl-Shift-Z");
   const [zenMode, setZenMode] = useState<boolean>(false);
 
+  // ==========================================
+  // LIFECYCLE 3: CONTRAST COLOR SELECTOR ALIGNER
+  // ==========================================
+  /** Adjusts global typography fallbacks to match dark or light surface elements */
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!darkMode) setDefaultColor("#000000");
-    else setDefaultColor("#ffffff");
+    if (!darkMode)
+      setTimeout(() => {
+        setDefaultColor("#000000");
+      }, 0);
+    else
+      setTimeout(() => {
+        setDefaultColor("#ffffff");
+      }, 0);
   }, [darkMode]);
 
+  // ==========================================
+  //BACKEND DISPATCH: DEBOUNCED CONFIG COMMIT
+  // ==========================================
+  /**
+   * Automatically serializes config states on variable changes [31/08/2026].
+   * Leverages a 500ms debounce loop buffer to group quick user inputs,
+   * preventing multiple rapid write calls from locking the Rust file system.
+   */
   useEffect(() => {
     if (!isHydrated.current) return;
     const dataToSave: settings = {
@@ -171,8 +237,7 @@ export const SettingsProvider = ({
     const delayDebounceFn = setTimeout(() => {
       async function saveFile() {
         try {
-          // Call the Rust command, passing only the file name and the JSON string
-
+          // Fire structural preference states down to Rust disk managers
           await invoke("save_portable_settings", {
             filename: "settings.json",
             contents: JSON.stringify(dataToSave, null, 2),
@@ -206,6 +271,10 @@ export const SettingsProvider = ({
     zenMode,
   ]);
 
+  // ==========================================
+  // LIFECYCLE 4: STARTUP HYDRATION PIPELINE
+  // ==========================================
+  /** Invokes the native disk reader command immediately on mount to load properties */
   useEffect(() => {
     async function loadSettings() {
       try {
@@ -266,7 +335,7 @@ export const SettingsProvider = ({
       } catch (error) {
         console.error("Failed to fetch settings from Rust file:", error);
       } finally {
-        // Lower shield and release the view
+        // Lower the loading shield and release the UI view layers for rendering
         isHydrated.current = true;
         setIsLoading(false);
       }
@@ -274,24 +343,31 @@ export const SettingsProvider = ({
     loadSettings();
   }, []);
 
+  // ==========================================
+  // INTERCEPTOR: ZEN DISTRACTION SHIELD SHORTCUT
+  // ==========================================
+  /**
+   * Universal Hotkey Capture Loop: Parses user shortcut tokens (e.g. "Ctrl-Shift-Z")
+   * and matches raw hardware keystrokes to toggle the distraction shield state.
+   */
   useEffect(() => {
     const handleCommands = (e: KeyboardEvent) => {
-      // 1. Break down your custom string shortcut into a manageable array
+      // 1. Split the configurable shortcut sequence string into manageable array tokens
       const dynamicKeys = zenModeShortcut.toLowerCase().split("-");
 
-      // 2. Evaluate individual modifier flags dynamically based on your array contents
+      // 2. Map logical syntax flags against physical hardware events
       const requiresMod =
         dynamicKeys.includes("mod") || dynamicKeys.includes("ctrl");
       const requiresShift = dynamicKeys.includes("shift");
       const requiresAlt = dynamicKeys.includes("alt");
 
-      // 3. Find the action character key (the array element that isn't a modifier)
+      // 3. Isolate the primary character action key out of modifier macros
       const primaryKeyToken = dynamicKeys.find(
         (token) =>
           !["mod", "ctrl", "shift", "alt", "win", "cmd"].includes(token),
       );
 
-      // 4. Verify that the hardware matches your configuration perfectly
+      // 4. Verify that physical hardware layouts completely match configurations
       const modMatch = requiresMod
         ? e.ctrlKey || e.metaKey
         : !(e.ctrlKey || e.metaKey);
@@ -300,7 +376,7 @@ export const SettingsProvider = ({
 
       const primaryKeyMatch = e.key.toLowerCase() === primaryKeyToken;
 
-      // 5. Fire the toggle command only if every condition passes
+      // 5. Fire the toggle command only if every condition passes completely
       if (modMatch && shiftMatch && altMatch && primaryKeyMatch) {
         e.preventDefault();
         setZenMode((prev) => !prev);
@@ -309,12 +385,16 @@ export const SettingsProvider = ({
 
     window.addEventListener("keydown", handleCommands);
 
-    // Clean up the active event listener to prevent event stacking memory leaks
+    // Clean up event listener tracks on context mutations to clear event stacking leaks
     return () => window.removeEventListener("keydown", handleCommands);
   }, [zenModeShortcut]);
 
+  // ==========================================
+  // LOADING SURFACE MOUNT SHIELD GUARD
+  // ==========================================
   if (isLoading) {
-    return <div style={{ background: "#1a1a1a", height: "100vh" }} />; // Or a spinner matching your app theme
+    // Keeps a clean background shield mounted to mask content layout adjustments during hydration loops
+    return <div style={{ background: "#1a1a1a", height: "100vh" }} />;
   }
 
   const settingContextValue: settingsContextType = {
@@ -365,6 +445,11 @@ export const SettingsProvider = ({
   );
 };
 
+/**
+ * @hook useSettings
+ * @description Global preference hook used to pull active key strings, font metrics,
+ * save timers, and dark mode toggles down any sub-component layer.
+ */
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (!context) {

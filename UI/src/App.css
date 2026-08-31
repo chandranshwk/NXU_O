@@ -1,9 +1,21 @@
+/**
+ * @file index.css
+ * @description Global stylesheet configuring application typography typography vectors, 
+ * Tailwind framework layer injections, native Webkit scrollbar tracks, and explicit structural 
+ * layout overrides for the TipTap / ProseMirror rich text engine.
+ * 
+ * @architecture
+ * - Injects custom local TrueType font assets safely via localized `@font-face` declarations.
+ * - Restructures default inline text nodes (headings, lists, tables) inside editor domains.
+ * - Translates dynamic runtime formatting variables (such as `--editor-line-height`) into layout rules.
+ */
+
 @import url("https://googleapis.com");
 @import "tailwindcss";
 
-/* =============================================================
-   PROJECT NXU_O - FINALIZED LOCAL DIRECTORY FONT ARCHITECTURE
-   ============================================================= */
+/* ==========================================================================
+   CATEGORY 1: LOCAL DIRECTORY FONTS ARCHITECTURE
+   ========================================================================== */
 
 /* 1. APTOS LOCAL */
 @font-face {
@@ -48,30 +60,36 @@
 }
 
 :root {
+  /* Intent: Prevents secondary document bars from double-scrolling background windows */
   overflow: hidden;
 }
 
-/* Target TipTap's actual content-editable engine container directly */
+/* ==========================================================================
+   CATEGORY 2: TIPTAP RICHTEXT CORE CANVAS INTERCEPTORS
+   ========================================================================== */
+
+/* Target TipTap's content-editable viewport canvas layout frame directly */
 .tiptap,
 .tiptap:focus,
 .tiptap:active,
 .tiptap:focus-visible {
+  /* Intent: Overrides default browser outlines to keep focal boxes from clipping text cells */
   outline: none !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-/* Style TipTap's inner text nodes so headings look like headings */
+/* Style TipTap's interior heading elements to guarantee uniform vertical spacing scales */
 .tiptap h1 {
-  font-size: 1.875rem !important; /* text-3xl equivalent */
-  font-weight: 700 !important; /* font-bold equivalent */
+  font-size: 1.875rem !important; /* text-3xl mapping */
+  font-weight: 700 !important;
   line-height: 1.25 !important;
   margin-top: 1.5rem !important;
   margin-bottom: 0.5rem !important;
 }
 
 .tiptap h2 {
-  font-size: 1.5rem !important; /* text-2xl equivalent */
+  font-size: 1.5rem !important; /* text-2xl mapping */
   font-weight: 700 !important;
   line-height: 1.35 !important;
   margin-top: 1.25rem !important;
@@ -79,43 +97,42 @@
 }
 
 .tiptap h3 {
-  font-size: 1.25rem !important; /* text-xl equivalent */
+  font-size: 1.25rem !important; /* text-xl mapping */
   font-weight: 600 !important;
   margin-top: 1rem !important;
 }
 
-/* Ensure regular paragraph blocks retain comfortable tracking distances */
+/* Ensure regular text paragraph blocks listen to shared text formatting contexts */
 .tiptap p {
   margin-top: 0.5rem !important;
   margin-bottom: 0.5rem !important;
   font-size: var(--editor-font-size, 1rem) !important;
   color: var(--editor-font-color, "#000") !important;
-}
-
-/* Inside your layout stylesheet or your global css index module */
-.tiptap p {
-  /* Forces lines to scale their vertical clearance match inline font measurements */
+  /* Intent: Pipes the active leading multiplier scale selected by users inside Section B */
   line-height: var(--editor-line-height, relaxed) !important;
 }
 
 .tiptap span[style*="font-size"] {
-  /* Keeps blank elements block-aligned so the caret draws matching pixel vertical metrics */
+  /* Intent: Keeps blank lines inline so input carets retain accurate focal height metrics */
   display: inline;
 }
 
-/* Inside your main editor style block within src/index.css */
 .tiptap h1 span[style*="font-size"],
 .tiptap h2 span[style*="font-size"],
 .tiptap h3 span[style*="font-size"] {
-  /* Forces clashing baseline inline spans to drop back to native header percentages */
+  /* Intent: Forces nested character spans to inherit default header proportions cleanly */
   font-size: inherit !important;
 }
 
-/* Optional: If they explicitly apply an oversized font, let it breakout */
+/* Optional: Bypasses header inheritance locks if explicit custom font scaling overrides apply */
 .tiptap h1 span[style^="font-size: 2"],
 .tiptap h1 span[style^="font-size: 3"] {
-  font-size: var(--custom-size) !important; /* Standard reference */
+  font-size: var(--custom-size) !important;
 }
+
+/* ==========================================================================
+   CATEGORY 3: RICH TEXT LIST SYMBOL FORMATTERS
+   ========================================================================== */
 
 .tiptap ul {
   list-style-type: disc !important;
@@ -125,8 +142,8 @@
   margin-bottom: 0.5rem !important;
 }
 
-/* Force decimal sequential numeric indicators to render accurately */
 .tiptap ol {
+  /* Intent: Dynamically re-styles sequential numbers using selection indicators passed from settings */
   list-style-type: var(
     --editor-ordered-list-representer,
     "lower-roman"
@@ -137,11 +154,14 @@
   margin-bottom: 0.5rem !important;
 }
 
-/* Ensure line-items stack with optimal vertical density */
 .tiptap li {
   margin-bottom: 0.125rem !important;
   line-height: inherit !important;
 }
+
+/* ==========================================================================
+   CATEGORY 4: TABULAR DATA CELLS ALIGNMENT SCHEMAS
+   ========================================================================== */
 
 .tiptap table th {
   font-weight: 600;
@@ -151,29 +171,20 @@
     113,
     122,
     0.08
-  ); /* Soft subtle gray header fill */
+  ); /* Soft slate header backdrop tint */
 }
 
-/* Give selected cell highlights crisp, low-overhead high-density visual markers */
 .tiptap .selectedCell::after {
-  background: rgba(
-    59,
-    130,
-    246,
-    0.12
-  ) !important; /* Soft Tailwind Blue accent hue */
+  /* Intent: Applies a crisp visual indicator mask over cells highlighted by right-clicks */
+  background: rgba(59, 130, 246, 0.12) !important;
 }
 
-/* Ensure table structures scroll horizontally inside tight window scales if they overflow */
 .tiptap-editor-container {
+  /* Intent: Allows tables to scroll horizontally on small screens without shifting page margins */
   overflow-x: auto;
 }
 
-/* =============================================================
-   PROJECT NXU_O - FINAL CRITICAL TABLE CELL ALIGNMENT RESETS
-   ============================================================= */
-
-/* Force table cell data elements to honor horizontal alignment attribute tags */
+/* Explicit cell attribute overrides routing text-alignment values received from ContextMenu triggers */
 .tiptap td[align="left"] {
   text-align: left !important;
 }
@@ -184,7 +195,6 @@
   text-align: right !important;
 }
 
-/* Force table headers to listen to their native align attributes */
 .tiptap th[align="left"] {
   text-align: left !important;
 }
@@ -194,7 +204,7 @@
 .tiptap th[align="right"] {
   text-align: right !important;
 }
-/* Table Cell alignment handlers inside src/index.css */
+
 .tiptap td[style*="text-align: left"],
 .tiptap th[style*="text-align: left"] {
   text-align: left !important;
@@ -207,19 +217,24 @@
 .tiptap th[style*="text-align: right"] {
   text-align: right !important;
 }
+
+/* ==========================================================================
+   CATEGORY 5: INLINE STYLE SELECTION UTILITIES & SCROLLBARS
+   ========================================================================== */
+
 .tiptap mark {
-  color: #1c1917 !important; /* Hard dark stone text for readability contrast inside highlights */
+  color: #1c1917 !important; /* Stone text to ensure text contrast over pastel highlights */
   border-radius: 0.125rem;
   padding: 0.05rem 0.15rem;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
 
-/* Maintain high-contrast text if the application switches to dark mode */
 .dark .tiptap mark {
-  color: #18181b !important;
+  color: #18181b !important; /* Zinc text override for high-contrast visibility under dark mode */
 }
 
+/* Custom Webkit scrollbar layout constraints targeting internal scroll lanes */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;

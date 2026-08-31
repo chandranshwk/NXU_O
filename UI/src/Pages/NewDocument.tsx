@@ -1,3 +1,15 @@
+/**
+ * @file NewDocument.tsx
+ * @component NewDocument
+ * @description The notebook multi-page document editor page. It handles sidebar
+ * page lists, creating new pages, switching sections, and entering zen mode.
+ *
+ * @architecture
+ * - Manages multi-level document sync using `useNotebookStore`.
+ * - Toggles structural layouts based on URL query parameters (`?page=...`).
+ * - Encapsulates text canvases using `<RightSideDocument />`.
+ */
+
 import { useEffect, useState } from "react";
 import {
   useNavigate,
@@ -13,19 +25,41 @@ import { useNotebookStore } from "../contexts/notebook";
 import { RightSideDocument } from "../components/RightSideDocument";
 import { useSettings } from "../contexts/settingsContext";
 
+/**
+ * @component NewDocumentContent
+ * @description Coordinates notebook navigation arrays, sidebar view states,
+ * page initialization lifecycles, and hotkey actions.
+ */
 const NewDocumentContent = () => {
+  /** Accesses global app theme preferences passed from the shell root template */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
+
+  /** Extracts the unique directory ID directly out of the router match parameters */
   const { id } = useParams<{ id: string }>();
+
+  /** Extracts targeted sub-page filters straight from window address metrics */
   const [searchParams] = useSearchParams();
   const targetPageId = searchParams.get("page");
+
+  /** Local toggle flag used to close the notebook navigation sidebar array */
   const [showSidebar, setShowSidebar] = useState(true);
   const navigate = useNavigate();
 
+  /** Connects to the data layer state store to mutate notebook values */
   const { activeNotebook, setActiveNotebookById, initializeData } =
     useNotebookStore();
+
+  /** Tracks the positional index of the section currently chosen by the user */
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const settings = useSettings();
-  // Sync data arrays safely on mount
+
+  // ==========================================
+  // 📁 LIFECYCLE 1: NOTEBOOK LOADER CORE
+  // ==========================================
+  /**
+   * Initializes local stores and claims active directory context references
+   * each time the root routing ID changes.
+   */
   useEffect(() => {
     initializeData();
     if (id) {
@@ -33,7 +67,13 @@ const NewDocumentContent = () => {
     }
   }, [id, initializeData, setActiveNotebookById]);
 
-  // Sync default active section if navigating to a specific sub-page directly
+  // ==========================================
+  // 🧭 LIFECYCLE 2: TARGET SUB-PAGE SYNCHRONIZER
+  // ==========================================
+  /**
+   * Scans notebook section sub-arrays on load. If a sub-page match is found,
+   * it pushes focus straight to that section without losing tracking coordinates.
+   */
   useEffect(() => {
     if (activeNotebook && targetPageId) {
       activeNotebook.sections.forEach((sec: MockSection, idx: number) => {
@@ -44,24 +84,27 @@ const NewDocumentContent = () => {
     }
   }, [activeNotebook, targetPageId]);
 
+  // ==========================================
+  // LIFECYCLE 3: ZEN MODE SHORTCUT DECODER
+  // ==========================================
+  /**
+   * Listens for keyboard key codes to toggle zen mode, cleanly parsing user strings
+   * like "Ctrl-Alt-Z" down to layout modifier events at runtime.
+   */
   useEffect(() => {
     const handleCommands = (e: KeyboardEvent) => {
-      // 1. Break down your custom string shortcut into a manageable array
       const dynamicKeys = settings.zenModeShortcut.toLowerCase().split("-");
 
-      // 2. Evaluate individual modifier flags dynamically based on your array contents
       const requiresMod =
         dynamicKeys.includes("mod") || dynamicKeys.includes("ctrl");
       const requiresShift = dynamicKeys.includes("shift");
       const requiresAlt = dynamicKeys.includes("alt");
 
-      // 3. Find the action character key (the array element that isn't a modifier)
       const primaryKeyToken = dynamicKeys.find(
         (token) =>
           !["mod", "ctrl", "shift", "alt", "win", "cmd"].includes(token),
       );
 
-      // 4. Verify that the hardware matches your configuration perfectly
       const modMatch = requiresMod
         ? e.ctrlKey || e.metaKey
         : !(e.ctrlKey || e.metaKey);
@@ -70,7 +113,6 @@ const NewDocumentContent = () => {
 
       const primaryKeyMatch = e.key.toLowerCase() === primaryKeyToken;
 
-      // 5. Fire the toggle command only if every condition passes
       if (modMatch && shiftMatch && altMatch && primaryKeyMatch) {
         e.preventDefault();
         setShowSidebar((prev) => !prev);
@@ -78,12 +120,12 @@ const NewDocumentContent = () => {
     };
 
     window.addEventListener("keydown", handleCommands);
-
-    // Clean up the active event listener to prevent event stacking memory leaks
     return () => window.removeEventListener("keydown", handleCommands);
   }, [settings.zenModeShortcut]);
 
-  // CRITICAL STRUCTURAL GUARD: Kept cleanly placed right before calculations to protect layout boundaries
+  // ==========================================
+  // CRITICAL STRUCTURAL RENDER GUARD
+  // ==========================================
   if (!activeNotebook) {
     return (
       <div className="h-screen w-full flex items-center justify-center text-zinc-500 bg-zinc-950">
@@ -92,12 +134,13 @@ const NewDocumentContent = () => {
     );
   }
 
-  // Compute active variables safely with optional fallbacks
+  // Calculate layout models with structural fallbacks
   const currentSection = activeNotebook.sections[activeSectionIdx];
   const currentPage =
     currentSection?.pages.find((p) => p.id === targetPageId) ||
     currentSection?.pages[0];
 
+  /** Routes address coordinates towards chosen page node parameters */
   const handleNavigation = (pageId: string) => {
     navigate(`/document/${activeNotebook.id}?page=${pageId}`);
   };
@@ -108,12 +151,14 @@ const NewDocumentContent = () => {
         !darkMode ? "bg-white text-zinc-900" : "bg-[#18181b] text-zinc-100"
       }`}
     >
-      {/* 1. Global Toolbar */}
+      {/* 1. Global Toolbar Layer */}
       <Toolbar />
 
-      {/* 2. Primary Workspace Split */}
+      {/* 2. Primary Workspace Split Panel View */}
       <div className="h-full w-full flex flex-1 overflow-hidden">
-        {/* Left Side: 1/6 Width Navigation Column */}
+        {/* ==========================================
+            LEFT SIDEBAR: SECTION NAVIGATION RAILS
+            ========================================== */}
         {showSidebar && !settings.zenMode && (
           <div
             className={`h-full w-1/6 min-w-55 max-w-[320px] border-r flex flex-col p-4 gap-4 ${
@@ -122,6 +167,7 @@ const NewDocumentContent = () => {
                 : "bg-zinc-50 border-zinc-200"
             }`}
           >
+            {/* Title Metadata Container */}
             <div>
               <h2 className="text-sm font-bold truncate">
                 {activeNotebook.title}
@@ -131,6 +177,7 @@ const NewDocumentContent = () => {
               </span>
             </div>
 
+            {/* Scrollable Page Button Stream Block */}
             <div className="flex flex-col gap-1.5 overflow-y-auto flex-1">
               <span className="text-[10px] uppercase font-bold tracking-wider opacity-40">
                 Section Pages
@@ -155,7 +202,7 @@ const NewDocumentContent = () => {
                 );
               })}
 
-              {/* Create New Page Functional Interface Trigger Block */}
+              {/* ACTION TRIGGER: APPEND NEW DRAFT BLANK BLOCK PAGE */}
               <div
                 onClick={() => {
                   if (!currentSection) return;
@@ -190,7 +237,9 @@ const NewDocumentContent = () => {
           </div>
         )}
 
-        {/* Right Side Viewport: Injected child component with clean parameter wiring */}
+        {/* ==========================================
+            RIGHT SIDEVIEWPORT: ACTIVE CANVAS CORE
+            ========================================== */}
         <RightSideDocument
           darkMode={darkMode}
           activeNotebook={activeNotebook}
@@ -205,6 +254,11 @@ const NewDocumentContent = () => {
   );
 };
 
+/**
+ * @component NewDocument
+ * @description Context initialization wrapper. Safely sets up state contexts
+ * around the core content layer prior to document rendering.
+ */
 const NewDocument = () => {
   return (
     <EditorProvider>
@@ -214,5 +268,4 @@ const NewDocument = () => {
     </EditorProvider>
   );
 };
-
 export default NewDocument;

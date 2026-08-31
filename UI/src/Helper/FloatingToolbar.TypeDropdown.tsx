@@ -1,11 +1,25 @@
-// TypeDropdown.tsx
+/**
+ * @file TypeDropdown.tsx
+ * @component TypeDropdown
+ * @description A dropdown block selector for the floating toolbar. It tracks
+ * cursor context using useEditorState and swaps the active block node type
+ * (e.g., standard text paragraphs, h1-h6 headings, block-quotes, or list formats).
+ *
+ * @architecture
+ * - Leverages `useEditorState` to track active cursor context flags in real time.
+ * - Extracts uniform schema formatting configurations from `useToolbarConfigs`.
+ * - Intercepts mouse events to swap block configurations without releasing text selection highlight layers.
+ */
+
 import React, { useState, useEffect } from "react";
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
 import { useToolbarConfigs } from "./FloatingToolbar.data";
 
 interface TypeDropdownProps {
+  /** Active TipTap core text engine receiving formatting node actions */
   editor: Editor;
+  /** Shared dark mode setting flag used to toggle UI themes */
   darkMode: boolean;
 }
 
@@ -13,10 +27,17 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
   editor,
   darkMode,
 }) => {
+  /** Visibility toggle flag controlling the dropdown panel layout view */
   const [isTypeOpen, setIsTypeOpen] = useState(false);
 
-  // 1. Pull the unified TYPES configurations structure straight out of your data file hook
-  // We feed it an empty properties object signature since TYPES logic doesn't depend on inline formatting flags
+  // ==========================================
+  // CONFIGURATIONS: EXTRACT BLOCK SCHEMA
+  // ==========================================
+  /**
+   * Pulls structural configurations from the central toolbar blueprint hook.
+   * Feeds it an empty fallback object signature because global node swaps
+   * operate independently of character style states like bold or italic.
+   */
   const { TYPES } = useToolbarConfigs({
     editor,
     properties: {
@@ -29,9 +50,16 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
     darkMode,
   });
 
+  /** Active selection state tracker displaying the component label badge */
   const [selectedType, setSelectedType] = useState(TYPES[0]);
 
-  // 2. Track the live document cursor context to determine what node block layout is active
+  // ==========================================
+  // SELECTOR: LIVE CURSOR BLOCK MONITOR
+  // ==========================================
+  /**
+   * Automatically interrogates TipTap view states on cursor changes.
+   * Maps current paragraph positions, block-quotes, lists, or heading tiers.
+   */
   const activeBlockId = useEditorState({
     editor,
     selector: (ctx) => {
@@ -40,7 +68,7 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
       if (ctx.editor.isActive("bulletList")) return "bulletList";
       if (ctx.editor.isActive("orderedList")) return "orderedList";
 
-      // Scrapes individual heading tiers H1-H6
+      // Scan individual heading weights h1 to h6
       for (let i = 1; i <= 6; i++) {
         if (ctx.editor.isActive("heading", { level: i })) return `h${i}`;
       }
@@ -48,18 +76,27 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
     },
   });
 
-  // 3. Keep the visible dropdown label synced cleanly when shifting positions using keyboard arrows
+  // ==========================================
+  // LIFECYCLE: LABEL DISPLAY SYNCHRONIZER
+  // ==========================================
+  /**
+   * Keeps labels perfectly updated when users cycle blocks using keyboard hotkeys,
+   * avoiding context configuration drift.
+   */
   useEffect(() => {
     const currentActiveBlock = TYPES.find((t) => t.id === activeBlockId);
     if (currentActiveBlock) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedType(currentActiveBlock);
+      setTimeout(() => {
+        setSelectedType(currentActiveBlock);
+      }, 0);
     }
   }, [activeBlockId, TYPES]);
 
   return (
     <div className="relative inline-block w-44 select-none font-sans antialiased text-xs">
-      {/* Trigger Button */}
+      {/* ==========================================
+          TRIGGER CONTROLLER: ACTIVE VALUE DISPLAY CARD
+          ========================================== */}
       <div
         className={`flex items-center justify-between px-3 py-1.5 rounded-lg border text-sm transition-all duration-150 cursor-pointer
           ${
@@ -68,7 +105,8 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
               : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
           }`}
         onMouseDown={(e) => {
-          e.preventDefault(); // Prevents Tiptap selection from dropping out of focus
+          // Stifles default actions to hold active selection highlight layers locked
+          e.preventDefault();
           setIsTypeOpen(!isTypeOpen);
         }}
       >
@@ -84,7 +122,9 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
         </span>
       </div>
 
-      {/* Custom Dropdown Items Menu */}
+      {/* ==========================================
+          DROPDOWN OVERLAY: NODE ACTION BLOCK MENU
+          ========================================== */}
       {isTypeOpen && (
         <div
           className={`absolute left-0 mt-2 w-56 border rounded-xl p-1.5 shadow-xl z-999 max-h-80 overflow-y-auto outline-none
@@ -110,13 +150,15 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
                         : "hover:bg-zinc-50 text-zinc-600"
                   }`}
                 onMouseDown={(e) => {
-                  e.preventDefault(); // Holds editor highlight target properties completely static
+                  // Prevents focus from dropping out of the editing pane highlight selection
+                  e.preventDefault();
                   type.action(e);
                   setSelectedType(type);
                   setIsTypeOpen(false);
                 }}
               >
                 <div className="flex items-center gap-3">
+                  {/* Action Icon Indicator Swatch */}
                   <div
                     className={`shrink-0 transition-colors ${isSelected ? "text-blue-500" : "text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"}`}
                   >
@@ -125,7 +167,7 @@ export const TypeDropdown: React.FC<TypeDropdownProps> = ({
                   <div>{type.label}</div>
                 </div>
 
-                {/* Right-aligned checkmark indicating active block type */}
+                {/* Right-aligned active verification checkmark */}
                 {isSelected && (
                   <span className="text-xs text-blue-500 dark:text-blue-400 font-semibold pr-0.5">
                     ✓

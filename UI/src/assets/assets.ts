@@ -1,38 +1,56 @@
+/**
+ * @file assets.ts
+ * @description Central layout asset library containing mock dashboard file sets,
+ * supported typeface catalogs, style hex vectors, list formatting parameters,
+ * and operational button evaluation methods.
+ *
+ * @architecture
+ * - Collects application configuration arrays used down lists, selectors, and dropdown windows.
+ * - Simulates local repository directories via mock document generation chains backed by Faker.js.
+ * - Bundles utility functions evaluating matching context styles to coordinate active states.
+ */
+
 import { faker } from "@faker-js/faker";
 import type { editorContextType } from "../contexts/editorContext";
 
 export interface TEXT_ODocument {
+  /** Numerical tracking index assigned to the file entity */
   id: number;
+  /** Categorizes whether files render under word or portable document templates */
   type: "pdf" | "words";
+  /** Clean string title naming the target file template */
   name: string;
+  /** System asset format tracking extensions */
   extension: ".docx" | ".pdf";
+  /** Descriptive explainer string detailing document focus states */
   des: string;
+  /** Quantitative indicator reporting network sharing thresholds */
   sharedCount: number;
+  /** Quantitative indicator reporting file retrieval statistics */
   downloadCount: number;
+  /** Timestamp text string measuring active modification events */
   editedAt: string;
+  /** Label marker pairing entries to parent organizational folder tags */
   project: string;
+  /** Visual tracking status tagging life lifecycle boundaries */
   status: "Final" | "In Review" | "Draft";
+  /** String layout metric tracking physical document disk sizing footprints */
   size: string;
 }
 
+/** Array collection generating mock recent document data matrices to simulate repository files */
 export const RECENT_FILES = Array.from({ length: 20 }, (_, index) => {
   const type = faker.helpers.arrayElement(["pdf", "words"]);
   const extension = type === "words" ? ".docx" : ".pdf";
 
   return {
     id: index + 1,
-    // Column: File (Icon/Type)
     type: type,
-    // Column: Name
     name: faker.system.fileName().split(".").slice(0, -1).join("-"),
     extension: extension,
-    // Column: Description
     des: faker.lorem.sentence({ min: 20, max: 25 }),
-    // Column: Shared (Count)
     sharedCount: faker.number.int({ min: 0, max: 50 }),
-    // Column: Downloads
     downloadCount: faker.number.int({ min: 0, max: 500 }),
-    // Column: Last Modified
     editedAt: faker.helpers.arrayElement([
       "2 hours ago",
       "5 hours ago",
@@ -41,7 +59,6 @@ export const RECENT_FILES = Array.from({ length: 20 }, (_, index) => {
       "Last week",
       "Oct 12",
     ]),
-    // Extra metadata for the UI
     project: faker.helpers.arrayElement([
       "Finance Core",
       "Marketing 2024",
@@ -53,6 +70,7 @@ export const RECENT_FILES = Array.from({ length: 20 }, (_, index) => {
   };
 });
 
+/** Static template list cataloging supported local system typeface configurations */
 export const FONTS = [
   "AptosLocal",
   "CalibriLocal",
@@ -68,6 +86,7 @@ export const FONTS = [
   "lucida-console",
 ];
 
+/** Static palette map tracking uniform interface theme color hex vectors */
 export const COLORS = [
   "#64748b",
   "#71717a",
@@ -84,6 +103,7 @@ export const COLORS = [
   "#ffffff",
 ];
 
+/** String list mapping prefix list selectors assigned onto ordered list nodes */
 export const ORDEREDLISTRESPRESENTER = [
   "decimal",
   "armenian",
@@ -94,6 +114,15 @@ export const ORDEREDLISTRESPRESENTER = [
   ...["alpha", "latin", "roman", "greek"].map((el) => `upper-${el}`),
 ];
 
+/**
+ * @function checkIsActive
+ * @description Audits incoming element option names with active state hooks,
+ * reporting indicators to light up matching interface items on toolbars.
+ *
+ * @param {string} name - The label title of the formatting item to examine.
+ * @param {editorContextType} context - Universal editor context manager.
+ * @returns {boolean} True if the format selection is active under current highlights.
+ */
 export const checkIsActive = (
   name: string,
   context: editorContextType,

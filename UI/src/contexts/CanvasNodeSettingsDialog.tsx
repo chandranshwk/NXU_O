@@ -1,28 +1,53 @@
-// src/components/CanvasNodeSettingsDialog.tsx
+/**
+ * @file CanvasNodeSettingsDialog.tsx
+ * @component CanvasNodeSettingsDialog
+ * @description A configuration menu dialog overlay for canvas blocks.
+ * Renders via a React portal, enabling dragging interactions, dimension inputs,
+ * and theme-adaptive color swatches.
+ *
+ * @architecture
+ * - Injected directly into the document root via `createPortal`.
+ * - Employs HTML5 Pointer Capture flags to enable dragging controls.
+ * - Restricts raw canvas height overrides dynamically if the active node type is text.
+ */
+
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 export interface AdaptableColor {
+  /** Label identifier naming the specific shade family */
   name: string;
+  /** Background hex string parsed when the light visual layout is active */
   light: string;
+  /** Background hex string parsed when the dark visual layout is active */
   dark: string;
 }
 
 interface CanvasNodeSettingsDialogProps {
+  /** Operational visibility flag defining when to draw this layout view */
   isOpen: boolean;
+  /** Shared dark mode setting flag used to switch palette ranges */
   darkMode: boolean;
+  /** Core key string identifying whether the parent element is text or widget components */
   nodeType: string;
+  /** Fallback background hex style parsed from database records on load */
   initialColor: string;
+  /** Boundary width dimension read directly from parent state records */
   initialWidth: number;
+  /** Boundary height dimension read directly from parent state records */
   initialHeight: number;
+  /** Geographic pixel bounds tracking where the wrapper mounts on screens */
   anchorRect: {
     top: number;
     left: number;
     width: number;
     height: number;
   } | null;
+  /** Static template matrix storing dynamic light vs dark theme color hexes */
   presetColors: AdaptableColor[];
+  /** Dismissal callback hook closing visibility states upon request */
   onClose: () => void;
+  /** Validation dispatch hook pushing shape configurations up to storage states */
   onApply: (width: number, height: number, backgroundColor: string) => void;
 }
 
@@ -43,27 +68,42 @@ export const CanvasNodeSettingsDialog: React.FC<
   const [dialogColor, setDialogColor] = useState(initialColor || "transparent");
   const [dialogWidth, setDialogWidth] = useState(initialWidth);
   const [dialogHeight, setDialogHeight] = useState(initialHeight || 150);
+
+  /** Vector offset tracking translation increments from screen center origins */
   const [dialogOffset, setDialogOffset] = useState({ x: 0, y: 0 });
+  /** Activity flag logging if dragging motions engage on headers */
   const [isDraggingDialog, setIsDraggingDialog] = useState(false);
 
   const dialogHeaderRef = useRef<HTMLDivElement>(null);
+  /** Remembers mouse click footprints when pointer down triggers fire */
   const dialogDragStartRef = useRef({ x: 0, y: 0 });
+  /** Remembers past position coordinates right before translations reload values */
   const dialogOffsetStartRef = useRef({ x: 0, y: 0 });
 
   // =========================================================================
-  // DYNAMIC DIMENSION RE-SYNC GENERATOR (NEW ADDITION)
+  // LIFECYCLE: DIMENSION INPUT SYNCHRONIZER
   // =========================================================================
+  /**
+   * Forces local menu fields to re-align metrics if external layout parameters
+   * mutate while the modal remains active on screen.
+   */
   useEffect(() => {
     if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDialogColor(initialColor || "transparent");
-      setDialogWidth(initialWidth);
-      setDialogHeight(initialHeight || 150);
+      setTimeout(() => {
+        setDialogColor(initialColor || "transparent");
+        setDialogWidth(initialWidth);
+        setDialogHeight(initialHeight || 150);
+      }, 0);
     }
+    // Structural Render Guard: Prevent draw sequences if coordinates map null
   }, [isOpen, initialWidth, initialHeight, initialColor]);
 
   if (!isOpen || !anchorRect) return null;
 
+  // ==========================================
+  // INTERACTION: WINDOW DRAG EVENTS
+  // ==========================================
+  /** Initiates dragging frames, latching pointer streams to handle headers */
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
     setIsDraggingDialog(true);
@@ -72,6 +112,7 @@ export const CanvasNodeSettingsDialog: React.FC<
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
+  /** Updates delta offsets on mouse moves to translate window structures */
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingDialog) return;
     const deltaX = e.clientX - dialogDragStartRef.current.x;
@@ -82,6 +123,7 @@ export const CanvasNodeSettingsDialog: React.FC<
     });
   };
 
+  /** Releases hardware tracking streams when mouse clicks clear bounds */
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isDraggingDialog) {
       setIsDraggingDialog(false);
@@ -89,6 +131,10 @@ export const CanvasNodeSettingsDialog: React.FC<
     }
   };
 
+  // ==========================================
+  // ACTION VALIDATION & PERSISTENCE
+  // ==========================================
+  /** Blocks saving invalid card geometry configurations before updating state */
   const handleValidationAndApply = () => {
     if (dialogWidth < 150 || dialogHeight < 80) {
       alert("Width must be at least 150px and height at least 80px.");
@@ -96,8 +142,8 @@ export const CanvasNodeSettingsDialog: React.FC<
     }
     onApply(dialogWidth, dialogHeight, dialogColor);
   };
-
   return createPortal(
+    /* OVERLAY SHIELD BACKGROUND CANVAS LAYER */
     <div
       className="fixed inset-0 z-9999 flex items-center justify-center"
       onClick={onClose}
@@ -115,7 +161,9 @@ export const CanvasNodeSettingsDialog: React.FC<
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Dialog Title / Drag Header */}
+        {/* ==========================================
+            DIALOG HEAD: INTERACTIVE DRAG HANDLE RAIL
+            ========================================== */}
         <div
           ref={dialogHeaderRef}
           className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing select-none"
@@ -138,7 +186,9 @@ export const CanvasNodeSettingsDialog: React.FC<
           </div>
         </div>
 
-        {/* Color Palette Grid */}
+        {/* ==========================================
+            COLOR SELECTOR SELECTION MATRIX
+            ========================================== */}
         <div className="mb-3">
           <label
             className="block text-xs font-medium mb-1.5"
@@ -148,6 +198,7 @@ export const CanvasNodeSettingsDialog: React.FC<
           </label>
           <div className="flex flex-wrap gap-2">
             {presetColors.map((colorObj) => {
+              // Swap hex targets depending on active system themes
               const computedHex = darkMode ? colorObj.dark : colorObj.light;
               const isSelected =
                 dialogColor.toLowerCase() === computedHex.toLowerCase();
@@ -173,6 +224,7 @@ export const CanvasNodeSettingsDialog: React.FC<
               );
             })}
 
+            {/* Clear Button: Reverts container styles back to transparent layout scales */}
             <button
               type="button"
               className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all hover:scale-110"
@@ -193,8 +245,11 @@ export const CanvasNodeSettingsDialog: React.FC<
             </button>
           </div>
         </div>
+        {/* ==========================================
+            DIMENSION METRIC BOUNDARY INPUT FIELDS
+            ========================================== */}
 
-        {/* Dimension Input Blocks */}
+        {/* Horizontal Width Sizing Block */}
         <div className="flex gap-3 mb-4">
           <div className="flex-1">
             <label
@@ -219,6 +274,8 @@ export const CanvasNodeSettingsDialog: React.FC<
               }
             />
           </div>
+
+          {/* Vertical Height Sizing Block (Handled by the trailing segment) */}
           <div className="flex-1">
             <label
               className="block text-xs font-medium mb-1"
@@ -232,6 +289,9 @@ export const CanvasNodeSettingsDialog: React.FC<
               value={nodeType === "text" ? ("Auto" as string) : dialogHeight}
               min="80"
               step="10"
+              /* TEXT NODE SPECIFIC HEIGHT SAFETY SHIELD:
+                  If nodeType is text, apply opacity-60, strip out mouse hover states, 
+                  and trigger native browser not-allowed cursor warnings. */
               className={`w-full rounded-lg border px-3 py-1.5 text-sm ${nodeType === "text" ? "opacity-60 select-none pointer-events-none cursor-not-allowed" : ""}`}
               style={{
                 backgroundColor: darkMode ? "#2d2d2d" : "#f9fafb",
@@ -245,8 +305,11 @@ export const CanvasNodeSettingsDialog: React.FC<
           </div>
         </div>
 
-        {/* Action Triggers Footer */}
+        {/* ==========================================
+            ACTION TRIGGERS FOOTER (CANCEL & APPLY)
+            ========================================== */}
         <div className="flex justify-end gap-2">
+          {/* Dismiss button sequence */}
           <button
             type="button"
             onClick={onClose}
@@ -258,6 +321,7 @@ export const CanvasNodeSettingsDialog: React.FC<
           >
             Cancel
           </button>
+          {/* Save trigger validation sequence */}
           <button
             type="button"
             onClick={handleValidationAndApply}

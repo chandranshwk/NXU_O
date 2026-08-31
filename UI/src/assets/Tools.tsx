@@ -1,3 +1,15 @@
+/**
+ * @file Tools.tsx
+ * @description Centralized tools configuration generator for the editor toolbar.
+ * Compiles arrays of formatting buttons, layout actions, and heading shortcuts
+ * based on simple vs rich layout requirements.
+ *
+ * @architecture
+ * - Returns modular action maps consisting of icons, labels, and execution parameters.
+ * - Bridges direct UI clicks with both the TipTap editor chain and parent context stores.
+ * - Uses functional loops to dynamically build multiple heading tier configurations.
+ */
+
 import React from "react";
 import { FiBold, FiItalic, FiAnchor, FiUnderline } from "react-icons/fi";
 import {
@@ -20,12 +32,23 @@ import {
 } from "react-icons/gr";
 
 export interface ToolItem {
+  /** The icon visual component to display on the toolbar rail */
   icon: React.ReactNode;
+  /** Display label name of the formatting action used for keys and titles */
   name: string;
-  // 🛠️ FIXED: Made context a mandatory argument to match your array calls perfectly
+  /** Execution callback parsing active editor instances and state context blocks */
   onClick: (editor: Editor, context: editorContextType) => void;
 }
 
+/**
+ * @function getEditorTools
+ * @description Factory function compiling action objects for the text editor toolbar.
+ * Appends advanced markers like links or section hooks if rich mode is requested.
+ *
+ * @param {"simple" | "rich"} type - Formatting density configuration rule.
+ * @param {editorContextType} context - Universal editor context manager.
+ * @returns {ToolItem[]} Array containing structured toolbar item action maps.
+ */
 export const getEditorTools = (
   type: "simple" | "rich",
   context: editorContextType,
@@ -101,6 +124,9 @@ export const getEditorTools = (
         editor?.chain().focus().toggleBulletList().run();
       },
     },
+    // ==========================================
+    // HEADING CHUNK GENERATOR (LEVELS 1-3)
+    // ==========================================
     ...([1, 2, 3] as const).map((level) => {
       const Icons = [
         LuHeading1,
@@ -122,6 +148,9 @@ export const getEditorTools = (
     }),
   ];
 
+  // ==========================================
+  // EXTENSION: RICH FORMATTING EXPANSIONS
+  // ==========================================
   if (type === "rich") {
     baseTools.push(
       {

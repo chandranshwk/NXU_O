@@ -1,4 +1,16 @@
-// src/components/SortableParagraphBlock.tsx
+/**
+ * @file SortableParagraphBlock.tsx
+ * @component SortableParagraphBlock
+ * @description A modular block wrapper component that handles an independent
+ * TipTap editor instance alongside drag handles, block addition/deletion shortcuts,
+ * and custom layout settings.
+ *
+ * @architecture
+ * - Integrates with `@dnd-kit/sortable` to participate in canvas-wide reordering.
+ * - Injects custom keyboard interceptors to trigger parent structural layout shifts.
+ * - Spawns a floating portal interface component directly on the document body for block mutations.
+ */
+
 import React, { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -17,15 +29,25 @@ import { createPortal } from "react-dom";
 import SortableDropdown from "./SortableDropdown";
 
 interface SortableParagraphBlockProps {
+  /** Unique identifier string assigned to this block tracking sequence position */
   id: string;
+  /** Raw content string containing document lines or HTML markup block data */
   html: string;
+  /** Accesses global app theme preferences passed down from the shell layout */
   darkMode: boolean;
+  /** Core state provider containing layout scale configurations and default fonts */
   settings: settingsContextType;
+  /** Saves modified content changes up towards the master node mapping stack */
   onUpdate: (id: string, html: string) => void;
+  /** Spawns a blank template block line directly beneath this element array */
   onInsertBelow: (id: string) => void;
+  /** Completely removes this specific block element entry from the active node list */
   onDeleteBlock: (id: string) => void;
+  /** Passes active keyboard focus coordinates up towards global selection monitors */
   onFocusSet: (editor: Editor) => void;
+  /** Triggers relative coordinate math handlers when active layout shapes map or shift */
   onTransaction: (editor: Editor, blockElement: HTMLElement) => void;
+  /** Conditional layout modifier passing preset design constraints downward */
   hasPreset?: boolean;
 }
 
@@ -41,13 +63,19 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
   onTransaction,
   hasPreset,
 }) => {
+  /** Reference link pointing to the direct node bounding box for position tracking */
   const blockRef = useRef<HTMLDivElement>(null);
+  /** Reference link anchoring the active location of the options toggle button */
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
+  /** Internal tracking state protecting synchronization loops from multi-render lag */
   const isTransitioningRef = useRef(false);
 
+  /** Visibility flag governing the open display state of the action portal dropdown */
   const [openDialog, setOpenDialog] = useState(false);
+  /** Calculated screen space coordinate bounds layout used to place the portal box */
   const [dialogCoords, setDialogCoords] = useState({ top: 0, left: 0 });
 
+  /** Unpacks sorting hooks, listener flags, and transforms from dnd-kit context */
   const {
     attributes,
     listeners,
@@ -57,16 +85,25 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
     isDragging,
   } = useSortable({ id });
 
+  // ==========================================
+  // EXTENSION: KEYBOARD SHORTCUT CAPTURES
+  // ==========================================
+  /**
+   * Custom embedded keyboard listener intercepting Enter and Backspace events inside
+   * the text block to command sibling instantiation and line clear configurations.
+   */
   const CanvasKeyboardShortcuts = Extension.create({
     name: "canvasKeyboardShortcuts",
     addKeyboardShortcuts() {
       return {
+        // Spawns a new blank block directly underneath when clicking Enter
         Enter: ({ editor }) => {
           if (editor.state.selection.$from.parent.type.name === "hardBreak")
             return false;
           onInsertBelow(id);
           return true;
         },
+        // Commands structural cell deletions if Backspace runs on empty strings
         Backspace: ({ editor }) => {
           if (editor.isEmpty) {
             onDeleteBlock(id);
@@ -78,6 +115,9 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
     },
   });
 
+  // ==========================================
+  // ENGINE: INTERNAL TIPTAP INITIALIZER
+  // ==========================================
   const editor = useEditor({
     extensions: [...getEditorExtensions({ settings }), CanvasKeyboardShortcuts],
     content: html,
@@ -101,6 +141,13 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
     },
   });
 
+  // ==========================================
+  // SELECTOR: EXTRACT CURRENT INLINE DESIGN
+  // ==========================================
+  /**
+   * Tracks typography configurations, font maps, alignment modes, and background block colors
+   * out of active data registers without inducing redundant side-render loops.
+   */
   const properties = useEditorState({
     editor,
     selector: (ctx) => {
@@ -130,6 +177,7 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
     },
   });
 
+  // Compute sorting displacement positions matching active animation metrics
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -140,6 +188,10 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
         : properties.blockBackground,
   };
 
+  // ==========================================
+  // 📁 LIFECYCLE: DATA RE-SYNC TRACK MATRIX
+  // ==========================================
+  /** Handles incoming updates and forces content refreshes cleanly if structures mutate */
   useEffect(() => {
     if (!editor) return;
     const currentHTML = editor.getHTML();
@@ -150,7 +202,7 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
     }
   }, [html, editor]);
 
-  // Automatic newly spawned focus task handler
+  /** Pushes keyboard focus points automatically to newly spawned lines */
   useEffect(() => {
     if (!editor) return;
     if (html === "<p></p>" || html === "") {
@@ -161,6 +213,10 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
     }
   }, [editor, html]);
 
+  // ==========================================
+  // ACTIONS: OPTION MENUS & DISMISSALS
+  // ==========================================
+  /** Maps position vectors bounding underneath the configuration handle coordinates */
   const handleOptionsClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -175,6 +231,7 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
     }
   };
 
+  /** Clears open option menus instantly if clicking background spaces */
   useEffect(() => {
     const handleOutsideClick = () => setOpenDialog(false);
     if (openDialog) {
@@ -196,12 +253,15 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
         darkMode ? "hover:bg-zinc-800/30" : "hover:bg-zinc-100/50"
       } `}
     >
-      {/* Visual Controls Action Handle Container */}
+      {/* ==========================================
+          LEFT ACTION CONTROLS RAIL (MORE & DRAG HANDLES)
+          ========================================== */}
       <div
         block-id={id}
         ref={blockRef}
         className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5 select-none pt-0.5"
       >
+        {/* Toggle options dropdown button menu */}
         <button
           ref={optionsBtnRef}
           type="button"
@@ -226,6 +286,9 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
 
       {/* Tiptap Rich Text Element Area */}
       <div className="flex-1 min-w-0 pl-1 py-0 h-max">
+        {/* ==========================================
+            RIGHT ACTION WORKSPACE LAYER (TEXT CANVAS CORE)
+            ========================================== */}
         <EditorContent
           editor={editor}
           className={`w-full font-sans text-base leading-relaxed m-0
@@ -243,7 +306,9 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
         />
       </div>
 
-      {/* Notion Options Portal Dropdown Menu */}
+      {/* ==========================================
+              PORTAL DIALOGUE POPUP BLOCK TRACK CARD
+              ========================================== */}
       {openDialog &&
         createPortal(
           <div
@@ -259,6 +324,7 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Action Item: Delete Block */}
             <button
               type="button"
               onClick={() => {
@@ -274,7 +340,7 @@ export const SortableParagraphBlock: React.FC<SortableParagraphBlockProps> = ({
               <span>Delete Block</span>
             </button>
 
-            {/* Section: Color Options */}
+            {/* Action Item: Color Sorting Dropdowns */}
             <div className="flex items-center justify-between w-full">
               <SortableDropdown
                 darkMode={darkMode}

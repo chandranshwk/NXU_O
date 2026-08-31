@@ -1,3 +1,16 @@
+/**
+ * @file DocumentEditorDoc.tsx
+ * @component DocumentEditorDoc
+ * @description The high-performance layout workspace layer for structured notebooks.
+ * Combines full-canvas text editors with absolute-positioned floating stickies, while embedding
+ * custom window tracking utilities like Ctrl+Wheel pinch-to-zoom scaling hooks.
+ *
+ * @architecture
+ * - Leverages the specialized modular integration hook `useStickyEditor` to boot editor instances.
+ * - Bridges the canvas layer with global workspace items mapped from `useWorkspace`.
+ * - Uses hardware-accelerated CSS 3D scale transforms to manipulate active viewport sizes dynamically.
+ */
+
 import { useOutletContext } from "react-router-dom";
 import { EditorContent } from "@tiptap/react";
 import "regenerator-runtime/runtime";
@@ -11,59 +24,75 @@ import StickyNote from "./StickyNotes";
 import { useWorkspace } from "../contexts/workspaceContext";
 
 interface props {
+  /** Size variant rule switching between a standard 100% layout and a narrow paper column */
   size: "full" | "short";
+  /** Raw markdown content payload strings synced down from backend database layers */
   content: string;
+  /** Toggles input response parameters across the field canvas layout ('text' | 'draw') */
   mode?: "text" | "draw";
 }
 
-const DocumentEditorDoc: React.FC<props> = ({
+export const DocumentEditorDoc: React.FC<props> = ({
   size,
   content,
   mode = "text",
 }) => {
+  /** Accesses dark mode state provided globally by the main layout shell */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
+
+  /** Central state context tracking font parameters, line spans, and layout indices */
   const context = useEditorContext();
+
+  /** Accesses general text configs, line spacing records, and default colors */
   const settings = useSettings();
+
+  /** Unpacks active absolute sticky data collections from the central spatial store */
   const { items, setItems } = useWorkspace();
 
-  // Localized Isolated Zoom State Engine (1 = 100%)
+  /** Localized Isolated Zoom State Engine (1 = 100% base scaling factor) */
   const [zoomScale, setZoomScale] = useState<number>(1);
 
+  // Set default foreground hex strings depending on the color mode
   settings.setDefaultColor(
     size === "full" ? (darkMode ? "#fff" : "#000") : "#000",
   );
 
+  // Initialize the text editing lifecycle via custom interceptor hooks
   const { editor, isTransitioningRef } = useStickyEditor({
     initialContent: content,
     darkMode: darkMode,
     autofocus: "end",
-    trackHeaders: true,
+    trackHeaders: true, // Automates section monitoring for outline views
   });
 
-  // Global Window-Level Interception Fix
+  // ==========================================
+  // INTERCEPTOR: CTRL + WHEEL PINCH ZOOM
+  // ==========================================
+  /**
+   * Catches global scrolling actions inside capture execution frames.
+   * When the Control key is held, it converts mouse wheel ticks into canvas scaling
+   * limits, locking the zoom bounds between 50% and 200%.
+   */
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
-      // Check if Ctrl key is pressed
       if (e.ctrlKey) {
-        // Find if the scroll is happening inside our editor container view path
         const isInsideEditor = (e.target as HTMLElement).closest(
           '[data-id="main-scroll-viewport"]',
         );
 
         if (isInsideEditor) {
           e.preventDefault();
-          e.stopPropagation(); // Stop Tiptap from hijacking the mouse stroke data
+          e.stopPropagation(); // Stifles TipTap selection mechanics from scrolling the screen
 
           setZoomScale((prevScale) => {
             const delta = e.deltaY < 0 ? 0.05 : -0.05;
-            // Bound the scaling metrics strictly between 50% and 200%
             return Math.min(Math.max(prevScale + delta, 0.5), 2.0);
           });
         }
       }
     };
 
-    // "true" forces the browser event handler into the absolute earliest capture phase execution path
+    // 'capture: true' hooks the listener into the primary top-level input phase
     window.addEventListener("wheel", handleGlobalWheel, {
       passive: false,
       capture: true,
@@ -74,6 +103,10 @@ const DocumentEditorDoc: React.FC<props> = ({
     };
   }, []);
 
+  // ==========================================
+  // LIFECYCLE 1: MARKUP CONTENT UPDATE RE-SYNC
+  // ==========================================
+  /** Syncs editor blocks cleanly if external document streams modify data content variables */
   useEffect(() => {
     if (!editor) return;
     const currentHTML = editor.getHTML();
@@ -86,19 +119,31 @@ const DocumentEditorDoc: React.FC<props> = ({
     }
   }, [content, editor, isTransitioningRef]);
 
+  // ==========================================
+  // LIFECYCLE 2: CANVAS MODE EDITABLE LOCKS
+  // ==========================================
+  /** Inactivates typing properties inside TipTap when switching out of text modes */
   useEffect(() => {
     if (!editor) return;
     editor.setOptions({ editable: mode === "text" });
   }, [mode, editor]);
 
+  /** Viewport tracking coordinates used to anchor table property selector grids */
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
   } | null>(null);
+  /** Dismisses active popover contextual cell menus */
   const closeContextMenu = () => setContextMenu(null);
 
+  // ==========================================
+  // CONTROL FOCUS COORDINATION MANAGER
+  // ==========================================
+  /** Intercepts background mouse down vectors to lock formatting focus flags */
   const claimDocumentToolbarFocus = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
+
+    // Safety guard: Drop intercept calculations if targeting floating card controls
     if (
       target.closest("[data-sticky-note]") ||
       target.closest(".SimpleToolBar") ||
@@ -119,7 +164,7 @@ const DocumentEditorDoc: React.FC<props> = ({
       onMouseDown={claimDocumentToolbarFocus}
       className={`flex flex-col overflow-hidden transition-all outline-none duration-200 relative ${
         mode === "draw"
-          ? "pointer-events-none select-none opacity-85"
+          ? "pointer-events-none select-none opacity-85" // Restrict clicks when whiteboard layers engage
           : "pointer-events-auto"
       } ${
         size === "full"
@@ -127,6 +172,7 @@ const DocumentEditorDoc: React.FC<props> = ({
           : "w-2/3 h-[120vh] top-0 border-5 border-zinc-800 relative left-[16.666667%]"
       } ${size === "short" ? "bg-white" : darkMode ? "bg-[#141414]" : "bg-white"}`}
     >
+      {/* PRIMARY ACTIVE INTERACTION SCROLL VIEWPORT PATH */}
       <div
         className="flex-1 h-[120vh] overflow-y-auto px-10 py-10 focus:outline-none relative"
         data-id="main-scroll-viewport"
@@ -156,15 +202,18 @@ const DocumentEditorDoc: React.FC<props> = ({
           }
         }}
       >
-        {/* Isolated Canvas Transform Box */}
+        {/* ==========================================
+            GPU SCALING CORE LAYOUT TRANSLATION CONTAINER
+            ========================================== */}
         <div
           style={{
             transform: `scale(${zoomScale})`,
             transformOrigin: "top center",
-            transition: "transform 0.05s ease-out",
+            transition: "transform 0.05s ease-out", // Snappy alignment feedback transitions
           }}
           className="w-full origin-top"
         >
+          {/* Loop and draw floating overlay sticky elements on top of raw pages */}
           {items.map((item, idx) => (
             <StickyNote
               key={item.id}
@@ -179,6 +228,7 @@ const DocumentEditorDoc: React.FC<props> = ({
             />
           ))}
 
+          {/* Core editor typing pane container view */}
           <EditorContent
             editor={editor}
             className={`w-full ${
@@ -201,6 +251,7 @@ const DocumentEditorDoc: React.FC<props> = ({
         </div>
       </div>
 
+      {/* FLOATING RIGHT-CLICK TABLE SETTING MODALS */}
       {contextMenu && (
         <ContextMenu
           contextMenu={contextMenu}

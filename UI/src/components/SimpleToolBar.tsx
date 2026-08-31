@@ -1,3 +1,16 @@
+/**
+ * @file SimpleToolBar.tsx
+ * @component SimpleToolBar
+ * @description The layout orchestrator for the main text formatting toolbar.
+ * Combines button arrays, color swatches, background highlighter grids, size fields,
+ * and font pickers into a unified control rail.
+ *
+ * @architecture
+ * - Scrapes default tool elements dynamically via the `getEditorTools` layout asset utility.
+ * - Computes button activation indicators using a centralized conditional switch branch map.
+ * - Wraps isolated palette grid items inside individual `<ToolbarDropdown />` chassis modules.
+ */
+
 import React, { useEffect, useState } from "react";
 import { getEditorTools } from "../assets/Tools";
 import type { editorContextType } from "../contexts/editorContext";
@@ -8,21 +21,35 @@ import { PiTextAUnderline } from "react-icons/pi";
 import TablePickerDropdown from "./TablePickerDropdown";
 import { FaHighlighter } from "react-icons/fa";
 import { COLORS, FONTS } from "../assets/assets";
-import { ColorNames, FontNames, HighLighterNames } from "../assets/utils";
+import { ColorNames, FontNames, HighLighterNames } from "../assets/Utils";
 
 interface props {
+  /** Shared dark mode setting flag used to toggle UI themes */
   darkMode: boolean;
+  /** Configuration filter sorting whether to load lightweight or fully loaded tool arrays */
   type: "simple" | "rich";
+  /** Sizing variant rule determining full width bar extensions vs compact floating layout panels */
   size: "small" | "full";
+  /** Shared text context manager holding editor instances and styling triggers */
   context: editorContextType;
 }
 
-// =========================================================================
-// MAIN WORKSPACE TOOLBAR CONTROLLER LAYOUT
-// =========================================================================
+/**
+ * @component SimpleToolBar
+ * @description Renders the formatting bar, synchronises state indicators, and pipes
+ * typography, font color, selection grid highlighting, and dimension commands down to TipTap.
+ */
 const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
+  /** Extracts functional metadata button arrays tailored matching formatting mode configs */
   const ELEMENTS = getEditorTools(type, context);
 
+  // ==========================================
+  // LOOK-UP VALUE STATUS ACTIVATION TRAP
+  // ==========================================
+  /**
+   * Compares incoming button identities with active editor context variables,
+   * returning flags used to light up matching interface items.
+   */
   const checkIsActive = (name: string): boolean => {
     switch (name) {
       case "Bold":
@@ -64,8 +91,16 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
     }
   };
 
+  /** Local state tracking current text input inside the font size entry box */
   const [fSize, setSize] = useState<string>(context.fontSize);
 
+  // ==========================================
+  // LIFECYCLE: SIZE SELECTION SYNCHRONIZER
+  // ==========================================
+  /**
+   * Uses low-priority microtask loops to sync local size variables with external
+   * text changes, preventing typing latency inside the text editor pane.
+   */
   useEffect(() => {
     if (context.fontSize) {
       queueMicrotask(() => {
@@ -74,6 +109,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
     }
   }, [context.fontSize]);
 
+  // Structural Render Guard: Prevent draw actions if active connection hooks clear out
   if (!context) return null;
 
   return (
@@ -92,9 +128,11 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         }
       `}
     >
-      {/* DROPDOWN 1: UNIQUE TEXT COLOR OPTIONS */}
+      {/* ==========================================
+          DROPDOWN 1: TEXT COLOR SELECTOR GRID
+          ========================================== */}
       <ToolbarDropdown
-        type="blocks"
+        type="blocks" // Displays a compact icon matrix layout grid format
         icon={
           <div className="flex items-center justify-center p-0.5">
             <PiTextAUnderline
@@ -122,6 +160,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
             idx={idx}
           />
         ))}
+        {/* Reset Action: Erases text styles back to theme default conditions */}
         <button
           onClick={() => {
             context.editor?.chain().focus().unsetColor().run();
@@ -137,7 +176,9 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         </button>
       </ToolbarDropdown>
 
-      {/* DROPDOWN: UNIQUE HIGHLIGHTER MARKER OPTIONS */}
+      {/* ==========================================
+          DROPDOWN 2: HIGHLIGHTER BACKGROUND SELECTOR
+          ========================================== */}
       <ToolbarDropdown
         type="blocks"
         icon={
@@ -167,6 +208,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
             idx={idx}
           />
         ))}
+        {/* Reset Action: Clear custom background textures back to transparency bounds */}
         <button
           onClick={() => {
             context.editor?.chain().focus().unsetBackgroundColor().run();
@@ -182,6 +224,9 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         </button>
       </ToolbarDropdown>
 
+      {/* ==========================================
+          INPUT BLOCK 3: NUMERIC FONT SIZE BOX FIELD
+          ========================================== */}
       <input
         type="text"
         value={fSize}
@@ -189,21 +234,17 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
           setSize(e.target.value);
         }}
         onKeyDown={(e) => {
-          // Check if the user pressed the Enter key
           if (e.key === "Enter") {
-            // 1. Sanitize the string input to get raw numeric input digits
-            const numericValue = parseInt(fSize);
-
-            // 2. Fallback check if the string contains no parseable numbers
+            const numericValue = parseInt(fSize, 10);
             if (isNaN(numericValue)) return;
 
             const sizeString = `${numericValue}px`;
 
-            // 3. Fire the execution chain cleanly to context and editor canvas
+            // Commit sizing variables directly down to text highlight layers
             context.editor?.chain().focus().setFontSize(sizeString).run();
             context.setFontSize(sizeString);
 
-            // 4. Optional: Blur the input field to remove active keyboard focus
+            // Strip active keyboard cursor focus to complete inputs cleanly
             e.currentTarget.blur();
           }
         }}
@@ -216,7 +257,9 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         }`}
       />
 
-      {/* CONTAINER LAYER 3: THE TYPOGRAPHY FONT PICKER DROPDOWN */}
+      {/* ==========================================
+          DROPDOWN 4: TYPOGRAPHY FAMILY SELECTION RAIL (FONTS)
+          ========================================== */}
       <ToolbarDropdown
         type="col"
         icon={

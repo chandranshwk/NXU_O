@@ -1,3 +1,16 @@
+/**
+ * @file RightSideDocument.tsx (Snippet 1)
+ * @component RightSideDocument
+ * @description The main layout section on the right side of the notebook editor canvas.
+ * It manages the tabs for notebook sections, local title renaming operations, and
+ * section creation pipelines.
+ *
+ * @architecture
+ * - Synchronises active workspace page data arrays using references from `useNotebookStore`.
+ * - Employs a focus hook array setup to switch section labels between text inputs and static triggers on F2 keypress events.
+ * - Seamlessly respects global `zenMode` modifiers to collapse the section bar layout when focused.
+ */
+
 import React, { useState, useEffect } from "react";
 import type {
   MockNotebook,
@@ -13,12 +26,19 @@ import { CanvasNodeWrapper } from "../contexts/CanvasNodeWrapper";
 import { NodeContentFactory } from "../Extensions/NodeContentFactory";
 
 interface RightSideDocumentProps {
+  /** Shared dark mode setting flag used to switch visual palette ranges */
   darkMode: boolean;
+  /** Active notebook repository object containing current structural sub-trees */
   activeNotebook: MockNotebook | null;
+  /** The target parent section model currently selected by the user */
   currentSection: MockSection | undefined;
+  /** Active document sub-page meta layer containing content card nodes */
   currentPage: MockPage | undefined;
+  /** Index mapping position of the section tab actively opened in viewports */
   activeSectionIdx: number;
+  /** State modifier updating targeted horizontal tab section indices */
   setActiveSectionIdx: (idx: number) => void;
+  /** Navigation router utility mapping sub-page transitions via query string metrics */
   handleNavigation: (pageId: string) => void;
 }
 
@@ -31,21 +51,36 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
   setActiveSectionIdx,
   handleNavigation,
 }) => {
-  // Clean local inline text editing tracking states
+  /** Tracks the specific string ID of the notebook section actively being renamed */
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  /** Local text input state tracking active typing buffers inside section renames */
   const [renameValue, setRenameValue] = useState("");
+  /** Local text input state tracking active typing buffers inside document title inputs */
   const [localTitle, setLocalTitle] = useState("");
 
-  // Sync title text whenever the selected page reference shifts
+  // ==========================================
+  // LIFECYCLE: TITLE VALUE DISPLAY SYNCHRONIZER
+  // ==========================================
+  /**
+   * Listens for sub-page transition operations. Automatically refreshes
+   * local input values with updated page titles when reference handles change out.
+   */
   useEffect(() => {
     if (currentPage?.title) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLocalTitle(String(currentPage.title));
+      setTimeout(() => {
+        setLocalTitle(String(currentPage.title));
+      }, 0);
     } else {
-      setLocalTitle("");
+      setTimeout(() => {
+        setLocalTitle("");
+      }, 0);
     }
   }, [currentPage?.id, currentPage?.title]);
 
+  // ==========================================
+  // STATE ACTION: COMMIT SUB-PAGE TITLE CHANGES
+  // ==========================================
+  /** Validates heading input strings and logs modifications back into global notebook store structures */
   const commitTitleChange = () => {
     const trimmed = localTitle.trim();
     if (
@@ -63,11 +98,14 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
     }
   };
 
+  /** Extracts zen layout options directly from app universal configuration stores */
   const { zenMode, setZenMode } = useSettings();
 
   return (
     <div className="h-full flex-1 flex flex-col overflow-hidden">
-      {/* Top Row: Horizontal Workflow Section Management Tabs */}
+      {/* ==========================================
+          TOP RAIL: HORIZONTAL WORKFLOW SECTION TABS BAR
+          ========================================== */}
       {!zenMode && (
         <div
           className={`h-max flex items-end border-b gap-1 pt-1.5 shrink-0 ${
@@ -80,6 +118,9 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
             const isSectionSelected = idx === activeSectionIdx;
             const isEditingThisSection = editingSectionId === section.id;
 
+            /* ==========================================
+               BRANCH A: ACTIVE EDITING RE-LABEL INPUT BLOCK
+               ========================================== */
             if (isEditingThisSection) {
               return (
                 <input
@@ -118,11 +159,12 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
                       }
                       setEditingSectionId(null);
                     } else if (e.key === "Escape") {
-                      setEditingSectionId(null);
+                      setEditingSectionId(null); // Dismiss changes safely
                     }
                   }}
                   style={{
                     borderBottomColor: section.colorHex,
+                    // Linearly grows input fields to fit variable length title strings smoothly
                     width: `${Math.max(renameValue.length * 8 + 24, 90)}px`,
                   }}
                   className={`px-4 py-2 text-xs font-semibold border-b-2 outline-none bg-transparent transition-all ${
@@ -134,9 +176,13 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
               );
             }
 
+            /* ==========================================
+               BRANCH B: STATIC TAB BUTTON LAYOUT ELEMENT
+               ========================================== */
             return (
               <button
                 key={section.id}
+                type="button"
                 onClick={() => {
                   setActiveSectionIdx(idx);
                   if (section.pages && section.pages.length > 0) {
@@ -144,6 +190,7 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
                   }
                 }}
                 onKeyDown={(e) => {
+                  // Capture F2 triggers to swap labels over to text input fields
                   if (e.key === "F2") {
                     setEditingSectionId(section.id);
                     setRenameValue(section.title);
@@ -152,7 +199,7 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
                 style={{
                   borderBottomColor: isSectionSelected
                     ? section.colorHex
-                    : "transparent",
+                    : "transparent", // Highlight selected tabs using custom section indicator bars
                 }}
                 className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all outline-none ${
                   isSectionSelected
@@ -170,8 +217,11 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
             );
           })}
 
-          {/* Create New Section Tab Layout Node Interface Block */}
+          {/* ==========================================
+              ACTION ELEMENT: APPEND NEW NOTEBOOK SECTION TABS LAYER
+              ========================================== */}
           <button
+            type="button"
             onClick={() => {
               const defaultSectionTitle = `Section ${activeNotebook ? activeNotebook.sections.length + 1 : 0}`;
               const { addSectionToNotebook } = useNotebookStore.getState();
@@ -202,7 +252,10 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
           </button>
         </div>
       )}
-      {/* Infinite Viewport Coordinate Container Layer Floor */}
+
+      {/* ==========================================
+          PRIMARY WORKSPACE CANVAS PANELS LOWER FLOOR
+          ========================================== */}
       <div
         className={`flex-1 relative overflow-hidden px-4 py-2 flex flex-col ${
           darkMode ? "bg-zinc-950" : "bg-zinc-50"
@@ -233,7 +286,9 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
               }`}
             />
 
-            {/* Sub-Header Metadata Layer: Renders Date & Time directly below input string layout */}
+            {/* ==========================================
+                SUB-HEADER METADATA LAYER: TIME STAMPS
+                ========================================== */}
             {(currentPage?.createdDate || currentPage?.createdTime) && (
               <div
                 className={`text-[11px] font-mono mb-1 transition-colors tracking-wide ${
@@ -246,13 +301,14 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
               </div>
             )}
 
-            {/* Underline Layout Bars */}
+            {/* Static alignment background layout divider line */}
             <span
               className={`absolute bottom-6 left-0 h-[1.5px] w-full transition-colors ${
                 darkMode ? "bg-zinc-800" : "bg-zinc-200"
               }`}
             />
 
+            {/* Dynamic expanding accent bar that triggers upon input box focus */}
             <span
               className={`absolute bottom-6 left-0 h-[1.5px] w-full transition-transform duration-300 origin-left scale-x-0 group-focus-within:scale-x-100 ${
                 darkMode ? "bg-zinc-400" : "bg-zinc-700"
@@ -261,14 +317,18 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
           </div>
         )}
 
-        {/* Optional metadata notification below the input field */}
+        {/* Empty title validation helper warning badge */}
         {localTitle.trim() === "" && (
           <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 mt-1 animate-pulse">
             Empty titles default to previous configuration on blur
           </span>
         )}
 
+        {/* ==========================================
+            CONTROL INTERFACE: ZEN MODE TOGGLE ACTION
+            ========================================== */}
         <button
+          type="button"
           onClick={() => setZenMode((prev) => !prev)}
           className={`absolute top-2 right-4 p-2 rounded-md transition-all border outline-none shadow-sm z-20 ${
             darkMode
@@ -282,14 +342,15 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
           </div>
         </button>
 
-        {/* Spatial content blocks and infinite background layers render directly inside here */}
-        {/* Replace the placeholder loop in your RightSideDocument.tsx with this: */}
+        {/* ==========================================
+            SPATIAL MATRIX: INFINITE GEOMETRY CANVAS VIEWPORT
+            ========================================== */}
         <div
           id="infinite-canvas-viewport"
           className="w-full flex-1 relative overflow-hidden"
         >
           <div className="absolute inset-0">
-            {/* Inside your RightSideDocument.tsx file map loop container: */}
+            {/* Loop through absolute node data arrays and spawn their component factory blocks */}
             {currentPage?.nodes &&
               currentPage.nodes.map((node: MockPageNode) => (
                 <CanvasNodeWrapper
@@ -304,6 +365,7 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
                     console.log("Focused node layout item:", id)
                   }
                 >
+                  {/* Dynamic Factory Router maps components based on data signatures (text, calendar, etc.) */}
                   <NodeContentFactory node={node} />
                 </CanvasNodeWrapper>
               ))}

@@ -1,13 +1,33 @@
+/**
+ * @file SectionD.tsx
+ * @component SectionD
+ * @description The configurations panel for interface design presets and cache controls.
+ * Manages editor margin styles and handles destructive cache actions to restore corrupted editor states.
+ *
+ * @architecture
+ * - Leverages the reusable layout template module `<Cards />` to bundle settings rows.
+ * - Employs a text validation pattern (`type="destructive"`) to highlight high-risk action cards.
+ * - Handles local layout options by piping select changes up to parent canvas context wrappers.
+ */
+
 import React, { type SetStateAction } from "react";
 import { Cards } from "../../components/Cards";
 import { FiEye, FiTrash2 } from "react-icons/fi";
 
 interface props {
+  /** Shared dark mode setting flag used to switch interface theme style variables */
   darkMode: boolean;
+  /** Tracks active workspace margin padding selected on screens ('compact' | 'wide') */
   marginPreset: string;
+  /** State modifier updating active text layout constraints */
   setMarginPreset: React.Dispatch<SetStateAction<string>>;
 }
 
+/**
+ * @component SectionD
+ * @description Renders layout preference adjustments targeting scratchpad width variables
+ * and handles the cache wipe action button.
+ */
 const SectionD: React.FC<props> = ({
   darkMode,
   marginPreset,
@@ -15,12 +35,14 @@ const SectionD: React.FC<props> = ({
 }) => {
   return (
     <div className="flex flex-col gap-2 mt-2">
+      {/* Category Section Group Label Title */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 px-1">
         <FiEye className="w-3.5 h-3.5" /> Interface Layout Presets
       </h3>
 
-      {/* POWERTOYS HORIZONTAL CARD 5: MARGIN PADDING PRESET */}
-
+      {/* ==========================================
+          ROW OPTION 1: COLUMN PADDING LAYOUT SELECTOR
+          ========================================== */}
       <Cards
         type="normal"
         title="Scratchpad Column Padding Preset"
@@ -41,15 +63,20 @@ const SectionD: React.FC<props> = ({
         </select>
       </Cards>
 
-      {/* POWERTOYS HORIZONTAL CARD 6: DESTRUCTIVE CACHE CLEAR OVERRIDE */}
-
+      {/* ==========================================
+          ROW OPTION 2: DESTRUCTIVE CACHE PURGE BUTTON
+          ========================================== */}
       <Cards
-        type="destructive"
+        type="destructive" // Applies a red theme tint configuration onto the card housing layout
         title="Destructive Cache Purge"
         description="Instantly clear out all cached scratchpad document storage matrices to fix corrupted text layers."
         darkMode={darkMode}
       >
-        <button className="flex items-center gap-1.5 w-max px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 rounded border border-transparent transition-colors">
+        {/* Destructive Action Trigger */}
+        <button
+          type="button"
+          className="flex items-center gap-1.5 w-max px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 rounded border border-transparent transition-colors"
+        >
           <FiTrash2 className="w-3.5 h-3.5" /> Purge Cache
         </button>
       </Cards>

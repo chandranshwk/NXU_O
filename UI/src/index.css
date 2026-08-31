@@ -1,8 +1,20 @@
+/**
+ * @file fonts-toolbar.css
+ * @description Local typeface registrations and custom style overrides for third-party 
+ * floating formatting toolbars. It implements clean dark-mode palettes and strips out 
+ * default neon shadow glows to guarantee a flat, high-contrast interface.
+ * 
+ * @architecture
+ * - Maps TrueType font bundles (`.ttf`) straight into custom system font family name aliases.
+ * - Targets floating overlay selectors (`.bn-popover`) to strip away box shadows.
+ * - Forces custom amber focus states (`#fbbf24`) onto active rich-text buttons.
+ */
+
 @import url("https://googleapis.com");
-/* Registering the base Aptos Sans Family */
-/* =============================================================
-   PROJECT nxu_o - FINALIZED LOCAL DIRECTORY FONT ARCHITECTURE
-   ============================================================= */
+
+/* ==========================================================================
+   CATEGORY 1: LOCAL DIRECTORY FONT ARCHITECTURE
+   ========================================================================== */
 
 /* 1. APTOS LOCAL */
 @font-face {
@@ -25,7 +37,6 @@
   font-weight: 400;
   font-style: normal;
 }
-
 @font-face {
   font-family: "CalibriLocal";
   src: url("./assets/Fonts/CALIBRIB.TTF") format("truetype");
@@ -47,15 +58,19 @@
   font-style: normal;
 }
 
+/* ==========================================================================
+   CATEGORY 2: FLOATING TOOLBAR OVERRIDES & DARK THEME ALIGNMENTS
+   ========================================================================== */
+
 /* 1. Target the floating popover wrapper to kill the heavy shadow glow */
 .bn-popover,
 [data-component="FormattingToolbar"] {
   box-shadow: none !important;
   filter: drop-shadow(0 0 0 transparent) !important;
-  border: 1px solid #242425 !important; /* Clean, flat border matching your app specs */
+  border: 1px solid #242425 !important; /* Clean, flat border matching app specifications */
 }
 
-/* 2. Enforce your dark theme colors onto the floating menu when app is in dark mode */
+/* 2. Enforce dark theme colors onto the floating menu when the app is in dark mode */
 .dark .bn-popover,
 .dark [data-component="FormattingToolbar"] {
   background-color: #18181b !important;
@@ -63,14 +78,13 @@
   border-color: #242425ab !important;
 }
 
-/* 3. Style the individual mini-buttons inside the floating bar to match your style */
+/* 3. Style the individual mini-buttons inside the floating bar to match app styles */
 .dark [data-component="FormattingToolbar"] button {
   background: transparent !important;
   color: #d4d4d8 !important;
 }
-
 .dark [data-component="FormattingToolbar"] button:hover {
-  background-color: #27272a !important; /* Flat subtle hover state */
+  background-color: #27272a !important; /* Flat, subtle hover state */
   color: #ffffff !important;
 }
 

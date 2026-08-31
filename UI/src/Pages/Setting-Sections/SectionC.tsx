@@ -1,3 +1,16 @@
+/**
+ * @file SectionC.tsx
+ * @component SectionC
+ * @description The configurations panel for global application keyboard shortcuts.
+ * Loops through configurable macro commands (zen mode, canvas switches, view hotkeys)
+ * and links edit buttons to the central key recording overlay menu.
+ *
+ * @architecture
+ * - Renders a collection of preference elements via the reusable `<Cards />` layout wrapper.
+ * - Parses system shortcut combinations (e.g. "Ctrl-Shift-K") into standalone `<kbd>` key-caps.
+ * - Broadcasts layout references up to parent settings monitors to launch hotkey recording sessions.
+ */
+
 import React, { type SetStateAction } from "react";
 import { FaPencilAlt, FaSubscript } from "react-icons/fa";
 import { MdShortcut } from "react-icons/md";
@@ -16,13 +29,23 @@ import { LuFolderTree } from "react-icons/lu";
 import { v4 as uuidv4 } from "uuid";
 
 interface props {
+  /** Shared dark mode setting flag used to switch visual palette states */
   darkMode: boolean;
+  /** Global settings context tracking all active user-configured macro strings */
   settings: settingsContextType;
+  /** State modifier showing or hiding the floating keycap recorder modal overlay */
   setOpenKeyEditor: React.Dispatch<SetStateAction<boolean>>;
+  /** State modifier forwarding the name of the target hotkey being adjusted */
   setTitleEditor: React.Dispatch<SetStateAction<string>>;
+  /** State modifier loading active hotkey combinations into recording buffers */
   setKeys: React.Dispatch<SetStateAction<string>>;
 }
 
+/**
+ * @component SectionC
+ * @description Compiles hotkey metadata entries, handles uppercase formatting strings,
+ * and connects click triggers to launch the shortcut editor.
+ */
 const SectionC: React.FC<props> = ({
   darkMode,
   settings,
@@ -30,6 +53,7 @@ const SectionC: React.FC<props> = ({
   setTitleEditor,
   setKeys,
 }) => {
+  /** Static collection indexing available system macro actions, descriptors, and design icons */
   const sidebarShortcuts = [
     {
       label: "Open NXU_O Key Formatting",
@@ -102,10 +126,12 @@ const SectionC: React.FC<props> = ({
   ];
   return (
     <div className="flex flex-col gap-2 mt-2">
+      {/* Category Section Group Label Title */}
       <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 px-1">
         <MdShortcut className="w-3.5 h-3.5" /> Activation Shortcuts
       </h3>
 
+      {/* Loop and render individual card lines */}
       {sidebarShortcuts.map((item) => {
         const uniqueRowKey = `row-${uuidv4()}`;
         return (
@@ -123,20 +149,24 @@ const SectionC: React.FC<props> = ({
               </div>
             }
           >
+            {/* ==========================================
+                RIGHT CARD RAIL: RENDERED HOTKEY KEYCAP BADGES
+                ========================================== */}
             <div className="flex items-center gap-1.5">
               {item.keys.split("-").map((key, idx) => (
                 <kbd
                   key={idx}
                   className="h-9 px-3 rounded-md flex items-center justify-center bg-[#45a9f5] text-white shadow-[0_2px_0_#2b8cd7] font-sans text-xs font-semibold select-none border-b border-white/20 min-w-"
                 >
+                  {/* Capitalize first characters of text keys safely */}
                   {key.charAt(0).toLocaleUpperCase() +
-                    key.substring(1, key.length)}{" "}
-                  {/* Standard Microsoft Windows Fluent Logo Node */}
+                    key.substring(1, key.length)}
                 </kbd>
               ))}
 
-              {/* Fluent Editing Pen Trigger Button */}
+              {/* Action trigger: Launch shortcut recording modal pane */}
               <button
+                type="button"
                 className={`p-2 rounded-md ml-1 transition-colors ${
                   darkMode
                     ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"

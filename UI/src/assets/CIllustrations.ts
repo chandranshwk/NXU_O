@@ -1,12 +1,28 @@
+/**
+ * @file Illustrations.ts
+ * @description Central layout asset library mapping illustration themes, asset file paths,
+ * and theme-adaptive user interface accent colors.
+ *
+ * @architecture
+ * - Supplies visual theme data and color mapping pairs across workspace selection menus.
+ * - Auto-maps flat asset arrays into index-aligned `illustrationUI` object models.
+ * - Holds accent hex colors to tint active status tags, buttons, and system toggles.
+ */
+
 export interface illustrationUI {
+  /** Sequential identifier index parameter tracking layout positions */
   idx: number;
+  /** Direct public asset storage directory path pointing to graphic files */
   file: string;
+  /** Unique key string identifying the specific aesthetic style family */
   theme: string;
+  /** Clean reader-friendly display label name assigned to the theme option */
   name: string;
+  /** Nested hex string sub-record matching button accents to light vs dark frames */
   ui: { light: string; dark: string };
 }
 
-// I updated the UI colors to provide the "Accent" color for your tags/toggles
+/** Flat config catalog storing asset file pointers, identifiers, and theme-adaptive visual palettes */
 const IllustationAssets = [
   {
     file: "/CIllustration(1).png",
@@ -52,6 +68,10 @@ const IllustationAssets = [
   },
 ];
 
+/**
+ * Compiled array exporting structured illustration objects.
+ * Automatically injects calculated mathematical indexing parameters on top of baseline properties.
+ */
 export const Illustrations: illustrationUI[] = IllustationAssets.map(
   (bg, i) => ({
     idx: i + 1,

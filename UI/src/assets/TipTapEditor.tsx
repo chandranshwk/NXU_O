@@ -16,7 +16,6 @@ import Suggestion from "@tiptap/suggestion";
 
 import type { settingsContextType } from "../contexts/settingsContext";
 import { CustomHeaderExtension } from "../Extensions/CustomHeaderExtension";
-import { CustomToDoExtension } from "../Extensions/CustomToDoExtensions";
 import { CustomImageBlockExtension } from "../Extensions/CustomImageExtension";
 import { suggestionConfig } from "../assets/Suggestion";
 
@@ -52,7 +51,6 @@ export const getEditorExtensions = ({
     orderedList: false,
   }),
   CustomHeaderExtension,
-  CustomToDoExtension,
   CustomImageBlockExtension,
 
   TextAlign.configure({

@@ -24,8 +24,9 @@ const Header: React.FC<HeaderProps> = ({
   const [localValue, setLocalValue] = useState(name);
 
   useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect */
-    setLocalValue(name);
+    setTimeout(() => {
+      setLocalValue(name);
+    }, 0);
   }, [name]);
 
   const forceInputFocus = (e?: React.MouseEvent) => {

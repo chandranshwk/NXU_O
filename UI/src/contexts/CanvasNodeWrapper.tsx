@@ -1,4 +1,16 @@
-// src/components/CanvasNodeWrapper.tsx
+/**
+ * @file CanvasNodeWrapper.tsx
+ * @component CanvasNodeWrapper
+ * @description A structural chassis wrapping absolute-positioned spatial canvas cards.
+ * Provides base infrastructure for 3D translations, border handles, color adjustments,
+ * and dimension overlays.
+ *
+ * @architecture
+ * - Submits geometry adjustments back to `useNotebookStore` stores.
+ * - Outsources operational input processing down to the `useCanvasNodeHandlers` utility hook.
+ * - Dynamically renders resize indicator handles tailored to specific structural component rules.
+ */
+
 import React, { useRef, useState, useEffect } from "react";
 import { useNotebookStore } from "../contexts/notebook";
 import type { MockPageNode } from "../assets/SAMPLE";
@@ -12,24 +24,40 @@ import { useCanvasNodeHandlers } from "./useCanvasNodeHandlers";
 export type NodeComponentType = "text" | "calendar" | "map" | "todo";
 
 export interface CanvasNodeData {
+  /** Uniquely generated identification tracking string */
   id: string;
+  /** Identifies targeted child content block render blueprints */
   type: NodeComponentType;
+  /** Left offset margin coordinate across structural spatial grids */
   x: number;
+  /** Top offset margin coordinate across structural spatial grids */
   y: number;
+  /** Explicit horizontal boundary constraint parameter */
   width: number;
+  /** Explicit vertical boundary constraint parameter */
   height?: number;
+  /** String payload block formatting text or component states */
   content: string;
+  /** Hex configuration value styling card background panels */
   backgroundColor?: string;
 }
 
 interface CanvasNodeWrapperProps {
+  /** Raw spatial geometry metadata object block tracking card configurations */
   node: MockPageNode;
+  /** Directory id linking components straight back to data store tables */
   notebookId: string;
+  /** Section token parameters connecting structural path layers */
   sectionId: string;
+  /** Target page location index layer housing absolute workspace boards */
   pageId: string;
+  /** Shared dark mode setting flag used to modify palette ranges */
   darkMode: boolean;
+  /** Evaluation flag confirming if this card instance holds focus */
   isSelected: boolean;
+  /** Focus assignment callback highlighting frames above neighboring strands */
   onSelect: (id: string) => void;
+  /** Embedded child layout node injected down factory switches */
   children: React.ReactNode;
 }
 
@@ -44,9 +72,13 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     children,
   } = props;
 
+  /** Operational status reporting if card dragging stays active */
   const [isDragging, setIsDragging] = useState(false);
+  /** Operational status reporting if dimension adjustments stay active */
   const [isResizing, setIsResizing] = useState(false);
+  /** Visibility toggle flag governing parameter setting dialogue modal overlays */
   const [dialogOpen, setDialogOpen] = useState(false);
+  /** Bounding box metrics recording spatial footprints before spawning context grids */
   const [dialogRect, setDialogRect] = useState<{
     top: number;
     left: number;
@@ -54,10 +86,14 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     height: number;
   } | null>(null);
 
+  /** Root structural wrapper link capturing element coordinate bounds */
   const nodeRef = useRef<HTMLDivElement>(null);
+  /** Handle tracker anchoring drag click intersections */
   const dragHandleRef = useRef<HTMLDivElement>(null);
+  /** Handle tracker anchoring resize click intersections */
   const resizeHandleRef = useRef<HTMLDivElement>(null);
 
+  // Bind operational inputs to shared motion configuration listeners
   const handlers = useCanvasNodeHandlers({
     ...props,
     setIsDragging,
@@ -69,6 +105,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     resizeHandleRef,
   });
 
+  /** Standard color configuration array matching light vs dark execution surfaces */
   const presetColors: AdaptableColor[] = [
     { name: "White/Charcoal", light: "#ffffff", dark: "#1f1f1f" },
     { name: "Gray", light: "#f3f4f6", dark: "#2d3139" },
@@ -84,6 +121,13 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     { name: "Violet", light: "#f3e8ff", dark: "#3b2261" },
   ];
 
+  // ==========================================
+  // LIFECYCLE: AUTOMATED PALETTE ALIGNER
+  // ==========================================
+  /**
+   * Automatically swaps hex parameters when global system styles transition,
+   * ensuring custom container backdrops match light vs dark themes gracefully.
+   */
   useEffect(() => {
     if (!node.backgroundColor || node.backgroundColor === "transparent") return;
 
@@ -112,6 +156,10 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [darkMode, node.id, notebookId, sectionId, pageId, node.backgroundColor]);
 
+  // ==========================================
+  // ACTIONS: MODAL DIALOGUE PARAMETERS
+  // ==========================================
+  /** Captures DOM rectangle vectors right before drawing parameter menus */
   const handleOpenDialog = (e: React.MouseEvent) => {
     e.stopPropagation();
     const rect = nodeRef.current?.getBoundingClientRect();
@@ -126,6 +174,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     setDialogOpen(true);
   };
 
+  /** Saves modified configuration values back into global application store layers */
   const handleApplyChanges = (
     width: number,
     height: number,
@@ -148,6 +197,9 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
 
   return (
     <>
+      {/* ==========================================
+          PRIMARY CONTAINER SHELL: TRANSLATED MATRIX CARD
+          ========================================== */}
       <div
         ref={nodeRef}
         onPointerDown={handlers.handlePointerDown}
@@ -155,6 +207,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
         onPointerUp={handlers.handlePointerUp}
         style={{
           position: "absolute",
+          // translate3d forces GPU hardware acceleration to ensure fluid motion
           transform: `translate3d(${node.x}px, ${node.y}px, 0)`,
           width: `${node.width}px`,
           height:
@@ -180,6 +233,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
               : "bg-white border-zinc-200 text-zinc-900 hover:border-zinc-300"
         }`}
       >
+        {/* UPPER BORDER DRAG HANDLE PILOT */}
         <CanvasNodeDragHandle
           isDragging={isDragging}
           isSelected={isSelected}
@@ -187,6 +241,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           innerRef={dragHandleRef}
         />
 
+        {/* FLOATING CONTEXT IDENTIFICATION BADGE METADATA BLOCK */}
         <div
           className={`absolute -top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-mono border uppercase z-30 cursor-pointer ${
             darkMode
@@ -198,12 +253,16 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           <span>{node.type}</span>
         </div>
 
+        {/* INTERIOR ACTIVE WORKSPACE CONTENT FACTORY ELEMENT */}
         <div
           className={`w-full h-full select-text relative z-20 mt-2 ${isDragging || isResizing ? "pointer-events-none" : "pointer-events-auto"}`}
         >
           {children}
         </div>
 
+        {/* ==========================================
+            BOTTOM RIGHT RESIZE CORNER TRACK GRIDS
+            ========================================== */}
         <div
           ref={resizeHandleRef}
           onPointerDown={handlers.handleResizeDown}
@@ -211,6 +270,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
             node.type === "text" ? "cursor-ew-resize" : "cursor-se-resize"
           } ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"}`}
         >
+          {/* Text blocks use a vertical line bar tracker; general widgets map diagonal vectors */}
           {node.type === "text" ? (
             <div
               className={`w-1 h-3 rounded-full ${darkMode ? "bg-zinc-600" : "bg-zinc-400"}`}
@@ -244,7 +304,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           )}
         </div>
       </div>
-
+      {/* FLOATING COMPONENT LAYOUT PROPERTY SETTING SHEET OVERLAY */}
       <CanvasNodeSettingsDialog
         isOpen={dialogOpen}
         darkMode={darkMode}
