@@ -93,7 +93,7 @@ export const Settings = () => {
 
   return (
     <>
-      {/* KEYCAP INPUT CAPTURE LAYOVER WINDOW */}
+      {/* KEY-CAP INPUT CAPTURE LAYOVER WINDOW */}
       {openKeyEditor && (
         <KeyEditor
           darkMode={darkMode}
