@@ -11,6 +11,58 @@
  */
 
 import { faker } from "@faker-js/faker";
+import type { MatrixEvent } from "../Helper/CalenderNode";
+
+export const mockMatrixEvents: MatrixEvent[] = [
+  {
+    id: "evt-001",
+    title: "Q3 Project Kickoff",
+    date: "2026-9-9",
+    type: "work",
+  },
+  {
+    id: "evt-002",
+    title: "Dentist Appointment",
+    date: "2026-9-9",
+    type: "personal",
+  },
+  {
+    id: "evt-003",
+    title: "Tax Return Filing",
+    date: "2026-9-15",
+    type: "deadline",
+  },
+  {
+    id: "evt-004",
+    title: "Code Review & Refactoring",
+    date: "2026-9-18",
+    type: "work",
+  },
+  {
+    id: "evt-005",
+    title: "Gym Session & Cardio",
+    date: "2026-9-18",
+    type: "personal",
+  },
+  {
+    id: "evt-006",
+    title: "SaaS Subscription Renewal",
+    date: "2026-9-22",
+    type: "deadline",
+  },
+  {
+    id: "evt-007",
+    title: "Team Sync & Planning",
+    date: "2026-9-28",
+    type: "work",
+  },
+  {
+    id: "evt-008",
+    title: "Dinner with Family",
+    date: "2026-9-30",
+    type: "personal",
+  },
+];
 
 /** Palette index storing structural vibrant headers alongside theme-adaptive soft canvas pastel fills */
 const PRESET_COLORS = [
@@ -103,13 +155,13 @@ const pickRandomColor = (): string => faker.helpers.arrayElement(PRESET_COLORS);
  * @description Populates mock notebook database arrays to simulate real user storage contexts.
  * Provides structural rich text cards alongside a balanced layout of companion interactive widgets.
  *
- * @param {number} [notebookCount=2] - Quantity specifying total master workspace folders to generate.
+ * @param {number} [notebookCount=18] - Quantity specifying total master workspace folders to generate.
  * @param {number} [sectionsPerPage=3] - Quantity specifying section partition branches to attach per entry.
  * @param {number} [pagesPerSection=4] - Quantity specifying page node leaves to stitch under branches.
  * @returns {MockNotebook[]} Array containing populated mock data repository streams.
  */
 export const generateMockNotebookData = (
-  notebookCount: number = 2,
+  notebookCount: number = 18,
   sectionsPerPage: number = 3,
   pagesPerSection: number = 4,
 ): MockNotebook[] => {
@@ -118,7 +170,7 @@ export const generateMockNotebookData = (
 
     return {
       id: notebookId,
-      title: `${faker.commerce.department()} Repository`,
+      title: `${faker.commerce.department()} ${faker.science.chemicalElement().name} ${faker.book.genre()} Repository`,
       sections: Array.from({ length: sectionsPerPage }, (): MockSection => {
         const sectionId = faker.string.uuid();
 

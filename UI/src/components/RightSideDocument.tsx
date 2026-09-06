@@ -257,7 +257,7 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
           PRIMARY WORKSPACE CANVAS PANELS LOWER FLOOR
           ========================================== */}
       <div
-        className={`flex-1 relative overflow-hidden px-4 py-2 flex flex-col ${
+        className={`flex-1 relative overflow-hidden px-4 py-2 flex flex-col canvas-bg ${
           darkMode ? "bg-zinc-950" : "bg-zinc-50"
         }`}
       >

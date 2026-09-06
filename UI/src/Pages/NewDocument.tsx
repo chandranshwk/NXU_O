@@ -167,20 +167,10 @@ const NewDocumentContent = () => {
                 : "bg-zinc-50 border-zinc-200"
             }`}
           >
-            {/* Title Metadata Container */}
-            <div>
-              <h2 className="text-sm font-bold truncate">
-                {activeNotebook.title}
-              </h2>
-              <span className="text-[10px] opacity-40 font-mono block truncate">
-                {activeNotebook.id}
-              </span>
-            </div>
-
             {/* Scrollable Page Button Stream Block */}
             <div className="flex flex-col gap-1.5 overflow-y-auto flex-1">
               <span className="text-[10px] uppercase font-bold tracking-wider opacity-40">
-                Section Pages
+                Pages
               </span>
 
               {currentSection?.pages.map((page: MockPage) => {

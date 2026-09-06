@@ -211,7 +211,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           transform: `translate3d(${node.x}px, ${node.y}px, 0)`,
           width: `${node.width}px`,
           height:
-            node.type === "text"
+            node.type === "text" || node.type === "calendar"
               ? "auto"
               : node.height
                 ? `${node.height}px`
@@ -267,7 +267,11 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           ref={resizeHandleRef}
           onPointerDown={handlers.handleResizeDown}
           className={`absolute bottom-1 right-1 w-3.5 h-3.5 flex items-end justify-end p-0.5 rounded-br-md z-30 transition-opacity duration-150 ${
-            node.type === "text" ? "cursor-ew-resize" : "cursor-se-resize"
+            node.type === "text"
+              ? "cursor-ew-resize"
+              : node.type === "calendar"
+                ? "cursor-default"
+                : "cursor-se-resize"
           } ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"}`}
         >
           {/* Text blocks use a vertical line bar tracker; general widgets map diagonal vectors */}
@@ -275,7 +279,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
             <div
               className={`w-1 h-3 rounded-full ${darkMode ? "bg-zinc-600" : "bg-zinc-400"}`}
             />
-          ) : (
+          ) : !(node.type === "calendar") ? (
             <svg
               width="8"
               height="8"
@@ -301,6 +305,8 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
                 strokeLinecap="round"
               />
             </svg>
+          ) : (
+            <div></div>
           )}
         </div>
       </div>

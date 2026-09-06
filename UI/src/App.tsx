@@ -21,8 +21,9 @@ import Home from "./Pages/Home";
 import ScratchPad from "./Pages/ScratchPad";
 import GraphView from "./Pages/GraphView";
 import Settings from "./Pages/Settings";
-import { useSettings } from "./contexts/settingsContext";
+import { SettingsProvider, useSettings } from "./contexts/settingsContext";
 import NewDocument from "./Pages/NewDocument";
+import { TitleBar } from "./App/TitleBar";
 
 /**
  * @layout Layout
@@ -108,39 +109,42 @@ function Layout() {
   const thumbHover = settings.darkMode ? "#B1B8C1" : "#40526C";
 
   return (
-    <div
-      className={`${settings.darkMode ? "bg-black/95" : "bg-slate-100"} h-screen flex transition-colors duration-200`}
-      style={
-        {
-          "--colorTrack": colorTrack,
-          "--thumbColor": thumbColor,
-          "--thumbHover": thumbHover,
-        } as React.CSSProperties
-      }
-    >
-      {/* Overlay command bar */}
-      {openCommandBar && (
-        <CommandBar
-          darkMode={settings.darkMode}
-          setDarkMode={settings.setDarkMode}
-          isOpen={openCommandBar}
-          onClose={() => setOpenCommandBar(false)}
-        />
-      )}
+    <>
+      <TitleBar />
+      <div
+        className={`${settings.darkMode ? "bg-black/95" : "bg-slate-100"} h-screen flex transition-colors duration-200`}
+        style={
+          {
+            "--colorTrack": colorTrack,
+            "--thumbColor": thumbColor,
+            "--thumbHover": thumbHover,
+          } as React.CSSProperties
+        }
+      >
+        {/* Overlay command bar */}
+        {openCommandBar && (
+          <CommandBar
+            darkMode={settings.darkMode}
+            setDarkMode={settings.setDarkMode}
+            isOpen={openCommandBar}
+            onClose={() => setOpenCommandBar(false)}
+          />
+        )}
 
-      {/* Navigation sidebar */}
-      <Sidebar darkMode={settings.darkMode} />
+        {/* Navigation sidebar */}
+        <Sidebar darkMode={settings.darkMode} />
 
-      {/* Main content workspace area */}
-      <div className="flex-1 overflow-auto ">
-        <Outlet
-          context={{
-            darkMode: settings.darkMode,
-            setDarkMode: settings.setDarkMode,
-          }}
-        />
+        {/* Main content workspace area */}
+        <div className="flex-1 overflow-auto ">
+          <Outlet
+            context={{
+              darkMode: settings.darkMode,
+              setDarkMode: settings.setDarkMode,
+            }}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -166,7 +170,11 @@ const router = createHashRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <SettingsProvider>
+      <RouterProvider router={router} />
+    </SettingsProvider>
+  );
 }
 
 export default App;

@@ -175,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
         animate={{
           width: isOpen ? "240px" : "55px",
         }}
-        className={`relative h-[calc(100vh-1rem)] justify-evenly gap-2 m-2 mt-2 mx-1 flex flex-col rounded-lg transition-colors duration-300 overflow-visible z-50 border-0`}
+        className={`relative h-[calc(100vh-3rem)] justify-evenly gap-2 m-2 mt-2 mx-1 flex flex-col rounded-lg transition-colors duration-300 overflow-visible z-50 border-0`}
       >
         {/* ==========================================
             TOP HEADER AREA: WORKSPACE SWAPPER TRACK CARD

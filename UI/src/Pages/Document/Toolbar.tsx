@@ -311,40 +311,6 @@ const Toolbar = () => {
       />
 
       {/* ==========================================
-          TRACK SYSTEM A: RICH TEXT FORMATTING BUTTONS LOOP
-          ========================================== */}
-      <div className="flex items-center gap-1">
-        {ELEMENTS.map((el, idx) => {
-          const isActive = checkIsActive(el.name, context);
-          return (
-            <button
-              key={idx}
-              type="button"
-              title={el.name}
-              aria-label={el.name}
-              className={`p-2 rounded transition-colors duration-150 outline-none ${
-                isActive
-                  ? "bg-blue-500 text-white shadow-inner font-semibold"
-                  : `${darkMode ? "hover:bg-white hover:text-black" : "hover:bg-zinc-950 hover:text-white"}`
-              }`}
-              onClick={() => {
-                el.onClick(context.editor!, context);
-              }}
-            >
-              <div className="w-4 h-4 flex items-center justify-center text-base">
-                {el.icon}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Vertical partitioning layout line */}
-      <div
-        className={`w-px h-6 mx-2 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
-      />
-
-      {/* ==========================================
           TRACK SYSTEM B: WHITEBOARD SPATIAL CONTROL BUTTONS LOOP
           ========================================== */}
       <div className="flex items-center gap-1">

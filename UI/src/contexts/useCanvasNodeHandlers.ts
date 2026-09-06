@@ -65,7 +65,7 @@ export const useCanvasNodeHandlers = ({
   const contentFloorRef = useRef<number>(0);
 
   // ==========================================
-  // 🖲️ INTERACTION 1: CARD DRAG POINTER DOWN
+  // INTERACTION 1: CARD DRAG POINTER DOWN
   // ==========================================
   /**
    * Captures screen metrics when clicking drag handles. Locks pointer tracking
@@ -96,7 +96,7 @@ export const useCanvasNodeHandlers = ({
   };
 
   // ==========================================
-  // 📐 INTERACTION 2: POINTER MOVE TRANSLATION
+  // INTERACTION 2: POINTER MOVE TRANSLATION
   // ==========================================
   /**
    * Tracks moving trajectories. Computes positioning offsets during drag frames,
@@ -156,7 +156,7 @@ export const useCanvasNodeHandlers = ({
           : Math.max(80, rawDraggedHeight);
 
       const { updateNodeSize } = useNotebookStore.getState();
-      if (updateNodeSize) {
+      if (updateNodeSize && node.type !== "calendar") {
         updateNodeSize(
           notebookId,
           sectionId,
@@ -170,7 +170,7 @@ export const useCanvasNodeHandlers = ({
   };
 
   // ==========================================
-  // 🔓 INTERACTION 3: RELEASE MOUSE POINTER UP
+  // INTERACTION 3: RELEASE MOUSE POINTER UP
   // ==========================================
   /** Unlocks active pointer bindings and resets interaction tracking states safely */
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -182,7 +182,7 @@ export const useCanvasNodeHandlers = ({
   };
 
   // ==========================================
-  // 📐 INTERACTION 4: CORNER RESIZE POINTER DOWN
+  // INTERACTION 4: CORNER RESIZE POINTER DOWN
   // ==========================================
   /** Captures element shapes and content boundaries immediately when sizing drags engage */
   const handleResizeDown = (e: React.PointerEvent<HTMLDivElement>) => {

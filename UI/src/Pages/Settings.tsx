@@ -106,24 +106,10 @@ export const Settings = () => {
 
       <div className="overflow-y-hidden">
         {/* Persistent engine version tag anchor decoration */}
-        <div className="absolute bottom-5 right-10 flex items-center gap-4 z-50 text-[10px] px-1.5 py-2 rounded font-mono font-medium bg-zinc-500/10 text-zinc-400">
-          v1.0.0 NXU_O Engine
-        </div>
-
-        {/* STICKY TOP BAR TITLE CARD */}
-        <div
-          className={`uppercase w-full z-20 h-max flex justify-center tracking-widest border-b py-5 font-semibold fixed top-0 shrink-0 ${
-            darkMode
-              ? "bg-[#141414] text-zinc-100 border-zinc-800/80 shadow-lg shadow-zinc-950/20"
-              : "bg-[#f4f4f5] text-zinc-800 border-zinc-200 shadow-sm shadow-zinc-200/20"
-          }`}
-        >
-          Settings Panel
-        </div>
 
         {/* MAIN PANEL WORKSPACE CONTAINER */}
         <div
-          className={`w-[calc(50%+15rem)] mt-16 overflow-x-hidden relative left-[calc(15%+3rem)] border h-full flex-1 py-6 px-4 transition-all duration-200 overflow-y-auto ${
+          className={`w-[calc(50%+15rem)] overflow-x-hidden relative left-[calc(15%+3rem)] border h-[calc(100%+5rem)] mb-10 flex-1 py-6 px-4 transition-all duration-200 overflow-y-auto ${
             darkMode
               ? "bg-[#141414] text-zinc-100 border-zinc-800/80 shadow-zinc-950/40"
               : "bg-[#f4f4f5] text-zinc-800 border-zinc-200 shadow-zinc-200/50"

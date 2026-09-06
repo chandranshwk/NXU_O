@@ -117,7 +117,7 @@ export const useNotebookStore = create<NotebookState>()(
       initializeData: () => {
         // Guard clause: Block execution if state arrays hold hydrated parameters
         if (get().notebooks.length > 0) return;
-        const data = generateMockNotebookData(3, 4, 5);
+        const data = generateMockNotebookData(18, 5, 5);
         set({ notebooks: data });
       },
 

@@ -13,7 +13,6 @@
 import { useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import type { MockSection } from "../assets/SAMPLE";
 import { useNotebookStore } from "../contexts/notebook";
 
 const Home = () => {
@@ -37,7 +36,7 @@ const Home = () => {
 
   return (
     <div
-      className={`p-8 w-full min-h-screen transition-colors duration-200 ${
+      className={`p-8 w-full mb-10 min-h-screen transition-colors duration-200 ${
         darkMode ? "bg-zinc-950 text-white" : "bg-gray-50 text-gray-800"
       }`}
     >
@@ -68,76 +67,112 @@ const Home = () => {
       {/* ==========================================
           WORKSPACE GRID LAYER (NOTEBOOK REPOSITORY)
           ========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {notebooks.map((notebook) => (
-          <div
-            key={notebook.id}
-            onClick={() => navigate(`document/${notebook.id}`)}
-            className={`border rounded-xl p-5 shadow-sm transition-all cursor-pointer hover:border-blue-500/50 ${
-              darkMode
-                ? "bg-zinc-900 border-zinc-800"
-                : "bg-white border-gray-200"
-            }`}
-          >
-            {/* Card Metadata Header Block */}
-            <div className="mb-4">
-              <span
-                className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full ${
-                  darkMode
-                    ? "bg-zinc-800 text-zinc-400"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
-                Notebook
-              </span>
-              <h2 className="text-xl font-bold mt-1.5">{notebook.title}</h2>
-              <p className="text-xs text-zinc-500 font-mono mt-0.5">
-                {notebook.id}
-              </p>
-            </div>
+      {/* ========================================================= */}
+      {/* PINTEREST MASONRY WRAPPER */}
+      {/* ========================================================= */}
+      <div className="columns-4 gap-6 p-6 w-full space-y-6 select-none">
+        {notebooks.map((notebook) => {
+          const totalPages = notebook.sections.reduce(
+            (acc, s) => acc + s.pages.length,
+            0,
+          );
+          const sectionCount = notebook.sections.length;
 
-            {/* Embedded Structural Nested Sections Stream */}
-            <div className="flex flex-col gap-4 mt-2">
-              {notebook.sections.map((section: MockSection) => (
+          return (
+            <div
+              key={notebook.id}
+              onClick={() => navigate(`document/${notebook.id}`)}
+              /* break-inside-avoid-column prevents the notebook from snapping in half between columns */
+              className="break-inside-avoid-column relative group/notebook w-full inline-block cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:rotate-[0.5deg]"
+              style={{ perspective: "1000px" }}
+            >
+              {/* ========================================================= */}
+              {/* 1. EXPOSED STACKED PAPER SHEETS */}
+              {/* ========================================================= */}
+              <div
+                className={`absolute inset-y-1 right-px left-3.75 rounded-r-md border-y border-r z-0 transition-transform duration-300 group-hover/notebook:translate-x-0.5
+          ${darkMode ? "bg-zinc-800 border-zinc-700/60 shadow-[inset_-3px_0_6px_rgba(0,0,0,0.3)]" : "bg-zinc-50 border-zinc-200 shadow-[inset_-3px_0_4px_rgba(0,0,0,0.05)]"}`}
+              >
                 <div
-                  key={section.id}
-                  className="border-l-2 pl-4 py-1"
-                  style={{ borderLeftColor: section.colorHex }}
+                  className={`absolute right-0.75 inset-y-0 w-px ${darkMode ? "bg-zinc-700/40" : "bg-zinc-200"}`}
+                />
+                <div
+                  className={`absolute right-1.25 inset-y-0 w-px ${darkMode ? "bg-zinc-700/20" : "bg-zinc-300/60"}`}
+                />
+              </div>
+
+              {/* ========================================================= */}
+              {/* 2. FRONT HARDCOVER ASSEMBLY */}
+              {/* ========================================================= */}
+              <div
+                className={`relative z-10 flex h-full rounded-r-xl rounded-l-[3px] overflow-hidden border-y border-r transition-shadow duration-300
+            ${
+              darkMode
+                ? "bg-zinc-900 border-zinc-800/80 shadow-[4px_8px_20px_rgba(0,0,0,0.4)] group-hover/notebook:shadow-[12px_16px_32px_rgba(0,0,0,0.5)] group-hover/notebook:border-zinc-700"
+                : "bg-white border-zinc-200/90 shadow-[4px_6px_14px_rgba(0,0,0,0.04)] group-hover/notebook:shadow-[10px_14px_24px_rgba(0,0,0,0.06)] group-hover/notebook:border-zinc-300"
+            }`}
+              >
+                {/* A. PHYSICAL BOOK BINDING SPINE */}
+                <div
+                  className={`w-4.5 min-h-35 border-r shrink-0 relative transition-colors duration-300
+            ${darkMode ? "bg-zinc-950/80 border-zinc-900/50" : "bg-zinc-100 border-zinc-200"}`}
                 >
-                  {/* Section Title Header Badge */}
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-sm">{section.title}</h3>
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: section.colorHex }}
-                    />
+                  <div className="absolute inset-y-0 right-0 w-0.5 bg-black/5 dark:bg-white/5" />
+                  <div className="absolute inset-y-0 left-0 w-0.75 bg-linear-to-r from-black/10 to-transparent" />
+                </div>
+
+                {/* B. THE ELASTIC CLOSURE STRAP */}
+                <div
+                  className={`absolute right-4 inset-y-0 w-2 z-20 opacity-85 transition-all duration-300 group-hover/notebook:right-3.5
+            ${darkMode ? "bg-zinc-800 border-x border-zinc-700/40" : "bg-zinc-200 border-x border-zinc-300/80"}`}
+                />
+
+                {/* C. COVER TYPOGRAPHY AREA (Grows cleanly without breaking card geometry) */}
+                <div className="flex flex-col justify-between p-4 pr-7 w-full relative z-10 gap-6">
+                  <div className="space-y-1">
+                    {/* Note: line-clamp is removed here so long titles can naturally stretch the book height downward */}
+                    <h2
+                      className={`text-lg font-bold tracking-tight leading-snug transition-colors duration-200
+                ${darkMode ? "text-zinc-200 group-hover/notebook:text-white" : "text-zinc-800 group-hover/notebook:text-black"}`}
+                    >
+                      {notebook.title}
+                    </h2>
+                    <p
+                      className={`text-[12px] font-semibold tracking-wide font-mono opacity-40 ${darkMode ? "text-zinc-400" : "text-zinc-500"}`}
+                    >
+                      {sectionCount} {sectionCount === 1 ? "sec" : "secs"}
+                    </p>
                   </div>
 
-                  {/* Section Child Pages List Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                    {section.pages.map((page) => (
-                      <div
-                        key={page.id}
-                        onClick={(e) => {
-                          // Prevent parent card clicks from launching notebook navigation shortcuts
-                          e.stopPropagation();
-                          navigate(`document/${notebook.id}?page=${page.id}`);
-                        }}
-                        className={`text-xs p-2 rounded border cursor-pointer font-medium transition-all truncate ${
-                          darkMode
-                            ? "bg-zinc-850 border-zinc-800 hover:bg-zinc-800 text-zinc-300 hover:text-white"
-                            : "bg-gray-50 border-gray-150 hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-                        }`}
-                      >
-                        {String(page.title)}
-                      </div>
-                    ))}
+                  {/* D. RIBBON TAB MARKERS & METALLIC PAGE BADGE */}
+                  <div className="flex items-center justify-between gap-1.5 mt-auto">
+                    <div className="flex items-center gap-0.5 flex-1 max-w-11.25">
+                      {notebook.sections.map((section) => (
+                        <div
+                          key={section.id}
+                          title={section.title}
+                          className="h-1 rounded-full flex-1 max-w-2 opacity-85 transition-transform duration-200 group-hover/notebook:scale-y-110"
+                          style={{ backgroundColor: section.colorHex }}
+                        />
+                      ))}
+                    </div>
+
+                    <span
+                      className={`text-[9px] font-bold font-mono px-1 py-0.5 rounded transition-all duration-200 shrink-0
+                ${
+                  darkMode
+                    ? "bg-zinc-800/80 text-zinc-400 border border-zinc-700/30 group-hover/notebook:text-indigo-300"
+                    : "bg-zinc-100 text-zinc-500 border border-zinc-200/60 group-hover/notebook:text-indigo-600"
+                }`}
+                    >
+                      {totalPages}p
+                    </span>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
