@@ -112,7 +112,7 @@ function Layout() {
     <>
       <TitleBar />
       <div
-        className={`${settings.darkMode ? "bg-black/95" : "bg-slate-100"} h-screen flex transition-colors duration-200`}
+        className={`${settings.darkMode ? "bg-black/95" : "bg-slate-100"} h-screen fixed top-9 w-screen flex transition-colors duration-200`}
         style={
           {
             "--colorTrack": colorTrack,

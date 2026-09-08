@@ -79,6 +79,12 @@ export interface settingsContextType {
   /** Activity flag tracking if zen layer mode remains focused */
   zenMode: boolean;
   setZenMode: React.Dispatch<SetStateAction<boolean>>;
+  /** To activate the search for navigating pages of a notebook */
+  searchingKeys: string;
+  setSearchingKeys: React.Dispatch<SetStateAction<string>>;
+  /** Temporarily store the searched query to check what element to highlight */
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<SetStateAction<string>>;
 }
 
 /* eslint-disable react-refresh/only-export-components */
@@ -103,6 +109,7 @@ interface settings {
   canvasModeShortcut: string;
   zenModeShortcut: string;
   zenMode: string;
+  searchingKeys: string;
 }
 
 /**
@@ -130,6 +137,7 @@ export const SettingsProvider = ({
       window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const [darkMode, setDarkMode] = useState<boolean>(isDarkMode);
+  const [searchingKeys, setSearchingKeys] = useState<string>("ctrl-P");
 
   // ==========================================
   // LIFECYCLE 1: INTERNAL THEME RESYNC
@@ -187,6 +195,9 @@ export const SettingsProvider = ({
   const [zenModeShortcut, setZenModeShortcut] =
     useState<string>("Ctrl-Shift-Z");
   const [zenMode, setZenMode] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => console.clear(), [searchQuery]);
 
   // ==========================================
   // LIFECYCLE 3: CONTRAST COLOR SELECTOR ALIGNER
@@ -232,6 +243,7 @@ export const SettingsProvider = ({
       canvasModeShortcut,
       zenModeShortcut,
       zenMode: zenMode ? "true" : "false",
+      searchingKeys,
     };
 
     const delayDebounceFn = setTimeout(() => {
@@ -269,6 +281,7 @@ export const SettingsProvider = ({
     canvasModeShortcut,
     zenModeShortcut,
     zenMode,
+    searchingKeys,
   ]);
 
   // ==========================================
@@ -331,6 +344,8 @@ export const SettingsProvider = ({
             setZenModeShortcut(savedData.zenModeShortcut);
           if (savedData.zenMode !== undefined)
             setZenMode(savedData.zenMode === "true");
+          if (savedData.searchingKeys !== undefined)
+            setSearchingKeys(savedData.searchingKeys);
         }
       } catch (error) {
         console.error("Failed to fetch settings from Rust file:", error);
@@ -436,6 +451,10 @@ export const SettingsProvider = ({
     setZenModeShortcut,
     zenMode,
     setZenMode,
+    searchingKeys,
+    setSearchingKeys,
+    searchQuery,
+    setSearchQuery,
   };
 
   return (

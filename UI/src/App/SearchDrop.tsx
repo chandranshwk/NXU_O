@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSettings } from "../contexts/settingsContext";
+import { useLocation } from "react-router-dom";
 
 export interface SearchItems {
   name: string;
@@ -47,6 +48,8 @@ const SearchDrop: React.FC<SearchDropProps> = ({
   };
 
   const { darkMode } = useSettings();
+  const location = useLocation();
+  const { setSearchQuery } = useSettings();
 
   // Reset references array size when matching search results update
   useEffect(() => {
@@ -86,7 +89,11 @@ const SearchDrop: React.FC<SearchDropProps> = ({
         className={`absolute top-full left-[calc(50%-2rem)] mt-1 w-200 py-6 text-center text-xs rounded-xl shadow-2xl border z-50
           ${darkMode ? "bg-zinc-900 border-zinc-800 text-zinc-500" : "bg-white border-zinc-200 text-zinc-400"}`}
       >
-        No matching sub-pages found
+        {location.pathname.startsWith("/document")
+          ? "No matching sub-pages found"
+          : location.pathname.startsWith("/")
+            ? "No matching notes found"
+            : "No matching settings found"}
       </motion.div>
     );
   }
@@ -119,10 +126,31 @@ const SearchDrop: React.FC<SearchDropProps> = ({
             ref={(el) => {
               itemsRef.current[index] = el;
             }}
-            onMouseEnter={() => setActiveIndex?.(index)}
+            onMouseEnter={() => {
+              setActiveIndex?.(index);
+              setSearchQuery(item.name);
+
+              const elementId = item.name.toLowerCase().replace(/\s+/g, "-");
+              const targetElement = document.getElementById(elementId);
+
+              if (targetElement) {
+                targetElement.scrollIntoView({
+                  behavior: "smooth", // Smooth scrolling animation
+                  block: "center", // Centers the element in the viewport
+                });
+              }
+            }}
             onClick={(e) => {
-              e.stopPropagation(); // Prevents bubbling side effects to parent click containers
+              e.stopPropagation();
+
+              setSearchQuery(item.name);
               item.exec();
+            }}
+            onKeyDown={(e) => {
+              if (e.key == "Enter") {
+                setSearchQuery(item.name);
+                item.exec();
+              }
             }}
             className={`w-full flex flex-col gap-0.5 px-3 py-1.5 rounded-lg text-left cursor-pointer transition-colors duration-100 select-none
               ${

@@ -18,7 +18,6 @@ import { GrNodes } from "react-icons/gr";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiSettings } from "react-icons/fi";
 import { RiHomeLine } from "react-icons/ri";
-import { getInitials } from "../assets/functions";
 import ProjectIcon from "./ProjectIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -30,8 +29,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
   /** Visibility toggle flag controlling expandable layout widths on mouse interactions */
   const [isOpen, setIsOpen] = useState(false);
-  const fullName = "User";
-  const email = "johndoe@gmail.com";
   /** Tracks the index pointer identifying which sub-menu branch stands toggled open */
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [, setOpenDialog] = useState<boolean>(false);
@@ -161,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
   return (
     /* MAIN SHIELD WRAPPER: Collapses panel down to 0px width whenever open documents take focus */
     <div
-      className={`xl:block sm:hidden transition-all duration-300 ease-in-out ${
+      className={`xl:block sm:hidden  transition-all duration-300 ease-in-out ${
         show ? "w-0 overflow-hidden mr-0" : "w-auto mr-1"
       }`}
     >
@@ -175,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
         animate={{
           width: isOpen ? "240px" : "55px",
         }}
-        className={`relative h-[calc(100vh-3rem)] justify-evenly gap-2 m-2 mt-2 mx-1 flex flex-col rounded-lg transition-colors duration-300 overflow-visible z-50 border-0`}
+        className={`relative h-[calc(100vh-3rem)] justify-between gap-2 m-2 mt-1 mx-1 flex flex-col rounded-lg transition-colors duration-300 overflow-visible z-50 border-0`}
       >
         {/* ==========================================
             TOP HEADER AREA: WORKSPACE SWAPPER TRACK CARD
@@ -351,58 +348,6 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
               </div>
             </div>
           </div>{" "}
-          {/* ==========================================
-              BOTTOM FOOTER ROW: PROFILE ACCOUNT IDENTITY BADGE
-              ========================================== */}
-          <div
-            className={`flex flex-col gap-3.5 w-full text-nowrap border-t pt-4 mt-auto transition-all duration-300 ${
-              isOpen ? "" : "px-0 items-center"
-            } ${darkMode ? "border-slate-800/60" : "border-slate-100"}`}
-          >
-            {/* User Profile Action Account Trigger Card */}
-            <button
-              type="button"
-              title={!isOpen ? `${fullName} (${email})` : undefined} // Spawn tooltip metadata info only if sidebar hits compressed 55px modes
-              className={`flex items-center rounded-xl py-1 transition-all duration-200 group text-left outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 ${
-                isOpen ? "w-full gap-4" : "w-10 justify-center"
-              }`}
-            >
-              {/* Profile Avatar Initials Swatch Block */}
-              <div
-                className={`size-9 rounded-xl shrink-0 flex items-center justify-center uppercase font-bold text-[11px] tracking-wider transition-all duration-200 group-hover:scale-105 ${
-                  darkMode
-                    ? "bg-emerald-950 text-emerald-400 border border-emerald-800/50"
-                    : "bg-emerald-50 text-emerald-700 border border-emerald-100/70"
-                }`}
-              >
-                {getInitials(fullName)}
-              </div>
-
-              {/* Animate text credentials panel layout viewports with cross-fade adjustments */}
-              <AnimatePresence mode="wait">
-                {isOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -4 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex flex-col min-w-0 leading-tight"
-                  >
-                    <span
-                      className={`text-[14px] font-medium tracking-wide truncate ${darkMode ? "text-slate-200" : "text-slate-700"}`}
-                    >
-                      {fullName || "John Doe"}
-                    </span>
-                    <span
-                      className={`text-[11px] font-normal mt-0.5 truncate ${darkMode ? "text-slate-500" : "text-slate-400"}`}
-                    >
-                      {email || "johndoe@gmail.com"}
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </button>
-          </div>
         </div>
       </motion.div>
     </div>

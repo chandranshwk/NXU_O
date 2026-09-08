@@ -123,6 +123,15 @@ const SectionC: React.FC<props> = ({
         <FiMoon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />
       ),
     },
+    {
+      label: "Search Notebook Mode",
+      keys: settings.searchingKeys,
+      description:
+        "Toggles the searching notebook mode for navigating between the pages of the notebook.",
+      icon: (
+        <FiMoon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />
+      ),
+    },
   ];
   return (
     <div className="flex flex-col gap-2 mt-2">

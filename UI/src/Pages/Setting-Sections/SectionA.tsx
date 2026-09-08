@@ -17,7 +17,6 @@ import type { settingsContextType } from "../../contexts/settingsContext";
 import type { SetStateAction } from "react";
 import { open as openTauriDialog } from "@tauri-apps/plugin-dialog";
 import { formatName } from "../../assets/functions";
-
 interface props {
   /** Shared dark mode setting flag used to switch interface style rules */
   darkMode: boolean;

@@ -47,7 +47,7 @@ export const Settings = () => {
   const [newKeys, setNewKeys] = useState<string[]>([]);
 
   // ==========================================
-  // ⌨️ SHORTCUT REASSIGNMENT SYNC ENGINE
+  // SHORTCUT REASSIGNMENT SYNC ENGINE
   // ==========================================
   /**
    * Watches for new key arrays captured by KeyEditor. When received,
@@ -82,6 +82,8 @@ export const Settings = () => {
       settings.setCanvasModeShortcut(newShortCut);
     } else if (normalizedTitle === "toggle zen mode") {
       settings.setZenModeShortcut(newShortCut);
+    } else if (normalizedTitle === "search notebook mode") {
+      settings.setSearchingKeys(newShortCut);
     }
 
     // Flush the local array state to prepare for future key edits

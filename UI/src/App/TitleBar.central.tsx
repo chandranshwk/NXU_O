@@ -13,7 +13,7 @@ interface TitleBarCentralProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   predictiveResults: string;
-  isDocumentRoute: boolean;
+  isShowRoute: boolean;
   darkMode: boolean;
   location: { pathname: string };
   notebooks: Array<{ id: string; title: string; sections: MockSection[] }>;
@@ -32,7 +32,7 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
   searchQuery,
   setSearchQuery,
   predictiveResults,
-  isDocumentRoute,
+  isShowRoute,
   darkMode,
   location,
   notebooks,
@@ -49,7 +49,7 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
       layout
       transition={{ type: "spring", stiffness: 350, damping: 30 }}
       className={`text-xs font-semibold tracking-wide h-7 flex items-center p-1.5 px-4 rounded-lg select-none relative ${
-        isDocumentRoute
+        isShowRoute
           ? searching
             ? "w-[40%] max-w-100 cursor-text " +
               (darkMode
@@ -62,7 +62,7 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
           : "w-auto justify-center cursor-default text-zinc-500 bg-transparent"
       }`}
       onClick={() => {
-        if (!searching && isDocumentRoute) setSearching(true);
+        if (!searching && isShowRoute) setSearching(true);
       }}
     >
       {/* Input Field View State Transitions */}
@@ -76,7 +76,7 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
             transition={{ duration: 0.15 }}
             className="flex items-center justify-center gap-2 w-full whitespace-nowrap"
           >
-            {isDocumentRoute && (
+            {isShowRoute && (
               <FiSearch className="text-sm opacity-70 shrink-0" />
             )}
             <span className="truncate">{getTitleText(location.pathname)}</span>
@@ -109,7 +109,7 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
                   }
                 }}
                 type="text"
-                placeholder={`Search ${notebooks.find((notebook) => notebook.id === location.pathname.split("/")[2])?.title || "everything"}...`}
+                placeholder={`Search ${notebooks.find((notebook) => notebook.id === location.pathname.split("/")[2])?.title || location.pathname.startsWith("/settings") ? "Settings" : "everything"}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -148,7 +148,7 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
 
       {/* Isolated Dropdown Animations to let spring mathematics execute cleanly */}
       <AnimatePresence>
-        {searching && isDocumentRoute && (
+        {searching && isShowRoute && (
           <SearchDrop
             searchItems={searchItems}
             activeIndex={activeIndex}

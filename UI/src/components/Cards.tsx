@@ -10,6 +10,9 @@
  * - Features high-density truncation layers to prevent text layouts from clipping the controls block.
  */
 
+import { useSettings } from "../contexts/settingsContext";
+import { settingsList } from "../Pages/Setting-Sections/settingsList";
+
 interface CardsProps {
   /** Switches layout styles between standard settings elements and colored warning boxes */
   type: "normal" | "destructive";
@@ -33,14 +36,26 @@ export const Cards: React.FC<CardsProps> = ({
   description,
   children,
 }) => {
+  const { searchQuery } = useSettings();
+
   return (
-    <div className="flex flex-col gap-2 max-w-full">
+    // Attached the id anchor onto the wrapper container row
+    <div
+      id={(settingsList.find((s) => s.name === title)?.name || title)
+        .toLowerCase()
+        .replace(/\s+/g, "-")}
+      className="flex flex-col gap-2 max-w-full"
+    >
       {/* ==========================================
           HORIZONTAL INTEGRATION PANELS ROW CONTAINER
           ========================================== */}
       <div
-        className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-150 ${
-          darkMode ? "bg-[#121212] border-zinc-800" : "bg-white border-zinc-200"
+        className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-300 ${
+          searchQuery !== "" && title.includes(searchQuery)
+            ? "border-blue-500 bg-blue-500/5 ring-1 ring-blue-500/30" // Dynamic Search Highlight Styles
+            : darkMode
+              ? "bg-[#121212] border-zinc-800"
+              : "bg-white border-zinc-200"
         }`}
       >
         {/* LEFT COLUMN: TITLE ICON METADATA CLUSTER */}
