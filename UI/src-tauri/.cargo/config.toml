@@ -1,0 +1,9 @@
+[build]
+# Cleaned out the invalid codegen argument
+rustflags = []
+
+[profile.dev]
+split-debuginfo = "unpacked"
+
+[profile.release]
+split-debuginfo = "packed"

@@ -128,17 +128,6 @@ const SearchDrop: React.FC<SearchDropProps> = ({
             }}
             onMouseEnter={() => {
               setActiveIndex?.(index);
-              setSearchQuery(item.name);
-
-              const elementId = item.name.toLowerCase().replace(/\s+/g, "-");
-              const targetElement = document.getElementById(elementId);
-
-              if (targetElement) {
-                targetElement.scrollIntoView({
-                  behavior: "smooth", // Smooth scrolling animation
-                  block: "center", // Centers the element in the viewport
-                });
-              }
             }}
             onClick={(e) => {
               e.stopPropagation();
