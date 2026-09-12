@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useCanvas } from "../contexts/CanvasContext";
-import type { MockNotebook, MockPage, MockSection } from "../assets/SAMPLE";
-import { useNotebookStore } from "../contexts/notebook";
-import { useEditorContext } from "../contexts/editorContext";
+import type { MockNotebook, MockPage, MockSection } from "../../assets/SAMPLE";
+import { useNotebookStore } from "../../contexts/notebook";
+import { useEditorContext } from "../../contexts/editorContext";
 import { renderTexturedLine, type BrushType } from "./useDrawingTextures";
+import { useCanvas } from "../../contexts/Canvas/CanvasContext";
 
 interface UseWorkspacePanZoomProps {
   currentPage: MockPage | undefined;

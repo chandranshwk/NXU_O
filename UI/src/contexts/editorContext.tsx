@@ -14,7 +14,7 @@ import type { Editor } from "@tiptap/core";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSettings } from "./settingsContext";
 import type { CanvasToolName } from "../Pages/Document/Toolbar";
-import { useCanvas } from "./CanvasContext";
+import { useCanvas } from "./Canvas/CanvasContext";
 
 export interface editorContextType {
   /** Active TipTap editor engine instance receiving user command dispatches */

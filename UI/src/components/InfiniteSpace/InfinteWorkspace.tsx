@@ -1,19 +1,20 @@
 import React from "react";
 import { CiMinimize1 } from "react-icons/ci";
 import { AiOutlineExpandAlt } from "react-icons/ai";
-import CanvasNodeWrapper from "../contexts/CanvasNodeWrapper";
-import { NodeContentFactory } from "../Extensions/NodeContentFactory";
+
+import { NodeContentFactory } from "../../Extensions/NodeContentFactory";
 import type {
   MockNotebook,
   MockPage,
   MockPageNode,
   MockSection,
-} from "../assets/SAMPLE";
-import { useSettings } from "../contexts/settingsContext";
+} from "../../assets/SAMPLE";
+import { useSettings } from "../../contexts/settingsContext";
 import { useWorkspacePanZoom } from "./InfiniteWorkspace.useWorkspace";
 import { DrawingCanvasLayer } from "./infiniteWorkspace.drawingCanvas";
 import { BrushPropertiesPanel } from "./InfiniteWorkspace.SketchProperties";
 import { EraserPropertiesPanel } from "./InfiniteWorkspace.EraserPanel";
+import CanvasNodeWrapper from "../../contexts/Canvas/CanvasNodeWrapper";
 
 interface InfiniteWorkspaceProps {
   activeNotebook: MockNotebook | null;
@@ -74,12 +75,36 @@ export const InfiniteWorkspace: React.FC<InfiniteWorkspaceProps> = ({
             value={localTitle}
             onChange={(e) => setLocalTitle(e.target.value)}
             onBlur={commitTitleChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setLocalTitle(
+                  currentPage?.title ? String(currentPage.title) : "",
+                );
+                e.currentTarget.blur();
+              }
+            }}
             placeholder="Untitled Page"
-            className={`w-full text-2xl font-extrabold tracking-tight bg-transparent outline-none pb-2 transition-all duration-200 ${
+            className={`w-full text-2xl font-extrabold tracking-tight bg-transparent outline-none pb-2 transition-all duration-200 placeholder:opacity-20 ${
               darkMode
                 ? "text-zinc-100 placeholder:text-zinc-400"
                 : "text-zinc-900 placeholder:text-zinc-500"
             }`}
+          />
+          {(currentPage?.createdDate || currentPage?.createdTime) && (
+            <div
+              className={`text-[11px] font-mono tracking-wide ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}
+            >
+              <span>Created on {String(currentPage.createdDate)}</span>
+              <span className="mx-2 opacity-40">•</span>
+              <span>{String(currentPage.createdTime)}</span>
+            </div>
+          )}
+          <span
+            className={`absolute bottom-5 left-0 h-[1.5px] w-full ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
+          />
+          <span
+            className={`absolute bottom-5 left-0 h-[1.5px] w-full transition-transform duration-300 origin-left scale-x-0 group-focus-within:scale-x-100 ${darkMode ? "bg-zinc-400" : "bg-zinc-700"}`}
           />
         </div>
       )}
@@ -127,7 +152,7 @@ export const InfiniteWorkspace: React.FC<InfiniteWorkspaceProps> = ({
         ref={viewportNodeRef}
         id="infinite-canvas-viewport"
         onMouseDown={handleMouseDown}
-        className={`w-full flex-1 relative overflow-hidden border mt-4 rounded-lg z-0 pointer-events-auto ${
+        className={`w-full flex-1 relative overflow-hidden border z-0 pointer-events-auto ${
           isDrawingOrErasing
             ? isPaintingActive
               ? ""

@@ -19,16 +19,16 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useSettings } from "../contexts/settingsContext";
+import { useSettings } from "../../contexts/settingsContext";
 import {
   useEditorContext,
   type editorContextType,
-} from "../contexts/editorContext";
-import ContextMenu from "../components/ContextMenu";
-import FloatingToolbar from "./FloatingToolbar";
+} from "../../contexts/editorContext";
+import ContextMenu from "../../components/ContextMenu";
 import { Editor } from "@tiptap/react";
-import { SortableParagraphBlock } from "./SortableParagraphBlock";
+import { SortableParagraphBlock } from "../FloatingToolbar/SortableParagraphBlock";
 import { extractParagraphsToBlocks, type BlockItem } from "./TextNode.helper";
+import FloatingToolbar from "../FloatingToolbar/FloatingToolbar";
 
 interface TextNodeProps {
   /** Raw content string containing document paragraphs or raw block markup */

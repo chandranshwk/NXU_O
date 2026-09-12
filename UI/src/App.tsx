@@ -25,7 +25,7 @@ import { SettingsProvider, useSettings } from "./contexts/settingsContext";
 import NewDocument from "./Pages/NewDocument";
 import { TitleBar } from "./App/TitleBar";
 import { EventsProvider } from "./contexts/EventsContext";
-import { CanvasProvider } from "./contexts/CanvasContext";
+import { CanvasProvider } from "./contexts/Canvas/CanvasContext";
 
 /**
  * @layout Layout

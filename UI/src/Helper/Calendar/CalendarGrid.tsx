@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { mockMatrixEvents } from "../assets/SAMPLE";
 import type { MatrixEvent } from "./CalenderNode";
+import { mockMatrixEvents } from "../../assets/SAMPLE";
 
 interface CalenderGridProps {
   darkMode: boolean;

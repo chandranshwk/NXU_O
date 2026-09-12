@@ -13,11 +13,11 @@
  */
 
 import React from "react";
-import type { CanvasNodeData } from "../contexts/CanvasNodeWrapper";
-import TextNode from "../Helper/TextNode";
-import CalenderNode from "../Helper/CalenderNode";
+import TextNode from "../Helper/Text-Node/TextNode";
 import TaskNode from "../Helper/TaskNode";
 import { useEvents } from "../contexts/EventsContext";
+import CalenderNode from "../Helper/Calendar/CalenderNode";
+import type { CanvasNodeData } from "../contexts/Canvas/CanvasNodeWrapper";
 
 interface NodeContentFactoryProps {
   /** Core configuration payload object defining the active block type, id, and content string */

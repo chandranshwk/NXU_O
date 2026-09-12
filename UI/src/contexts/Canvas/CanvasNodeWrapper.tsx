@@ -12,15 +12,15 @@
  */
 
 import React, { useRef, useState, useEffect } from "react";
-import { useNotebookStore } from "../contexts/notebook";
-import type { MockPageNode } from "../assets/SAMPLE";
 import {
   CanvasNodeSettingsDialog,
   type AdaptableColor,
 } from "./CanvasNodeSettingsDialog";
 import { CanvasNodeDragHandle } from "./CanvasNodeDragHandle";
-import { useCanvasNodeHandlers } from "./useCanvasNodeHandlers";
 import { useCanvas } from "./CanvasContext";
+import type { MockPageNode } from "../../assets/SAMPLE";
+import { useCanvasNodeHandlers } from "../useCanvasNodeHandlers";
+import { useNotebookStore } from "../notebook";
 
 export type NodeComponentType = "text" | "calendar" | "map" | "todo" | "task";
 

@@ -15,7 +15,7 @@ import React, { useState } from "react";
 import type { MockNotebook, MockPage, MockSection } from "../assets/SAMPLE";
 import { useNotebookStore } from "../contexts/notebook";
 import { useSettings } from "../contexts/settingsContext";
-import { InfiniteWorkspace } from "./InfinteWorkspace";
+import { InfiniteWorkspace } from "./InfiniteSpace/InfinteWorkspace";
 
 interface RightSideDocumentProps {
   /** Shared dark mode setting flag used to switch visual palette ranges */

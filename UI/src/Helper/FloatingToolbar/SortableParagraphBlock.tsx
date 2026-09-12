@@ -20,9 +20,9 @@ import {
   Extension,
   useEditorState,
 } from "@tiptap/react";
-import { getEditorExtensions } from "../assets/TipTapEditor";
+import { getEditorExtensions } from "../../assets/TipTapEditor";
 import { Editor } from "@tiptap/core";
-import type { settingsContextType } from "../contexts/settingsContext";
+import type { settingsContextType } from "../../contexts/settingsContext";
 import { PiDotsSix } from "react-icons/pi";
 import { FiMoreHorizontal, FiTrash2 } from "react-icons/fi";
 import { createPortal } from "react-dom";
