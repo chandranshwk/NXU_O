@@ -1,7 +1,7 @@
 import React from "react";
-import type { MatrixEvent } from "./CalenderNode";
 import { useSettings } from "../contexts/settingsContext";
 import { LuChevronDown, LuChevronsUp, LuChevronUp } from "react-icons/lu";
+import type { MatrixEvent } from "./Calendar/CalenderNode";
 
 interface TaskNodeProps {
   events: MatrixEvent[];

@@ -13,11 +13,11 @@
 
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
-import type { editorContextType } from "../contexts/editorContext";
 import { useToolbarConfigs } from "./FloatingToolbar.data";
 import ColorDropdown from "./FloatingToolbar.ColorDropdown";
 import TypeDropdown from "./FloatingToolbar.TypeDropdown";
 import React from "react";
+import type { editorContextType } from "../../contexts/editorContext";
 
 interface props {
   /** Target active text engine receiving button selection commands */

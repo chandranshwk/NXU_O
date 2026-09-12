@@ -81,8 +81,9 @@ export const useWorkspacePanZoom = ({
       target.closest("button")
     )
       return;
-
+    console.log(isDragging);
     setIsDragging(true);
+    console.log(isDragging);
     setPanning(true);
     dragStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   };

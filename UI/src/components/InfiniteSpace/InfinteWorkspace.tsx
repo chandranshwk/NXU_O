@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { CiMinimize1 } from "react-icons/ci";
 import { AiOutlineExpandAlt } from "react-icons/ai";
 
@@ -63,6 +63,10 @@ export const InfiniteWorkspace: React.FC<InfiniteWorkspaceProps> = ({
 
   const isDrawingOrErasing =
     activeCanvasTool === "Sketch" || activeCanvasTool === "Erase";
+
+  useEffect(() => {
+    console.log("Dragging : " + isDragging);
+  }, [isDragging]);
 
   return (
     <div

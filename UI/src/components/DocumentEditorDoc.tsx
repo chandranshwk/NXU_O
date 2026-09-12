@@ -20,8 +20,6 @@ import { useSettings } from "../contexts/settingsContext";
 import { useEditorContext } from "../contexts/editorContext";
 import ContextMenu from "./ContextMenu";
 import { useStickyEditor } from "../Hooks/useStickyEditor";
-import StickyNote from "./StickyNotes";
-import { useWorkspace } from "../contexts/workspaceContext";
 
 interface props {
   /** Size variant rule switching between a standard 100% layout and a narrow paper column */
@@ -45,9 +43,6 @@ export const DocumentEditorDoc: React.FC<props> = ({
 
   /** Accesses general text configs, line spacing records, and default colors */
   const settings = useSettings();
-
-  /** Unpacks active absolute sticky data collections from the central spatial store */
-  const { items, setItems } = useWorkspace();
 
   /** Localized Isolated Zoom State Engine (1 = 100% base scaling factor) */
   const [zoomScale, setZoomScale] = useState<number>(1);
@@ -213,21 +208,6 @@ export const DocumentEditorDoc: React.FC<props> = ({
           }}
           className="w-full origin-top"
         >
-          {/* Loop and draw floating overlay sticky elements on top of raw pages */}
-          {items.map((item, idx) => (
-            <StickyNote
-              key={item.id}
-              id={item.id}
-              index={idx}
-              content={item.content}
-              initialX={item.x}
-              initialY={item.y}
-              initialWidth={item.width}
-              initialHeight={item.height}
-              setItems={setItems}
-            />
-          ))}
-
           {/* Core editor typing pane container view */}
           <EditorContent
             editor={editor}

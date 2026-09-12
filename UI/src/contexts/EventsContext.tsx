@@ -4,7 +4,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import type { MatrixEvent } from "../Helper/CalenderNode";
+import type { MatrixEvent } from "../Helper/Calendar/CalenderNode";
 
 interface EventsContextType {
   events: MatrixEvent[];

@@ -1,4 +1,4 @@
-import type { MatrixEvent } from "./CalenderNode";
+import type { MatrixEvent } from "./Calendar/CalenderNode";
 
 interface TimelinePanelProps {
   darkMode: boolean;

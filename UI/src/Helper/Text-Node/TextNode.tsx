@@ -226,7 +226,7 @@ export const TextNode: React.FC<TextNodeProps> = ({
 
   return (
     /* Visual container scales vertically via h-auto to adjust for paragraph counts */
-    <div className="w-full h-auto relative z-10 -top-5 overflow-visible ">
+    <div className="w-full h-auto relative z-10 -top-5 overflow-visible cursor-text">
       <div
         ref={containerRef}
         onClick={closeContextMenu}

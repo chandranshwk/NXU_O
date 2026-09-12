@@ -11,7 +11,7 @@
  */
 
 import { faker } from "@faker-js/faker";
-import type { MatrixEvent } from "../Helper/CalenderNode";
+import type { MatrixEvent } from "../Helper/Calendar/CalenderNode";
 
 export const mockMatrixEvents = (): MatrixEvent[] => {
   return Array.from({ length: 100 }, (): MatrixEvent => {

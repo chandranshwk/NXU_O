@@ -1,22 +1,16 @@
-
-
-
-
-* Set up a global state store to track the active section, active page, and camera zoom/pan offsets.
-* ~~Build a horizontal top-bar to render active section tabs using their hex color values.~~
-* ~~Build a vertical left-side panel to list pages belonging only to the active section tab.~~
-* ~~Implement a shortcut or toggle button to completely hide or show the left-side panel.~~
-* ~~Set up a local database connection inside the frontend to load and save page data directly to the local machine.~~
-* Create a full-screen viewport container that captures mouse wheel and pointer drag events to calculate pan and zoom values.
-* Implement a background HTML5 canvas layer that listens for mouse coordinates to draw freehand lines when sketch mode is active.
-* Add event propagation intercepts on all interactive widgets so clicking inside a widget does not drag or pan the background canvas.
-* Create a double-click listener on the canvas workspace to map screen coordinates to canvas space and insert a new text node.
-* Wrap the Tiptap editor inside an absolutely positioned container styled with CSS transforms based on the node layout values.
-* Set a fixed default width constraint on the text container while letting the height calculate automatically based on text length.
-* Build a slash-command dropdown menu inside the Tiptap instance to quickly format headings and lists.
-* Build a separate right-click or shortcut menu on the open canvas workspace to spawn non-text widgets at the pointer position.
-* Write a visibility bounding-box calculation to unmount or skip rendering a ny canvas nodes whose coordinates sit entirely outside the current viewport.
-* Ensure switching between section tabs caches the current view position in memory before loading the new page content to keep tab transitions instant.
-
-
-
+- Set up a global state store to track the active section, active page, and camera zoom/pan offsets.
+- ~~Build a horizontal top-bar to render active section tabs using their hex color values.~~
+- ~~Build a vertical left-side panel to list pages belonging only to the active section tab.~~
+- ~~Implement a shortcut or toggle button to completely hide or show the left-side panel.~~
+- ~~Set up a local database connection inside the frontend to load and save page data directly to the local machine.~~
+- Create a full-screen viewport container that captures mouse wheel and pointer drag events to calculate pan and zoom values.
+- Implement a background HTML5 canvas layer that listens for mouse coordinates to draw freehand lines when sketch mode is active.
+- Add event propagation intercepts on all interactive widgets so clicking inside a widget does not drag or pan the background canvas.
+- Create a double-click listener on the canvas workspace to map screen coordinates to canvas space and insert a new text node.
+- Wrap the Tiptap editor inside an absolutely positioned container styled with CSS transforms based on the node layout values.
+- Set a fixed default width constraint on the text container while letting the height calculate automatically based on text length.
+- Build a slash-command dropdown menu inside the Tiptap instance to quickly format headings and lists.
+- Build a separate right-click or shortcut menu on the open canvas workspace to spawn non-text widgets at the pointer position.
+- Write a visibility bounding-box calculation to unmount or skip rendering a ny canvas nodes whose coordinates sit entirely outside the current viewport.
+- Ensure switching between section tabs caches the current view position in memory before loading the new page content to keep tab transitions instant.
+- Native Compiler Orchestration (Zero Cloud Overhead):The backend will bundle zero compiler binaries, keeping the app footprint ultra-light.It will interface directly with the compilers already installed on the student's machine (g++, gcc, python, javac, etc.) by executing them via Tauri’s native OS process shell API (std::process::Command).It will run a fast automated system scan of the computer's environment variables (PATH) on first launch to auto-detect available languages.Fully Configurable Multi-Language Recipe Engine:Users will have full sovereign control to add any compiler or interpreter (even obscure languages like Brainfuck or local Assembly).Each language profile maps to a simple, user-editable configuration row specifying: Language Name, File Extension, and the Compile/Run terminal string command (e.g., bf -o output.exe {file}).Tactile Distraction-Free Environment:Intentionally omits heavy LSP (Language Server Protocol) servers, autocomplete dropdowns, auto-closing brackets, or instant error-checking.Forces the student to trace variables and verify syntax manually—building true, exam-ready muscle memory.Lightweight Regex Highlight Engine:Bypasses heavy abstract syntax trees (AST). Syntax highlighting runs on a basic, high-performance Regular Expression (RegEx) string mask matching dictionary.The text highlighting map is 100% user-editable, allowing students to configure completely unique color profiles for each language.Automated Portfolio Scaffolding:Every time a problem is run, the Rust backend automatically creates an un-obfuscated, portable directory folder tree inside the user's workspace repository:Question.md — The problem statement and constraints.Solution.<language_ext> — The raw code source file.Output_Run_X.json — Unique incremental run history, capturing stdout, stderr, run logs, and compiler traces for a transparent debugging timeline.Vector Performance Snippet Capture:When a solution passes or is marked complete, the app automatically generates a Correct_Output.png summary card.To prevent OS screenshot lag, the card renders programmatically onto a hidden <canvas> via the frontend and is saved to the folder by Tauri as a binary PNG file with zero pixel compression lag.Offline Complexity Calculations:Time Complexity: Tracked using high-precision native clock wrappers (like C++ std::chrono) injected directly into the execution test harness.Space Complexity: Calculated locally by querying the child process memory handle (such as PeakWorkingSetSize on Windows via kernel APIs) immediately after the test run finishes.Local LeetCode Exam Simulator Matrix:The app will pre-package a local, structured JSON bank of public problem descriptions and test cases, keeping it 100% offline.An in-memory weighted queue algorithm selects problems for mock exams based on user-configured distributions. Unsolved questions are dynamically given a 4x priority bias to aggressively test active recall.Gamified Problem Vault Lockout:The advanced problem bank remains a locked local resource until the student's solved tracking array successfully matches the baseline question count, providing a definitive end-game milestone reward.
