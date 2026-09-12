@@ -2,11 +2,23 @@ import { useState } from "react";
 import CalenderGrid from "./CalendarGrid";
 import { useOutletContext } from "react-router-dom";
 
+export interface Assignee {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
 export interface MatrixEvent {
   id: string;
   title: string;
+  description: string;
   date: string;
   type: "work" | "personal" | "deadline";
+  priority: "low" | "medium" | "high";
+  status: "pending" | "completed" | "in-progress" | "cancelled";
+  isAllDay: boolean;
+  color: string;
+  assignee: Assignee;
 }
 
 interface CalenderNodeProps {

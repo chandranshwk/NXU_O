@@ -24,6 +24,8 @@ import Settings from "./Pages/Settings";
 import { SettingsProvider, useSettings } from "./contexts/settingsContext";
 import NewDocument from "./Pages/NewDocument";
 import { TitleBar } from "./App/TitleBar";
+import { EventsProvider } from "./contexts/EventsContext";
+import { CanvasProvider } from "./contexts/CanvasContext";
 
 /**
  * @layout Layout
@@ -172,7 +174,11 @@ const router = createHashRouter([
 function App() {
   return (
     <SettingsProvider>
-      <RouterProvider router={router} />
+      <CanvasProvider>
+        <EventsProvider>
+          <RouterProvider router={router} />
+        </EventsProvider>
+      </CanvasProvider>
     </SettingsProvider>
   );
 }

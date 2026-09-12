@@ -111,8 +111,7 @@ export const TextNode: React.FC<TextNodeProps> = ({
 
         // Notify tracking delta context system of new HTML sequence layout
         if (activeEditor) {
-          const combinedHTML = updated.map((b) => b.html).join("");
-          console.log(combinedHTML);
+          console.clear();
         }
         return updated;
       });

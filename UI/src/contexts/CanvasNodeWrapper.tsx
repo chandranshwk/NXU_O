@@ -20,8 +20,9 @@ import {
 } from "./CanvasNodeSettingsDialog";
 import { CanvasNodeDragHandle } from "./CanvasNodeDragHandle";
 import { useCanvasNodeHandlers } from "./useCanvasNodeHandlers";
+import { useCanvas } from "./CanvasContext";
 
-export type NodeComponentType = "text" | "calendar" | "map" | "todo";
+export type NodeComponentType = "text" | "calendar" | "map" | "todo" | "task";
 
 export interface CanvasNodeData {
   /** Uniquely generated identification tracking string */
@@ -92,6 +93,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
   const dragHandleRef = useRef<HTMLDivElement>(null);
   /** Handle tracker anchoring resize click intersections */
   const resizeHandleRef = useRef<HTMLDivElement>(null);
+  const { zoom } = useCanvas();
 
   // Bind operational inputs to shared motion configuration listeners
   const handlers = useCanvasNodeHandlers({
@@ -103,6 +105,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     nodeRef,
     dragHandleRef,
     resizeHandleRef,
+    zoom,
   });
 
   /** Standard color configuration array matching light vs dark execution surfaces */
@@ -209,14 +212,21 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           position: "absolute",
           // translate3d forces GPU hardware acceleration to ensure fluid motion
           transform: `translate3d(${node.x}px, ${node.y}px, 0)`,
-          width: `${node.width}px`,
+          width:
+            node.type === "calendar"
+              ? `25rem`
+              : node.type === "task"
+                ? "662px"
+                : `${node.width}px`,
           height:
-            node.type === "text" || node.type === "calendar"
-              ? "auto"
-              : node.height
-                ? `${node.height}px`
-                : "auto",
-          minHeight: "max-content",
+            node.type === "task"
+              ? "h-max"
+              : node.type === "text" || node.type === "calendar"
+                ? "auto"
+                : node.height
+                  ? `${node.height}px`
+                  : "auto",
+          minHeight: node.type === "task" ? "5rem" : "max-content",
           zIndex: isSelected || isDragging || isResizing ? 50 : 10,
           touchAction: "none",
           backgroundColor: node.backgroundColor || "transparent",

@@ -13,56 +13,41 @@
 import { faker } from "@faker-js/faker";
 import type { MatrixEvent } from "../Helper/CalenderNode";
 
-export const mockMatrixEvents: MatrixEvent[] = [
-  {
-    id: "evt-001",
-    title: "Q3 Project Kickoff",
-    date: "2026-9-9",
-    type: "work",
-  },
-  {
-    id: "evt-002",
-    title: "Dentist Appointment",
-    date: "2026-9-9",
-    type: "personal",
-  },
-  {
-    id: "evt-003",
-    title: "Tax Return Filing",
-    date: "2026-9-15",
-    type: "deadline",
-  },
-  {
-    id: "evt-004",
-    title: "Code Review & Refactoring",
-    date: "2026-9-18",
-    type: "work",
-  },
-  {
-    id: "evt-005",
-    title: "Gym Session & Cardio",
-    date: "2026-9-18",
-    type: "personal",
-  },
-  {
-    id: "evt-006",
-    title: "SaaS Subscription Renewal",
-    date: "2026-9-22",
-    type: "deadline",
-  },
-  {
-    id: "evt-007",
-    title: "Team Sync & Planning",
-    date: "2026-9-28",
-    type: "work",
-  },
-  {
-    id: "evt-008",
-    title: "Dinner with Family",
-    date: "2026-9-30",
-    type: "personal",
-  },
-];
+export const mockMatrixEvents = (): MatrixEvent[] => {
+  return Array.from({ length: 100 }, (): MatrixEvent => {
+    const [randomDate] = faker.date.betweens({
+      from: "2026-09-01T00:00:00.000Z",
+      to: "2026-09-30T23:59:59.000Z",
+    });
+    const formattedDate = randomDate.toISOString().split("T")[0];
+
+    return {
+      id: faker.string.uuid(),
+      title: faker.lorem.words({ min: 2, max: 4 }), // Slightly longer titles look more realistic
+      description: faker.lorem.sentence(),
+      date: formattedDate,
+      type: faker.helpers.arrayElement(["deadline", "personal", "work"]),
+      priority: faker.helpers.arrayElement(["low", "medium", "high"]),
+      status: faker.helpers.arrayElement([
+        "pending",
+        "completed",
+        "in-progress",
+      ]),
+      isAllDay: faker.datatype.boolean({ probability: 0.3 }), // 30% chance to be all-day
+      color: faker.helpers.arrayElement([
+        "#3b82f6",
+        "#ef4444",
+        "#10b981",
+        "#f59e0b",
+      ]), // Tailwind hex codes look cleaner than purely random colors
+      assignee: {
+        id: faker.string.uuid(),
+        name: faker.person.fullName(),
+        avatar: faker.image.avatar(),
+      },
+    };
+  });
+};
 
 /** Palette index storing structural vibrant headers alongside theme-adaptive soft canvas pastel fills */
 const PRESET_COLORS = [
@@ -95,7 +80,7 @@ export interface MockPageNode {
   /** Universally unique identity identifier assigned by generation handlers */
   id: string;
   /** Component factory routing tag string selecting active structural blocks */
-  type: "text" | "calendar" | "map" | "todo";
+  type: "text" | "calendar" | "map" | "todo" | "task";
   /** Horizontal vector positioning parameter relative to infinite whiteboard grid margins */
   x: number;
   /** Vertical vector positioning parameter relative to infinite whiteboard grid margins */
@@ -213,7 +198,17 @@ export const generateMockNotebookData = (
                 // 2. Automatically spawn a companion floating widget node helper directly beside it
                 {
                   id: faker.string.uuid(),
-                  type: faker.helpers.arrayElement(["calendar", "map", "todo"]),
+                  type: "task",
+                  x: faker.number.int({ min: 650, max: 900 }),
+                  y: faker.number.int({ min: 100, max: 400 }),
+                  width: 320,
+                  height: 350,
+                  backgroundColor: pickRandomColor(),
+                  content: JSON.stringify({ title: faker.hacker.noun() }),
+                },
+                {
+                  id: faker.string.uuid(),
+                  type: "calendar",
                   x: faker.number.int({ min: 650, max: 900 }),
                   y: faker.number.int({ min: 100, max: 400 }),
                   width: 320,

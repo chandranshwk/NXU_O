@@ -12,10 +12,12 @@
  *   like the Calendar Node or Todo Block trackers.
  */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import type { CanvasNodeData } from "../contexts/CanvasNodeWrapper";
 import TextNode from "../Helper/TextNode";
-import CalenderNode, { type MatrixEvent } from "../Helper/CalenderNode";
+import CalenderNode from "../Helper/CalenderNode";
+import TaskNode from "../Helper/TaskNode";
+import { useEvents } from "../contexts/EventsContext";
 
 interface NodeContentFactoryProps {
   /** Core configuration payload object defining the active block type, id, and content string */
@@ -25,10 +27,7 @@ interface NodeContentFactoryProps {
 export const NodeContentFactory: React.FC<NodeContentFactoryProps> = ({
   node,
 }) => {
-  const [events, setEvents] = useState<MatrixEvent[]>([]);
-  useEffect(() => {
-    console.log(events);
-  }, [events]);
+  const { events, setEvents } = useEvents();
   // Evaluates string parameters to route elements down to the matching structural layouts
   switch (node.type) {
     case "text":
@@ -36,6 +35,9 @@ export const NodeContentFactory: React.FC<NodeContentFactoryProps> = ({
 
     case "calendar":
       return <CalenderNode initialEvents={events} setEvents={setEvents} />;
+
+    case "task":
+      return <TaskNode events={events} />;
 
     case "todo":
       /* TODO_BLOCK PLUG-IN ROUTE MARKER: Swap this placeholder out once your list board file is built */

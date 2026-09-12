@@ -28,6 +28,7 @@ import { formatName } from "../../assets/functions";
 import { checkIsActive, COLORS, FONTS } from "../../assets/assets";
 import { getEditorTools } from "../../assets/Tools";
 import { ColorNames, HighLighterNames } from "../../assets/Utils";
+import { useCanvas } from "../../contexts/CanvasContext";
 
 interface ToolProps {
   /** The unique key name identifying the purpose of the action tool */
@@ -58,6 +59,7 @@ const Toolbar = () => {
 
   const darkMode = setting.darkMode;
   const activeCanvasTool = context.activeCanvasTool || "Select";
+  const canvas = useCanvas();
 
   /** Config array defining mock action handles and graphic icon snippets for whiteboards */
   const tool: ToolProps[] = [
@@ -84,7 +86,10 @@ const Toolbar = () => {
     {
       name: "Pan",
       icon: <BsHandIndexThumb />,
-      exec: () => console.log("Pan viewport"),
+      exec: () => {
+        canvas.setPanning(true);
+        console.log("Pan viewport");
+      },
     },
     {
       name: "Center",

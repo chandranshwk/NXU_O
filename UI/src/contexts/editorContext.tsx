@@ -14,6 +14,7 @@ import type { Editor } from "@tiptap/core";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSettings } from "./settingsContext";
 import type { CanvasToolName } from "../Pages/Document/Toolbar";
+import { useCanvas } from "./CanvasContext";
 
 export interface editorContextType {
   /** Active TipTap editor engine instance receiving user command dispatches */
@@ -117,6 +118,7 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const [readText, setReadText] = useState<() => void>(() => () => {});
+  const canvas = useCanvas();
 
   const isHeading = (level: number) => {
     return activeHeadingLevel === level;
@@ -146,6 +148,15 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
 
     setTimeout(reset, 100);
   }, [activeCanvasTool]);
+  useEffect(() => {
+    setTimeout(() => {
+      if (canvas.panning) {
+        setActiveCanvasTool("Pan");
+      } else {
+        setActiveCanvasTool("Select");
+      }
+    }, 0);
+  }, [canvas]);
 
   // ==========================================
   // LIFECYCLE 2: DARK MODE TEXT ALIGNER
