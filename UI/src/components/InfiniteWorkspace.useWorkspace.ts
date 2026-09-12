@@ -40,7 +40,6 @@ export const useWorkspacePanZoom = ({
   const lastDrawingPointRef = useRef({ x: 0, y: 0 });
 
   // --- BITMAP RASTER UNDO / REDO HISTORY STACKS ---
-  // Stores snapshot copies of your canvas pixels so cutting actions are fully undoable
   const [undoStack, setUndoStack] = useState<ImageData[]>([]);
   const [redoStack, setRedoStack] = useState<ImageData[]>([]);
 
@@ -106,6 +105,7 @@ export const useWorkspacePanZoom = ({
       window.removeEventListener("mousemove", handleGlobalMouseMove);
       window.removeEventListener("mouseup", handleGlobalMouseUp);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging]);
 
   // --- UNDO / REDO SNAPSHOT MATRIX MACHINE ---
@@ -168,6 +168,7 @@ export const useWorkspacePanZoom = ({
     window.addEventListener("keydown", handleKeys, { capture: true });
     return () =>
       window.removeEventListener("keydown", handleKeys, { capture: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [undoStack, redoStack]);
 
   const getBrushAlpha = (type: BrushType) => {

@@ -33,7 +33,7 @@ export const EraserPropertiesPanel: React.FC<EraserPropertiesPanelProps> = ({
 
       {/* SECTION 2: FLAT ACCENT SLIDER CONTROLS */}
       <div className="flex items-center gap-3 w-40">
-        <div className="flex flex-col gap-0.5 min-w-[54px]">
+        <div className="flex flex-col gap-0.5 min-w-13.5">
           <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Eraser
           </span>
