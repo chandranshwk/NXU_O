@@ -13,6 +13,12 @@ interface CanvasContextType {
   setZoom: React.Dispatch<SetStateAction<number>>;
   panning: boolean;
   setPanning: React.Dispatch<SetStateAction<boolean>>;
+  isDrawing: boolean;
+  setIsDrawing: React.Dispatch<SetStateAction<boolean>>;
+  isErasing: boolean;
+  setIsErasing: React.Dispatch<SetStateAction<boolean>>;
+  isSelectMode: boolean;
+  setIsSelectMode: React.Dispatch<SetStateAction<boolean>>;
 }
 
 // 2. Create the context with an undefined default value
@@ -43,9 +49,25 @@ export const CanvasProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [zoom]);
   const [panning, setPanning] = useState<boolean>(false);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [isErasing, setIsErasing] = useState<boolean>(false);
+  const [isSelectMode, setIsSelectMode] = useState<boolean>(true);
 
   return (
-    <CanvasContext.Provider value={{ zoom, setZoom, panning, setPanning }}>
+    <CanvasContext.Provider
+      value={{
+        zoom,
+        setZoom,
+        panning,
+        setPanning,
+        isDrawing,
+        setIsDrawing,
+        isErasing,
+        setIsErasing,
+        isSelectMode,
+        setIsSelectMode,
+      }}
+    >
       {children}
     </CanvasContext.Provider>
   );

@@ -28,7 +28,6 @@ import { formatName } from "../../assets/functions";
 import { checkIsActive, COLORS, FONTS } from "../../assets/assets";
 import { getEditorTools } from "../../assets/Tools";
 import { ColorNames, HighLighterNames } from "../../assets/Utils";
-import { useCanvas } from "../../contexts/CanvasContext";
 
 interface ToolProps {
   /** The unique key name identifying the purpose of the action tool */
@@ -59,14 +58,16 @@ const Toolbar = () => {
 
   const darkMode = setting.darkMode;
   const activeCanvasTool = context.activeCanvasTool || "Select";
-  const canvas = useCanvas();
 
   /** Config array defining mock action handles and graphic icon snippets for whiteboards */
   const tool: ToolProps[] = [
     {
       name: "Select",
       icon: <BsCursor />,
-      exec: () => console.log("Select mode"),
+      exec: () => {
+        context.setActiveCanvasTool("Select");
+        console.log("Select mode");
+      },
     },
     {
       name: "Selection",
@@ -76,18 +77,24 @@ const Toolbar = () => {
     {
       name: "Sketch",
       icon: <BiBrush />,
-      exec: () => console.log("Sketch mode"),
+      exec: () => {
+        context.setActiveCanvasTool("Sketch");
+        console.log("Sketch mode");
+      },
     },
     {
       name: "Erase",
       icon: <BiEraser />,
-      exec: () => console.log("Erase mode"),
+      exec: () => {
+        context.setActiveCanvasTool("Erase");
+        console.log("Erase mode");
+      },
     },
     {
       name: "Pan",
       icon: <BsHandIndexThumb />,
       exec: () => {
-        canvas.setPanning(true);
+        context.setActiveCanvasTool("Pan");
         console.log("Pan viewport");
       },
     },
