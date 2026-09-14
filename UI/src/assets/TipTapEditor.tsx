@@ -18,6 +18,7 @@ import type { settingsContextType } from "../contexts/settingsContext";
 import { CustomHeaderExtension } from "../Extensions/CustomHeaderExtension";
 import { CustomImageBlockExtension } from "../Extensions/CustomImageExtension";
 import { suggestionConfig } from "../assets/Suggestion";
+import { CodeTabExtension } from "../Extensions/CodeTabExtension";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -52,6 +53,7 @@ export const getEditorExtensions = ({
   }),
   CustomHeaderExtension,
   CustomImageBlockExtension,
+  CodeTabExtension,
 
   TextAlign.configure({
     types: ["heading", "paragraph", "tableCell", "tableHeader"],
@@ -272,6 +274,31 @@ export const getEditorExtensions = ({
           ...this.options.suggestion,
         }),
       ];
+    },
+  }),
+];
+
+export const getCodeWorkspaceExtensions = () => [
+  StarterKit.configure({
+    // ⚡ STRIP ALL INLINE FORMATTING MARKS
+    bold: false,
+    italic: false,
+    strike: false,
+    code: false,
+
+    // ⚡ STRIP BLOCK ELEMENT STRUCTURES
+    bulletList: false,
+    orderedList: false,
+    codeBlock: false,
+    blockquote: false,
+    heading: false,
+    horizontalRule: false,
+
+    // Keep raw basic block elements clear of margins
+    paragraph: {
+      HTMLAttributes: {
+        class: "m-0 p-0 leading-relaxed font-mono",
+      },
     },
   }),
 ];

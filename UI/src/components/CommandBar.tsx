@@ -18,7 +18,7 @@ import { BiMoon, BiSun, BiSearch, BiSolidHome } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { FaRegFolderOpen } from "react-icons/fa";
 import { useSettings } from "../contexts/settingsContext";
-import { LuNotepadText, LuSettings2 } from "react-icons/lu";
+import { LuCode, LuNotepadText, LuSettings2 } from "react-icons/lu";
 import { VscColorMode } from "react-icons/vsc";
 import { FormatHotkey } from "../assets/FormatHotKeys";
 
@@ -154,6 +154,16 @@ const CommandBar: React.FC<CommandBarProps> = ({
         hideByDefault: false,
         category: "Core",
         action: () => navigate("/scratchpad"),
+      },
+      {
+        id: "codeide",
+        icon: <LuCode />,
+        title: "Code-IDE",
+        shortcut: "/code",
+        module: "NXU_O",
+        hideByDefault: false,
+        category: "Core",
+        action: () => navigate("/ide"),
       },
       {
         id: "settings",

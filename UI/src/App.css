@@ -254,3 +254,158 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--thumbHover, #94a3b8) !important;
 }
+
+/* Core structure wrapper applied to all editor text blocks */
+.tiptap .editor-code-row {
+  position: relative !important;
+  /* Push your code text over to the right to clear room for the 3rem line number column */
+  padding-left: 3.5rem !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  margin: 0 !important;
+  width: 100% !important;
+  border-radius: 0px !important; /* Removes rounded pill contours entirely */
+  box-sizing: border-box !important;
+}
+
+/* Standalone Absolute Gutter Component */
+.tiptap .editor-code-row::before {
+  content: attr(data-line-number);
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2.5rem; /* Strict fixed physical column width tracking */
+  padding-right: 0.75rem;
+
+  /* Text properties inside the gutter */
+  font-family: monospace !important;
+  font-size: 11px !important;
+  font-weight: 500;
+  color: #71717a; /* Zinc-500 text color */
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  user-select: none;
+  pointer-events: none;
+
+  /* The Vertical Separation Line */
+  border-right: 1px solid rgba(63, 63, 70, 0.4);
+}
+
+/* Light mode adjustments for the line number color and separation line */
+.bg-zinc-50\/50 .tiptap .editor-code-row::before {
+  border-right: 1px solid rgba(228, 228, 231, 1);
+  color: #a1a1aa; /* Zinc-400 equivalent */
+}
+
+/* Highlight style for the active line number gutter */
+.tiptap .editor-code-row[data-active-row="true"]::before {
+  color: #6366f1 !important; /* Sharp Indigo accent matching premium IDEs */
+  font-weight: bold;
+}
+
+/* Full-Width Active Line Highlight Track */
+.tiptap .editor-code-row[data-active-row="true"] {
+  background-color: rgba(
+    99,
+    102,
+    241,
+    0.04
+  ) !important; /* Ultra-subtle light theme indigo row */
+}
+
+.dark .tiptap .editor-code-row[data-active-row="true"] {
+  background-color: rgba(
+    99,
+    102,
+    241,
+    0.08
+  ) !important; /* Dark theme row track background */
+}
+.bg-zinc-50\/50 .editor-code-row .token-modifier {
+  color: #b45309 !important;
+  font-weight: 600;
+}
+.bg-zinc-50\/50 .editor-code-row .token-keyword {
+  color: #1d4ed8 !important;
+  font-weight: 600;
+}
+.bg-zinc-50\/50 .editor-code-row .token-control {
+  color: #be185d !important;
+  font-weight: 600;
+}
+.bg-zinc-50\/50 .editor-code-row .token-primitive {
+  color: #0e7490 !important;
+  font-weight: 600;
+}
+.bg-zinc-50\/50 .editor-code-row .token-builtin {
+  color: #6d28d9 !important;
+  font-weight: 600;
+}
+.bg-zinc-50\/50 .editor-code-row .token-string {
+  color: #15803d !important;
+}
+.bg-zinc-50\/50 .editor-code-row .token-number {
+  color: #c2410c !important;
+}
+.bg-zinc-50\/50 .editor-code-row .token-comment {
+  color: #71717a !important;
+  font-style: italic;
+}
+.bg-zinc-50\/50 .editor-code-row .token-annotation {
+  color: #a16207 !important;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-modifier,
+.bg-\[\#121214\] .editor-code-row .token-modifier {
+  color: #f59e0b !important;
+  font-weight: 600;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-keyword,
+.bg-\[\#121214\] .editor-code-row .token-keyword {
+  color: #60a5fa !important;
+  font-weight: 600;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-control,
+.bg-\[\#121214\] .editor-code-row .token-control {
+  color: #f472b6 !important;
+  font-weight: 600;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-primitive,
+.bg-\[\#121214\] .editor-code-row .token-primitive {
+  color: #22d3ee !important;
+  font-weight: 600;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-builtin,
+.bg-\[\#121214\] .editor-code-row .token-builtin {
+  color: #c084fc !important;
+  font-weight: 600;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-string,
+.bg-\[\#121214\] .editor-code-row .token-string {
+  color: #4ade80 !important;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-number,
+.bg-\[\#121214\] .editor-code-row .token-number {
+  color: #fb923c !important;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-comment,
+.bg-\[\#121214\] .editor-code-row .token-comment {
+  color: #94a3b8 !important;
+  font-style: italic;
+}
+
+.bg-\[\#151518\] .editor-code-row .token-annotation,
+.bg-\[\#121214\] .editor-code-row .token-annotation {
+  color: #facc15 !important;
+}

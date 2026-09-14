@@ -15,17 +15,33 @@ import "./index.css";
 import App from "./App.tsx";
 import { SettingsProvider } from "./contexts/settingsContext.tsx";
 import { WorkspaceProvider } from "./contexts/workspaceContext.tsx";
+import { initializeCustomLanguages } from "./Extensions/ThemeLoader.ts";
 
-// Mount the compiled React virtual DOM tree cleanly into your main HTML node container
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    {/* Global context manager handling spatial node collections and camera focus anchors */}
-    <WorkspaceProvider>
-      {/* Global preference store managing theme modes, save timers, and keyboard macros */}
-      <SettingsProvider>
-        {/* Core application layout shell router orchestrator */}
-        <App />
-      </SettingsProvider>
-    </WorkspaceProvider>
-  </StrictMode>,
-);
+const container = document.getElementById("root")!;
+const root = createRoot(container);
+
+// ==========================================
+// TAURI DESKTOP BOOTSTRAP INIT SEQUENCE
+// ==========================================
+/**
+ * Forces the file system directory scanner to map custom files before
+ * rendering any frontend layout components, ensuring RAM dictionaries are active.
+ */
+initializeCustomLanguages()
+  .then(() => {
+    root.render(
+      <StrictMode>
+        {/* Global context manager handling spatial node collections and camera focus anchors */}
+        <WorkspaceProvider>
+          {/* Global preference store managing theme modes, save timers, and keyboard macros */}
+          <SettingsProvider>
+            {/* Core application layout shell router orchestrator */}
+            <App />
+          </SettingsProvider>
+        </WorkspaceProvider>
+      </StrictMode>,
+    );
+  })
+  .catch((error: string) => {
+    console.error("Critical boot failure: Filesystem scanner crashed", error);
+  });

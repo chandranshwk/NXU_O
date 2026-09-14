@@ -12,14 +12,14 @@
  */
 
 import { useEffect, useState } from "react";
-import { LuNotepadText } from "react-icons/lu";
+import { LuCode, LuNotepadText } from "react-icons/lu";
 
-import { GrNodes } from "react-icons/gr";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiSettings } from "react-icons/fi";
 import { RiHomeLine } from "react-icons/ri";
 import ProjectIcon from "./ProjectIcon";
 import { useLocation, useNavigate } from "react-router-dom";
+import { GrNodes } from "react-icons/gr";
 
 interface SidebarProps {
   /** Shared dark mode setting flag used to switch visual palette layouts */
@@ -69,6 +69,11 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
       icon: <LuNotepadText size={22} />,
       label: "Scratch Pad",
       link: "/scratchpad",
+    },
+    {
+      icon: <LuCode size={22} />,
+      label: "Code IDE",
+      link: "/ide",
     },
     {
       icon: <GrNodes size={22} />,

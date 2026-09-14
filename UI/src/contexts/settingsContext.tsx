@@ -197,7 +197,7 @@ export const SettingsProvider = ({
   const [zenMode, setZenMode] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  useEffect(() => console.clear(), [searchQuery]);
+  //useEffect(() => console.clear(), [searchQuery]);
 
   // ==========================================
   // LIFECYCLE 3: CONTRAST COLOR SELECTOR ALIGNER

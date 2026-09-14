@@ -26,6 +26,7 @@ import NewDocument from "./Pages/NewDocument";
 import { TitleBar } from "./App/TitleBar";
 import { EventsProvider } from "./contexts/EventsContext";
 import { CanvasProvider } from "./contexts/Canvas/CanvasContext";
+import CodeIDE from "./Pages/CodeIDE";
 
 /**
  * @layout Layout
@@ -166,6 +167,7 @@ const router = createHashRouter([
       { path: "scratchpad", element: <ScratchPad /> },
       { path: "graph", element: <GraphView /> },
       { path: "settings", element: <Settings /> },
+      { path: "ide", element: <CodeIDE /> },
       { path: "document/:id", element: <NewDocument /> },
     ],
   },
