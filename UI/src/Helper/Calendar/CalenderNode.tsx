@@ -1,6 +1,18 @@
-import { useState } from "react";
+/**
+ * @file CalenderNode.tsx
+ * @component CalenderNode
+ * @description Compact month calendar sized for the right rail.
+ * Reads `darkMode` from props (not outlet context) so it renders anywhere.
+ *
+ * @architecture
+ * - No outer card chrome — the rail's `Panel` wrapper provides it.
+ * - Grid is compact enough to fit a 320px-wide rail column.
+ * - Month navigation is local state (prev / next buttons in the header).
+ */
+
+import { useMemo, useState } from "react";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import CalenderGrid from "./CalendarGrid";
-import { useOutletContext } from "react-router-dom";
 
 export interface Assignee {
   id: string;
@@ -22,57 +34,153 @@ export interface MatrixEvent {
 }
 
 interface CalenderNodeProps {
-  initialEvents?: MatrixEvent[];
-  setEvents?: React.Dispatch<React.SetStateAction<MatrixEvent[]>>;
+  events: MatrixEvent[];
+  darkMode: boolean;
+  /** Optional: fires when a day is clicked, with that day's events. */
+  onDaySelect?: (dateStr: string, dayEvents: MatrixEvent[]) => void;
 }
 
+const WEEK_DAYS = ["S", "M", "T", "W", "T", "F", "S"];
+
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 export default function CalenderNode({
-  initialEvents = [],
-  setEvents,
+  events,
+  darkMode,
+  onDaySelect,
 }: CalenderNodeProps) {
-  const [events] = useState<MatrixEvent[]>(initialEvents);
-  const [currentDate] = useState(new Date());
+  // Tracked as {year, month} so navigation across year boundaries is trivial.
+  const today = useMemo(() => new Date(), []);
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDateStr, setSelectedDateStr] = useState("");
 
-  const { darkMode } = useOutletContext<{ darkMode: boolean }>();
-  const curMonth = currentDate.getMonth();
-  const curYear = currentDate.getFullYear();
-
-  const firstDayOfMonth = new Date(curYear, curMonth, 1).getDay();
-  const totalDaysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
+  const totalDaysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
   const paddingDays = Array(firstDayOfMonth).fill(null);
   const numbersArray = Array.from(
     { length: totalDaysInMonth },
     (_, i) => i + 1,
   );
-
   const daysArray = [...paddingDays, ...numbersArray];
 
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const goPrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const goNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+
+  const isCurrentMonth =
+    viewYear === today.getFullYear() && viewMonth === today.getMonth();
 
   return (
     <div
-      className={`p-5 w-full max-w-4xl mx-auto border rounded-xl font-sans text-sm shadow-xl transition-all duration-200 select-none ${
-        darkMode
-          ? "bg-[#141414] border-zinc-800/80 text-zinc-100 shadow-zinc-950/40"
-          : "bg-white border-zinc-200/80 text-zinc-800 shadow-zinc-200/30"
+      className={`w-full p-2 text-[11px] font-sans select-none ${
+        darkMode ? "text-zinc-200" : "text-zinc-700"
       }`}
     >
-      <div className="gap-6">
-        <CalenderGrid
-          darkMode={darkMode}
-          currentDate={currentDate}
-          year={curYear}
-          month={curMonth}
-          calendarCells={daysArray}
-          events={events}
-          selectedDateStr={selectedDateStr}
-          setSelectedDateStr={setSelectedDateStr}
-          setEvents={setEvents}
-          weekDays={weekDays}
-        />
+      {/* ── MONTH HEADER: prev / label / next ───────── */}
+      <div className="flex items-center justify-between mb-2 px-1">
+        <button
+          type="button"
+          onClick={goPrevMonth}
+          aria-label="Previous month"
+          className={`p-1 rounded transition-colors ${
+            darkMode
+              ? "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
+              : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+          }`}
+        >
+          <LuChevronLeft size={14} />
+        </button>
+
+        <div className="flex items-baseline gap-1">
+          <span
+            className={`text-[11px] font-semibold tracking-tight ${
+              darkMode ? "text-zinc-300" : "text-zinc-700"
+            }`}
+          >
+            {MONTH_LABELS[viewMonth]}
+          </span>
+          <span
+            className={`text-[10px] font-mono ${
+              darkMode ? "text-zinc-500" : "text-zinc-400"
+            }`}
+          >
+            {viewYear}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={goNextMonth}
+          aria-label="Next month"
+          className={`p-1 rounded transition-colors ${
+            darkMode
+              ? "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800"
+              : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+          }`}
+        >
+          <LuChevronRight size={14} />
+        </button>
       </div>
+
+      <CalenderGrid
+        darkMode={darkMode}
+        currentDate={today}
+        year={viewYear}
+        month={viewMonth}
+        calendarCells={daysArray}
+        events={events}
+        selectedDateStr={selectedDateStr}
+        setSelectedDateStr={setSelectedDateStr}
+        weekDays={WEEK_DAYS}
+        onDaySelect={onDaySelect}
+      />
+
+      {/* ── "JUMP TO TODAY" — only shown when viewing another month ── */}
+      {!isCurrentMonth && (
+        <button
+          type="button"
+          onClick={() => {
+            setViewYear(today.getFullYear());
+            setViewMonth(today.getMonth());
+          }}
+          className={`mt-2 w-full text-[10px] font-medium py-1 rounded transition-colors ${
+            darkMode
+              ? "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60"
+              : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100"
+          }`}
+        >
+          Jump to today
+        </button>
+      )}
     </div>
   );
 }

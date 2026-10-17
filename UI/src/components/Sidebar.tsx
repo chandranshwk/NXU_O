@@ -15,9 +15,8 @@ import { useEffect, useState } from "react";
 import { LuCode, LuNotepadText } from "react-icons/lu";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { FiSettings } from "react-icons/fi";
+import { FiPlus, FiSettings } from "react-icons/fi";
 import { RiHomeLine } from "react-icons/ri";
-import ProjectIcon from "./ProjectIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GrNodes } from "react-icons/gr";
 
@@ -33,30 +32,6 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [, setOpenDialog] = useState<boolean>(false);
   const navigate = useNavigate();
-
-  /** Static parameter list mapping active project directories and gradient backgrounds */
-  const NAVITEMS = [
-    {
-      label: "Grifty",
-      color: "from-indigo-500 to-purple-600",
-      link: "/project/grifty",
-    },
-    {
-      label: "Llama TB",
-      color: "from-emerald-500 to-teal-800",
-      link: "/project/llamatb",
-    },
-    {
-      label: "OXU_O",
-      color: "from-orange-400 to-rose-500",
-      link: "/project/OXU_O",
-    },
-    {
-      label: "Samridh",
-      color: "from-blue-500 to-cyan-500",
-      link: "/project/samridh",
-    },
-  ];
 
   /** Static parameters grouping the application's root pages and navigation icons */
   const PAGES = [
@@ -87,73 +62,9 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
     },
   ];
 
-  /** Local state tracking the current workspace identity payload in view */
-  const [currentSite, setCurrentSide] = useState<{
-    name: string;
-    icon: React.ReactNode;
-  }>({ name: "NXU_O", icon: null });
-
   const location = useLocation();
   /** Collapse modifier reporting true if deeply nested inside fullscreen document panels */
   const show = location.pathname.startsWith("/document");
-
-  // ==========================================
-  // LIFECYCLE 1: WORKSPACE SITE IDENTITY ALIGNER
-  // ==========================================
-  /**
-   * Evaluates location URL parameters on router changes. Scrapes current path branches
-   * to automatically synchronize header title text labels and gradient icon layouts.
-   */
-  useEffect(() => {
-    const pathParts = location.pathname.split("/");
-
-    // 1. Check if we are in a project route (e.g., /project/grifty)
-    if (location.pathname.startsWith("/project") && pathParts[2]) {
-      const projectId = pathParts[2];
-
-      const matchedProject = NAVITEMS.find(
-        (item) => item.link === `/project/${projectId}`,
-      );
-
-      if (matchedProject) {
-        setTimeout(() => {
-          setCurrentSide({
-            name: matchedProject.label,
-            icon: (
-              <div
-                className={`h-8 w-8 rounded-full hover:scale-110 relative shrink-0 size-5 transition-transform duration-300 group-hover:scale-110 border bg-linear-to-br ${matchedProject.color} p-px rounded-full flex items-center justify-center shadow-lg shadow-orange-500/10`}
-              />
-            ),
-          });
-        }, 0);
-        return; // Exit sequence early if matched project context settles
-      }
-    }
-
-    // 2. Default Fallback Brand Core (OXU_O)
-    setTimeout(() => {
-      setCurrentSide({
-        name: "NXU_O",
-        icon: (
-          <img
-            src="/icon-OXU_O.png"
-            alt="Logo"
-            className={`h-8 w-8 rounded-full border transition-transform duration-300 group-hover:scale-110 relative ${
-              darkMode
-                ? "border-slate-700 shadow-lg"
-                : "border-slate-200 shadow-sm"
-            }`}
-          />
-        ),
-      });
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, darkMode]);
-
-  /** Filters out active matching links to list closed sibling channels in dropdown paths */
-  const filteredItems = NAVITEMS.filter(
-    (item) => item.link !== location.pathname,
-  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -179,41 +90,6 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
         }}
         className={`relative h-[calc(100vh-3rem)] justify-between gap-2 m-2 mt-1 mx-1 flex flex-col rounded-lg transition-colors duration-300 overflow-visible z-50 border-0`}
       >
-        {/* ==========================================
-            TOP HEADER AREA: WORKSPACE SWAPPER TRACK CARD
-            ========================================== */}
-        <div
-          className={`flex items-center p-3 gap-3 h-16 shrink-0 border-b border-transparent rounded-lg ${darkMode ? "bg-[#141414] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
-        >
-          {/* Workspace Accent Icon Block */}
-          <div className="relative shrink-0 flex items-center justify-center">
-            {currentSite.icon}
-            {darkMode && (
-              <div className="absolute inset-0 bg-orange-500/10 blur-md rounded-full -z-10" />
-            )}
-          </div>
-
-          {/* Animate text visibility inline transformations with smooth spring weights */}
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex-1 min-w-0 flex items-center justify-between ml-1"
-              >
-                <div
-                  className={`font-bold tracking-tight text-sm truncate ${darkMode ? "text-slate-100" : "text-slate-900"}`}
-                >
-                  {currentSite.name}
-                </div>
-
-                <div className="relative mt-2"></div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* ==========================================
             MIDDLE NAVIGATION RAILS BODY: LINK LISTINGS
             ========================================== */}
@@ -299,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                     <span
                       className={`font-bold uppercase text-[10px] ${darkMode ? "text-white" : "text-slate-900"} tracking-widest whitespace-nowrap`}
                     >
-                      Recent Projects
+                      Workspaces
                     </span>
                     <hr className="flex-1 border-t border-slate-300" />
                   </div>
@@ -308,46 +184,33 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
                 )}
               </div>
 
-              {/* RECENT PROJECT WORKSPACE GRID ELEMENT LINKS CONTAINER */}
-              <div className="flex flex-col gap-1">
-                <div className="flex flex-col gap-1">
-                  <AnimatePresence initial={false}>
-                    {filteredItems.map((item) => (
-                      <motion.div
-                        layout // Retains layout positions dynamically when active addresses swap indices
-                        key={item.label} // Utilizes explicit string labels instead of simple loop index numbers to safeguard keys
-                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{
-                          opacity: 0,
-                          scale: 0.9,
-                          transition: { duration: 0.15 },
-                        }}
-                        whileHover={{ x: isOpen ? 5 : 0 }}
-                        className={`flex items-center w-full gap-4 cursor-pointer group transition-all duration-300 ${isOpen ? "justify-start px-2 py-1.5 rounded-xl" : "justify-center p-2 py-1 rounded-2xl"} ${darkMode ? "hover:bg-[#27272bd4]" : "hover:bg-slate-50"} `}
-                        onClick={() => {}}
-                      >
-                        {/* Custom Project Identity Icon Swatch */}
-                        <div className="shrink-0 flex items-center justify-center w-6">
-                          <ProjectIcon color={item.color} />
-                        </div>
+              <div className="flex flex-col w-full ">
+                <div
+                  className={`flex items-center py-3 w-full gap-4 my-0 transition-all duration-300 cursor-pointer group p-2 rounded-xl 
+                  ${isOpen ? (darkMode ? "justify-start hover:bg-[#27272bd4]" : "justify-start hover:bg-slate-50") : "justify-center"}`}
+                >
+                  {/* Interactive graphic visual marker link */}
+                  <div
+                    className={`shrink-0 ${darkMode ? "text-slate-200 group-hover:text-white" : "text-slate-600 group-hover:text-indigo-600"}`}
+                  >
+                    <FiPlus size={22} />
+                  </div>
 
-                        <AnimatePresence mode="wait">
-                          {isOpen && (
-                            <motion.span
-                              layout // Ensures text typography stays locked directly inline with sliding bounds
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -5 }}
-                              className={`whitespace-nowrap text-[13px] font-bold flex-1 
-                ${darkMode ? "text-slate-200 group-hover:text-slate-100" : "text-slate-600 group-hover:text-slate-900"}`}
-                            >
-                              {item.label}
-                            </motion.span>
-                          )}
-                        </AnimatePresence>
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -5 }}
+                        className="flex items-center justify-between flex-1 overflow-hidden"
+                      >
+                        <span
+                          className={`whitespace-nowrap font-semibold ${darkMode ? "text-slate-50" : "text-slate-700"} text-sm`}
+                        >
+                          Add Workspace
+                        </span>
                       </motion.div>
-                    ))}
+                    )}
                   </AnimatePresence>
                 </div>
               </div>

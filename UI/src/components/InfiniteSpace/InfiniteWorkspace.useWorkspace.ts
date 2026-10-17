@@ -1,6 +1,18 @@
+/**
+ * @file InfiniteWorkspace.useWorkspace.ts
+ * @hook useWorkspacePanZoom
+ * @description Manages the workspace viewport: pan, zoom, drawing, eraser,
+ * and undo/redo history. Also owns the local page-title buffer.
+ *
+ * @architecture
+ * - Pan/zoom state lives here; zoom is mirrored into `CanvasContext`.
+ * - Drawing history is bitmap snapshots (ImageData) per stroke.
+ * - Title commits go through `useNotebookStore.renamePage`.
+ */
+
 import React, { useState, useRef, useEffect } from "react";
-import type { MockNotebook, MockPage, MockSection } from "../../assets/SAMPLE";
-import { useNotebookStore } from "../../contexts/notebook";
+import type { MockNotebook, MockPage } from "../../assets/SAMPLE";
+import { useNotebookStore } from "../../Store/store";
 import { useEditorContext } from "../../contexts/editorContext";
 import { renderTexturedLine, type BrushType } from "./useDrawingTextures";
 import { useCanvas } from "../../contexts/Canvas/CanvasContext";
@@ -8,14 +20,12 @@ import { useCanvas } from "../../contexts/Canvas/CanvasContext";
 interface UseWorkspacePanZoomProps {
   currentPage: MockPage | undefined;
   activeNotebook: MockNotebook | null;
-  currentSection: MockSection | undefined;
   darkMode: boolean;
 }
 
 export const useWorkspacePanZoom = ({
   currentPage,
   activeNotebook,
-  currentSection,
 }: UseWorkspacePanZoomProps) => {
   const [localTitle, setLocalTitle] = useState("");
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -56,52 +66,55 @@ export const useWorkspacePanZoom = ({
     const trimmed = localTitle.trim();
     if (
       !activeNotebook ||
-      !currentSection ||
       !currentPage ||
       trimmed === "" ||
       trimmed === currentPage.title
     )
       return;
+
     const { renamePage } = useNotebookStore.getState();
-    if (renamePage) {
-      renamePage(activeNotebook.id, currentSection.id, currentPage.id, trimmed);
-    }
+    renamePage(activeNotebook.id, currentPage.id, trimmed);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (activeCanvasTool === "Sketch" || activeCanvasTool === "Erase") return;
+
     const target = e.target as HTMLElement;
     const isBackgroundClick =
       target === viewportNodeRef.current ||
       target.id === "infinite-canvas-viewport" ||
       target.id === "infinite-grid-layer";
+
     if (
       !isBackgroundClick ||
       target.closest("input") ||
       target.closest("button")
     )
       return;
-    console.log(isDragging);
+
     setIsDragging(true);
-    console.log(isDragging);
     setPanning(true);
     dragStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   };
 
   useEffect(() => {
     if (!isDragging) return;
+
     const handleGlobalMouseMove = (e: MouseEvent) => {
       setPan({
         x: e.clientX - dragStart.current.x,
         y: e.clientY - dragStart.current.y,
       });
     };
+
     const handleGlobalMouseUp = () => {
       setIsDragging(false);
       setPanning(false);
     };
+
     window.addEventListener("mousemove", handleGlobalMouseMove);
     window.addEventListener("mouseup", handleGlobalMouseUp);
+
     return () => {
       window.removeEventListener("mousemove", handleGlobalMouseMove);
       window.removeEventListener("mouseup", handleGlobalMouseUp);
@@ -118,7 +131,6 @@ export const useWorkspacePanZoom = ({
     const nextUndoStack = [...undoStack];
     const previousSnapshot = nextUndoStack.pop()!;
 
-    // Save current view state to redo track before applying rollback
     const currentSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
     setRedoStack((prev) => [currentSnapshot, ...prev]);
 
@@ -196,11 +208,9 @@ export const useWorkspacePanZoom = ({
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    // Save a pixel snapshot to history state before editing begins
     const currentSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
     setUndoStack((prev) => [...prev, currentSnapshot]);
 
-    // Clear redo history when a new action starts
     if (redoStack.length > 0) setRedoStack([]);
 
     const rect = canvas.getBoundingClientRect();
@@ -240,12 +250,10 @@ export const useWorkspacePanZoom = ({
         brushType,
       );
     } else if (activeCanvasTool === "Erase") {
-      // --- DYNAMIC DOCK PIXEL ERASURE MECHANICS ---
       ctx.save();
       ctx.beginPath();
-      // Sets the composition blending pipe to clear out target canvas pixels dynamically
       ctx.globalCompositeOperation = "destination-out";
-      ctx.lineWidth = eraserSize * 2; // Full brush footprint thickness
+      ctx.lineWidth = eraserSize * 2;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.moveTo(lastDrawingPointRef.current.x, lastDrawingPointRef.current.y);

@@ -28,6 +28,8 @@ import { formatName } from "../../assets/functions";
 import { checkIsActive, COLORS, FONTS } from "../../assets/assets";
 import { getEditorTools } from "../../assets/Tools";
 import { ColorNames, HighLighterNames } from "../../assets/Utils";
+import { useCanvas } from "../../contexts/Canvas/CanvasContext";
+import WidgetDrop from "./WidgetDrop";
 
 interface ToolProps {
   /** The unique key name identifying the purpose of the action tool */
@@ -58,6 +60,8 @@ const Toolbar = () => {
 
   const darkMode = setting.darkMode;
   const activeCanvasTool = context.activeCanvasTool || "Select";
+
+  const canvas = useCanvas();
 
   /** Config array defining mock action handles and graphic icon snippets for whiteboards */
   const tool: ToolProps[] = [
@@ -111,7 +115,10 @@ const Toolbar = () => {
     {
       name: "Widget",
       icon: <MdOutlineWidgets />,
-      exec: () => console.log("Widget menu"),
+      exec: () => {
+        canvas.setWidgetOpen(!canvas.widgetOpen);
+        console.log("Widget menu");
+      },
     },
     {
       name: "Z-Layer",
@@ -295,24 +302,37 @@ const Toolbar = () => {
         {ELEMENTS.map((el, idx) => {
           const isActive = checkIsActive(el.name, context);
           return (
-            <button
+            <div
+              className="relative group flex items-center justify-center"
               key={idx}
-              type="button"
-              title={el.name}
-              aria-label={el.name}
-              className={`p-2 rounded transition-colors duration-150 outline-none ${
-                isActive
-                  ? "bg-blue-500 text-white shadow-inner font-semibold"
-                  : `${darkMode ? "hover:bg-white hover:text-black" : "hover:bg-zinc-950 hover:text-white"}`
-              }`}
-              onClick={() => {
-                el.onClick(context.editor!, context);
-              }}
             >
-              <div className="w-4 h-4 flex items-center justify-center text-base">
-                {el.icon}
-              </div>
-            </button>
+              <button
+                key={idx}
+                type="button"
+                title={el.name}
+                className={`p-2 rounded transition-colors duration-150 outline-none group ${
+                  isActive
+                    ? "bg-blue-500 text-white shadow-inner font-semibold"
+                    : `${darkMode ? "hover:bg-white hover:text-black" : "hover:bg-zinc-950 hover:text-white"}`
+                }`}
+                onClick={() => {
+                  el.onClick(context.editor!, context);
+                }}
+              >
+                <div className="w-4 h-4 flex items-center justify-center text-base">
+                  {el.icon}
+                </div>
+              </button>
+              <span
+                className={`text-[10px] tracking-wide pointer-events-none hidden group-hover:block absolute px-2 py-1 rounded shadow-md top-10 whitespace-nowrap z-50 transition-colors ${
+                  darkMode
+                    ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
+                    : "bg-zinc-900 text-zinc-100"
+                }`}
+              >
+                {el.name}
+              </span>
+            </div>
           );
         })}
       </div>
@@ -371,6 +391,7 @@ const Toolbar = () => {
           );
         })}
       </div>
+      <WidgetDrop />
     </div>
   );
 };

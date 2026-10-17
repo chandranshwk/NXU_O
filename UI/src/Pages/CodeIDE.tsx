@@ -264,7 +264,7 @@ const CodeIDEContent: React.FC = () => {
       </div>
 
       {/** Column 2 & 3: Right Pure Coding Simulator Panel Matrix Layout */}
-      <div className="col-span-2 flex flex-col h-full overflow-hidden">
+      <div className="col-span-2 flex flex-col h-full overflow-hidden w-[calc(100%+0.5rem)]">
         {/** Integrated Workspace Operations Action Navigation Dock Row */}
         <CodeWorkspaceHeader
           darkMode={darkMode}
@@ -279,7 +279,7 @@ const CodeIDEContent: React.FC = () => {
 
         {/** Scrollable Text Canvas housing container wrapper element with structural layout controls */}
         <div
-          className={`flex-1 min-h-0 overflow-y-auto rounded-b-xl border-x border-b transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
+          className={`flex-1 w-full min-h-0 overflow-y-auto rounded-b-xl border-x border-b transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
             darkMode
               ? "bg-[#151518] border-zinc-800/80"
               : "bg-zinc-50/50 border-zinc-200"

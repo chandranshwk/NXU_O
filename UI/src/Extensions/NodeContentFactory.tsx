@@ -1,58 +1,50 @@
 /**
  * @file NodeContentFactory.tsx
  * @component NodeContentFactory
- * @description A dynamic component router that acts as a Factory pattern. It reads
- * the node type attribute from your canvas state configuration and returns the corresponding
- * functional block component.
+ * @description Factory router that maps a node's `type` to its concrete
+ * renderer component.
  *
  * @architecture
- * - Receives configuration payload bundles from `src/contexts/CanvasNodeWrapper`.
- * - Maps the text block stream data straight into the verified `<TextNode />` system.
- * - Serves as your expansion routing springboard where you can plug in upcoming modules
- *   like the Calendar Node or Todo Block trackers.
+ * - Receives the raw `MockPageNode` from `CanvasNodeWrapper`.
+ * - Routes each known type to its renderer; unknown types fall through to a
+ *   visible error boundary so silent blanks don't ship to production.
  */
 
 import React from "react";
 import TextNode from "../Helper/Text-Node/TextNode";
-import TaskNode from "../Helper/TaskNode";
-import { useEvents } from "../contexts/EventsContext";
-import CalenderNode from "../Helper/Calendar/CalenderNode";
-import type { CanvasNodeData } from "../contexts/Canvas/CanvasNodeWrapper";
+import type { MockPageNode } from "../assets/SAMPLE";
 
 interface NodeContentFactoryProps {
-  /** Core configuration payload object defining the active block type, id, and content string */
-  node: CanvasNodeData;
+  /** Raw node payload from the page's `nodes` array. */
+  node: MockPageNode;
 }
 
 export const NodeContentFactory: React.FC<NodeContentFactoryProps> = ({
   node,
 }) => {
-  const { events, setEvents } = useEvents();
-  // Evaluates string parameters to route elements down to the matching structural layouts
   switch (node.type) {
     case "text":
       return <TextNode content={node.content} nodeId={node.id} />;
 
-    case "calendar":
-      return <CalenderNode initialEvents={events} setEvents={setEvents} />;
-
-    case "task":
-      return <TaskNode events={events} />;
-
-    case "todo":
-      /* TODO_BLOCK PLUG-IN ROUTE MARKER: Swap this placeholder out once your list board file is built */
+    case "map":
+      // MAP_BLOCK: swap this placeholder once the map component ships.
       return (
         <div className="py-2 text-xs font-mono opacity-60">
-          [Clean List Task Tracker Tracker Component Viewport]
+          Map view — coming soon
         </div>
       );
 
-    default:
-      /* FALLBACK SAFETY BOUNDARY CHASSIS: Catches unrecognized layout exceptions gracefully */
+    default: {
+      // Exhaustiveness check: if a new type is added to NodeComponentType and
+      // not handled above, `_exhaustive` fails to compile.
+      const _exhaustive: never = node.type;
+      void _exhaustive;
+
       return (
         <div className="text-xs text-red-500">
-          Unrecognized structural element node data signature
+          Unrecognized node type: {String(node.type)}
         </div>
       );
+    }
   }
 };

@@ -3,8 +3,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
-import SearchDrop, { type SearchItems } from "./SearchDrop"; // Adjust path to match your folder tree
-import type { MockSection } from "../assets/SAMPLE";
+import SearchDrop, { type SearchItems } from "./SearchDrop";
 
 // Explicitly define your separated central search bar properties interface
 interface TitleBarCentralProps {
@@ -16,7 +15,7 @@ interface TitleBarCentralProps {
   isShowRoute: boolean;
   darkMode: boolean;
   location: { pathname: string };
-  notebooks: Array<{ id: string; title: string; sections: MockSection[] }>;
+  notebooks: Array<{ id: string; title: string }>;
   searchItems: SearchItems[];
   activeIndex: number;
   setActiveIndex: (index: number) => void;

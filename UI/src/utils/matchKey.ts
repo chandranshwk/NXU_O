@@ -22,7 +22,7 @@ export const matchShortcut = (
 ): boolean => {
   if (!shortcutInput) return false;
 
-  // 🚀 FIXED: Initialize without useless baseline variable assignment space maps
+  // Initialize without useless baseline variable assignment space maps
   let tokens: string[];
 
   // 1. Safely extract and clean shortcut tokens from any data structure

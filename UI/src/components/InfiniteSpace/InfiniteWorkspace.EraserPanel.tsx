@@ -6,6 +6,10 @@ interface EraserPropertiesPanelProps {
   setEraserSize: (size: number) => void;
 }
 
+/** Range thumb styling shared by both browsers. WebKit + Firefox syntax. */
+const thumbClasses =
+  "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-grab";
+
 export const EraserPropertiesPanel: React.FC<EraserPropertiesPanelProps> = ({
   darkMode,
   eraserSize,
@@ -19,36 +23,58 @@ export const EraserPropertiesPanel: React.FC<EraserPropertiesPanelProps> = ({
           : "bg-white/90 border-zinc-200 text-zinc-900"
       }`}
     >
-      {/* SECTION 1: UNCONSTRAINED LIVE PREVIEW (Allows growth up to 64px) */}
-      <div className="flex items-center justify-center w-16 h-16 pr-4 border-r border-zinc-200 dark:border-zinc-800">
-        {/* The ring now sits unconstrained so it can scale to full width/height naturally */}
+      {/* ==========================================
+          SECTION 1: LIVE PREVIEW
+          ========================================== */}
+      <div className="flex items-center shrink-0">
+        <div className="flex items-center justify-center w-20 h-20">
+          <div
+            className={`rounded-full border transition-all duration-75 ease-out ${
+              darkMode
+                ? "border-zinc-500 bg-zinc-500/10"
+                : "border-zinc-400 bg-zinc-400/10"
+            }`}
+            style={{
+              width: `${eraserSize}px`,
+              height: `${eraserSize}px`,
+            }}
+          />
+        </div>
         <div
-          className="rounded-full border border-zinc-400 dark:border-zinc-500 bg-zinc-400/10 dark:bg-zinc-500/10 transition-all duration-75 ease-out"
-          style={{
-            width: `${eraserSize}px`,
-            height: `${eraserSize}px`,
-          }}
+          className={`w-px h-12 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
         />
       </div>
 
-      {/* SECTION 2: FLAT ACCENT SLIDER CONTROLS */}
-      <div className="flex items-center gap-3 w-40">
-        <div className="flex flex-col gap-0.5 min-w-13.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+      {/* ==========================================
+          SECTION 2: SLIDER + LABEL
+          ========================================== */}
+      <div className="flex items-center gap-3 w-48">
+        <div className="flex flex-col gap-0.5 min-w-[54px]">
+          <span
+            className={`text-[9px] font-bold uppercase tracking-wider ${
+              darkMode ? "text-zinc-500" : "text-zinc-400"
+            }`}
+          >
             Eraser
           </span>
           <span className="text-xs font-mono font-bold leading-none">
             {eraserSize}px
           </span>
         </div>
+
         <input
           type="range"
-          min="8"
-          max="64"
-          step="2"
+          min={8}
+          max={64}
+          step={2}
           value={eraserSize}
-          onChange={(e) => setEraserSize(parseInt(e.target.value))}
-          className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-zinc-600 dark:accent-zinc-400"
+          onChange={(e) => setEraserSize(parseInt(e.target.value, 10))}
+          aria-label="Eraser size"
+          className={`w-full h-1 rounded-lg appearance-none cursor-pointer ${thumbClasses} ${
+            darkMode
+              ? "bg-zinc-800 [&::-webkit-slider-thumb]:bg-zinc-300 [&::-moz-range-thumb]:bg-zinc-300"
+              : "bg-zinc-200 [&::-webkit-slider-thumb]:bg-zinc-700 [&::-moz-range-thumb]:bg-zinc-700"
+          }`}
         />
       </div>
     </div>
