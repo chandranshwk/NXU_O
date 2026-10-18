@@ -1,13 +1,7 @@
 import React from "react";
-import {
-  FiType,
-  FiCalendar,
-  FiBarChart2,
-  FiCheckSquare,
-  FiPlus,
-} from "react-icons/fi";
+import { FiType, FiPlus } from "react-icons/fi";
 import { useCanvas } from "../../contexts/Canvas/CanvasContext";
-import type { NodeComponentType } from "../../Store/types";
+import type { NodeComponentType } from "../../assets/SAMPLE";
 
 // Semantic visual anchors for node types
 const NODE_TYPES: {
@@ -23,27 +17,6 @@ const NODE_TYPES: {
     desc: "Notes & markdown",
     Icon: FiType,
     accent: "bg-blue-50 text-blue-600 border-blue-100",
-  },
-  {
-    type: "calendar",
-    label: "Calendar",
-    desc: "Events & deadlines",
-    Icon: FiCalendar,
-    accent: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  },
-  {
-    type: "task",
-    label: "Tasks",
-    desc: "Multi-event tracking",
-    Icon: FiBarChart2,
-    accent: "bg-purple-50 text-purple-600 border-purple-100",
-  },
-  {
-    type: "todo",
-    label: "Todo Board",
-    desc: "Interactive checklists",
-    Icon: FiCheckSquare,
-    accent: "bg-amber-50 text-amber-600 border-amber-100",
   },
 ];
 

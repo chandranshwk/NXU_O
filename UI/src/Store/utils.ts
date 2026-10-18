@@ -1,5 +1,5 @@
 import type { MockNotebook, MockPage, MockPageNode } from "../assets/SAMPLE";
-import type { NodeComponentType } from "./types";
+import type { NodeComponentType } from "../contexts/Canvas/CanvasNodeWrapper";
 
 export interface TreeUpdateResult {
   notebooks: MockNotebook[];
@@ -101,6 +101,7 @@ const NODE_DEFAULTS: Record<
 > = {
   text: { width: 550, height: 180 },
   map: { width: 400, height: 320 },
+  image: { width: 400, height: 320 },
 };
 
 /**

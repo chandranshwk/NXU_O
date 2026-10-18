@@ -26,10 +26,9 @@ import {
 } from "./CanvasNodeSettingsDialog";
 import { CanvasNodeDragHandle } from "./CanvasNodeDragHandle";
 import { useCanvas } from "./CanvasContext";
-import type { MockPageNode } from "../../assets/SAMPLE";
+import type { MockPageNode, NodeComponentType } from "../../assets/SAMPLE";
 import { useCanvasNodeHandlers } from "../useCanvasNodeHandlers";
 
-import type { NodeComponentType } from "../../Store/types";
 import { useWorkspaceStore } from "../../Store/store";
 
 /**

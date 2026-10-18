@@ -1,8 +1,8 @@
 import React from "react";
-import type { SampleProblemData } from "./CodeIDE.SAMPLE";
+import type { CodeFile } from "./CodeIDE.SAMPLE";
 
 interface ProblemInstructionTrackProps {
-  data: SampleProblemData;
+  data: CodeFile;
   darkMode: boolean;
 }
 
@@ -81,7 +81,7 @@ export const ProblemInstructionTrack: React.FC<
           Constraints
         </h3>
         <ul className="flex flex-col gap-1.5">
-          {data.constraints.map((constraint, idx) => (
+          {data.constraints.map((constraint: string, idx: number) => (
             <li
               key={idx}
               className={`font-mono text-[11px] px-2.5 py-1 rounded-md border w-max max-w-full truncate ${

@@ -13,11 +13,12 @@ import { faker } from "@faker-js/faker";
 import type { MatrixEvent } from "../Helper/Calendar/CalenderNode";
 import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
 
-export type CanvasNodeType = "text" | "map" | "image";
+export type NodeComponentType = "text" | "map" | "image";
+export type WdigetType = "calendar" | "todo" | "task";
 
 export interface MockPageNode {
   id: string;
-  type: CanvasNodeType;
+  type: NodeComponentType;
   x: number;
   y: number;
   width: number;

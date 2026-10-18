@@ -1,8 +1,8 @@
 import type {
-  CanvasNodeType,
   Folder,
   MockNotebook,
   MockSubtask,
+  NodeComponentType,
 } from "../assets/SAMPLE";
 import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
 
@@ -25,7 +25,7 @@ export interface WorkspaceState {
   addNodeToPage: (
     notebookId: string,
     pageId: string,
-    nodeType: CanvasNodeType,
+    nodeType: NodeComponentType,
   ) => void;
   deleteNodeFromPage: (
     notebookId: string,
