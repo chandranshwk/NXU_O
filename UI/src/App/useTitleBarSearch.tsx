@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { NavigateFunction } from "react-router-dom";
-import { FiBook, FiCode, FiFileText, FiFolder } from "react-icons/fi"; //  Added FiFolder
+import { FiBook, FiCode, FiFileText, FiFolder } from "react-icons/fi";
 import { settingsList } from "../Pages/Setting-Sections/settingsList";
 import type { Folder, MockNotebook } from "../assets/SAMPLE";
-import type { CodeFile } from "../Pages/CodeIDE.SAMPLE"; //  Added CodeFile
+import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
 import type { SearchItems } from "./SearchDrop";
 import {
   computePredictiveResult,
   filterByQuery,
   pickSearchScope,
   isNotebook,
+  isCodeFile, // ⚡ Added isCodeFile import
 } from "./titleBarUtils";
 
 interface UseTitleBarSearchOptions {
@@ -87,7 +88,7 @@ export const useTitleBarSearch = ({
       exec: () => {
         setSearching(false);
         setSearchQuery("");
-        navigate(`/code/${c.id}`);
+        navigate(`/code/${c.titleSlug}`);
       },
       description: `Problem · ${c.difficulty} · ${c.category}`,
     }));
@@ -176,7 +177,8 @@ export const useTitleBarSearch = ({
           },
           description: `Notebook · ${item.pages.length} pages`,
         };
-      } else {
+      } else if (isCodeFile(item)) {
+        // ⚡ Added explicit check for CodeFile
         return {
           id: `folder-code:${item.id}`,
           name: item.title || "Untitled Problem",
@@ -188,6 +190,19 @@ export const useTitleBarSearch = ({
           },
           description: `Problem · ${item.difficulty} · ${item.category}`,
         };
+      } else {
+        // ⚡ Fallback for Folder
+        return {
+          id: `folder-folder:${item.id}`,
+          name: item.title || "Untitled Folder",
+          icon: <FiFolder className="size-3.5 opacity-70" />,
+          exec: () => {
+            setSearching(false);
+            setSearchQuery("");
+            navigate(`/folder/${item.id}`);
+          },
+          description: `Folder · ${item.content.length} items`,
+        };
       }
     });
   }, [currentFolderId, folders, navigate, setSearchQuery]);
@@ -198,7 +213,6 @@ export const useTitleBarSearch = ({
     if (scope === "folder") return filterByQuery(folderContents, searchQuery);
     if (scope === "pages") return filterByQuery(pages, searchQuery);
     if (scope === "settings") return filterByQuery(settingsItems, searchQuery);
-    //  Use homeItems for the "notes" (Home) scope and limit to 30 results to keep UI fast
     if (scope === "notes")
       return filterByQuery(homeItems, searchQuery).slice(0, 30);
     return [];

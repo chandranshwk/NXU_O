@@ -127,8 +127,13 @@ export const computePredictiveResult = (
 // ── Type guards ───────────────────────────────────────────────────
 // Shared between search and the folder view.
 export const isNotebook = (
-  item: CodeFile | MockNotebook,
+  item: CodeFile | MockNotebook | Folder, // ⚡ Added Folder
 ): item is MockNotebook => "pages" in item && "events" in item;
 
-export const isCodeFile = (item: CodeFile | MockNotebook): item is CodeFile =>
-  "titleSlug" in item && "examples" in item;
+export const isCodeFile = (
+  item: CodeFile | MockNotebook | Folder, // ⚡ Added Folder
+): item is CodeFile => "titleSlug" in item && "examples" in item;
+
+export const isFolder = (
+  item: CodeFile | MockNotebook | Folder, // ⚡ Added Folder
+): item is Folder => "content" in item && "color" in item;

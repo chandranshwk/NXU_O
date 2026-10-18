@@ -102,7 +102,8 @@ export const useTitleBarTabs = ({
         onClick: () => {
           const store = useWorkspaceStore.getState() as NotebookStoreView;
           const created = store.addNotebook?.("Untitled Notebook");
-          const id = created?.id ?? store.activeNotebook?.id;
+          // ⚡ FIXED: created is a string, so we just use it directly
+          const id = created || store.activeNotebook?.id;
           if (id) {
             addTab({
               id: `doc:${id}`,
