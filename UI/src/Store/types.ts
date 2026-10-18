@@ -1,9 +1,17 @@
-import type { MockNotebook } from "../assets/SAMPLE";
+import type {
+  CanvasNodeType,
+  Folder,
+  MockNotebook,
+  MockSubtask,
+} from "../assets/SAMPLE";
+import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
 
-export type NodeComponentType = "text" | "map";
-
-export interface NotebookState {
+export interface WorkspaceState {
+  // ── Top-level collections ──────────────────────────────────
   notebooks: MockNotebook[];
+  folders: Folder[];
+  codeFiles: CodeFile[];
+
   activeNotebook: MockNotebook | null;
 
   initializeData: () => void;
@@ -17,7 +25,7 @@ export interface NotebookState {
   addNodeToPage: (
     notebookId: string,
     pageId: string,
-    nodeType: NodeComponentType,
+    nodeType: CanvasNodeType,
   ) => void;
   deleteNodeFromPage: (
     notebookId: string,
@@ -74,6 +82,6 @@ export interface NotebookState {
   setTaskSubtasks: (
     notebookId: string,
     taskId: string,
-    subtasks: import("../assets/SAMPLE").MockSubtask[],
+    subtasks: MockSubtask[],
   ) => void;
 }

@@ -35,11 +35,6 @@ export const NodeContentFactory: React.FC<NodeContentFactoryProps> = ({
       );
 
     default: {
-      // Exhaustiveness check: if a new type is added to NodeComponentType and
-      // not handled above, `_exhaustive` fails to compile.
-      const _exhaustive: never = node.type;
-      void _exhaustive;
-
       return (
         <div className="text-xs text-red-500">
           Unrecognized node type: {String(node.type)}

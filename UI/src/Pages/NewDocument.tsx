@@ -5,7 +5,7 @@
  * adding/renaming pages, zen mode, and mounting the workspace.
  *
  * @architecture
- * - Manages document sync using `useNotebookStore`.
+ * - Manages document sync using `useWorkspaceStore`.
  * - Reads the active page from URL query (`?page=...`).
  * - Left rail is `<PageRail />`; workspace is `<RightSideDocument />`.
  */
@@ -21,7 +21,7 @@ import { EditorProvider } from "../contexts/editorContext";
 import { ScratchProvider } from "../contexts/scratchContext";
 import Toolbar from "./Document/Toolbar";
 import type { MockPage } from "../assets/SAMPLE";
-import { useNotebookStore } from "../Store/store";
+import { useWorkspaceStore } from "../Store/store";
 import { RightSideDocument } from "../components/RightSideDocument";
 import { useSettings } from "../contexts/settingsContext";
 import { PageRail } from "./PageRail";
@@ -102,11 +102,11 @@ const NewDocumentContent = () => {
   const settings = useSettings();
 
   // ── Store selectors ──────────────────────────────────────────
-  const activeNotebook = useNotebookStore((s) => s.activeNotebook);
-  const setActiveNotebookById = useNotebookStore(
+  const activeNotebook = useWorkspaceStore((s) => s.activeNotebook);
+  const setActiveNotebookById = useWorkspaceStore(
     (s) => s.setActiveNotebookById,
   );
-  const initializeData = useNotebookStore((s) => s.initializeData);
+  const initializeData = useWorkspaceStore((s) => s.initializeData);
 
   // ==========================================
   // LIFECYCLE 1: NOTEBOOK LOADER CORE
@@ -114,7 +114,7 @@ const NewDocumentContent = () => {
   useEffect(() => {
     initializeData();
 
-    const store = useNotebookStore.getState();
+    const store = useWorkspaceStore.getState();
     if (store.notebooks.length === 0) return;
 
     const match = id ? store.notebooks.find((n) => n.id === id) : undefined;
@@ -221,11 +221,11 @@ const NewDocumentContent = () => {
 
   /** Appends a blank page to the notebook and navigates to it. */
   const handleAddPage = () => {
-    const { addPageToNotebook } = useNotebookStore.getState();
+    const { addPageToNotebook } = useWorkspaceStore.getState();
     addPageToNotebook(activeNotebook.id, "Untitled Page");
 
     // Re-read fresh state to grab the newly appended page.
-    const refreshed = useNotebookStore.getState().activeNotebook;
+    const refreshed = useWorkspaceStore.getState().activeNotebook;
     const newPage = refreshed?.pages.at(-1);
     if (newPage) handleNavigation(newPage.id);
   };

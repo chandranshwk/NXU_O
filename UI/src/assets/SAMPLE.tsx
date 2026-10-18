@@ -5,11 +5,13 @@
  * @architecture
  * - Hierarchy: Notebook → Page → Node.
  * - Notebooks own: pages, events, tasks.
+ * - Folders are containers referencing notebooks and code files; they do not parent them.
  * - Todos are not a separate entity — they are the subtasks nested under tasks.
  */
 
 import { faker } from "@faker-js/faker";
 import type { MatrixEvent } from "../Helper/Calendar/CalenderNode";
+import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
 
 export type CanvasNodeType = "text" | "map" | "image";
 
@@ -30,6 +32,18 @@ export interface MockStroke {
   color: string;
   width: number;
   points: { x: number; y: number }[];
+}
+
+export interface Folder {
+  id: string;
+  title: string;
+  color: string;
+  description: string;
+  /** ISO date string (YYYY-MM-DD). Matches MockPage for persist-safe round-trip. */
+  createdDate: string;
+  /** ISO date string (YYYY-MM-DD). */
+  lastUpdatedDate: string;
+  content: (CodeFile | MockNotebook)[];
 }
 
 export interface MockPrintZone {
@@ -209,6 +223,44 @@ export const generateMockNotebookData = (
           strokes: [],
         };
       }),
+    };
+  });
+};
+
+export const generateMockFolderData = (
+  notebookPool: MockNotebook[],
+  codePool: CodeFile[],
+  folderCount: number = 5,
+  notebookRange: [number, number] = [0, 3],
+  codeFileRange: [number, number] = [0, 2],
+): Folder[] => {
+  return Array.from({ length: folderCount }, (): Folder => {
+    const nbCount = faker.number.int({
+      min: notebookRange[0],
+      max: Math.min(notebookRange[1], notebookPool.length),
+    });
+    const cfCount = faker.number.int({
+      min: codeFileRange[0],
+      max: Math.min(codeFileRange[1], codePool.length),
+    });
+
+    const notebooks = faker.helpers.arrayElements(notebookPool, nbCount);
+    const codeFiles = faker.helpers.arrayElements(codePool, cfCount);
+
+    // Shuffle so a folder reads as a mixed bag, not "notebooks then code."
+    const content: (CodeFile | MockNotebook)[] = faker.helpers.shuffle([
+      ...notebooks,
+      ...codeFiles,
+    ]);
+
+    return {
+      id: faker.string.uuid(),
+      title: `${faker.commerce.department()} ${faker.science.chemicalElement().name} ${faker.book.genre()} Folder`,
+      color: pickRandomColor(),
+      description: faker.lorem.sentence(),
+      createdDate: faker.date.past().toISOString().split("T")[0],
+      lastUpdatedDate: faker.date.recent().toISOString().split("T")[0],
+      content,
     };
   });
 };

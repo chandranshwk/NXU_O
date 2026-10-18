@@ -3,7 +3,7 @@
  * @component CodeIDE
  * @description The primary application gateway module for the local practice simulator code editor workspace.
  * It manages context routing states, synchronizes active text editor frames via TipTap hooks, and handles
- * layout state distributions between standard problem prompt tracks and raw sandbox practice environments.
+ * layout state distributions inside the problem prompt track and coding workspace panels.
  *
  * @architecture
  * - Utilizes an isolated local context matrix layer wrapping `SettingsProvider`, `EditorProvider`, and `ScratchProvider`.
@@ -18,7 +18,7 @@ import { getCodeWorkspaceExtensions } from "../assets/TipTapEditor";
 import { SettingsProvider, useSettings } from "../contexts/settingsContext";
 import { EditorProvider } from "../contexts/editorContext";
 import { useScratchContext, ScratchProvider } from "../contexts/scratchContext";
-import { DATAIDE, type SampleProblemData } from "./CodeIDE.SAMPLE";
+import { generateCodeFile, type CodeFile } from "./CodeIDE.SAMPLE";
 import { ProblemInstructionTrack } from "./ProblemInstructionTrack";
 import { CodeWorkspaceHeader } from "./CodeWorkspaceHeader";
 import { LineNumberExtension } from "../Extensions/LineNumberExtension";
@@ -42,6 +42,13 @@ const CodeIDEContent: React.FC = () => {
 
   /** Guard reference to block cyclic updates and race conditions during explicit buffer transaction executions */
   const isTransitioningRef = useRef<boolean>(false);
+
+  /**
+   * Single source of truth for the active problem.
+   * Generated once via `useMemo` so its identity is stable across renders
+   * and across the code-editor lifecycle.
+   */
+  const problem: CodeFile = useMemo(() => generateCodeFile(1), []);
 
   /** Track selected execution target language initialized locally to Python */
   const [selectedLang, setSelectedLang] = useState<string>(() => {
@@ -69,34 +76,6 @@ const CodeIDEContent: React.FC = () => {
     }
   }, [selectedLang]);
 
-  /** Operational workflow toggle tracking whether the user is executing a pre-loaded problem or an open sandbox */
-
-  const [working, setWorking] = useState<"problem" | "practice">(() => {
-    try {
-      const savedTrack = localStorage.getItem("ide_workspace_mode");
-      return savedTrack === "problem" || savedTrack === "practice"
-        ? savedTrack
-        : "practice";
-    } catch (e) {
-      console.warn(
-        "Failed to extract active track parameter from localStorage:",
-        e,
-      );
-      return "practice";
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("ide_workspace_mode", working);
-    } catch (e) {
-      console.error(
-        "Failed to persist operational track value to localStorage:",
-        e,
-      );
-    }
-  }, [working]);
-
   /**
    * Moves the theme color state synchronization block
    * inside a useEffect hook. This safely prevents the "Cannot update a component while rendering a different component" error.
@@ -108,36 +87,6 @@ const CodeIDEContent: React.FC = () => {
       settings.setDefaultColor(currentThemeColor);
     }
   }, [currentThemeColor, settings]);
-
-  /**
-   * @constant dataToShow
-   * @description Computes the structural display data layer reactively. Bypasses redundant inner nesting requirements
-   * by mapping codeTemplates directly to an omitted structural layout configuration when in sandboxed practice frames.
-   */
-  const dataToShow = useMemo(() => {
-    return working === "problem"
-      ? (DATAIDE as unknown as SampleProblemData)
-      : {
-          id: 0,
-          title: "Practice Sandbox",
-          titleSlug: "practice-sandbox",
-          category: "General Workspace",
-          description: {
-            markdown:
-              "Welcome to the code practice sandbox. Select a programming language configuration below to begin.",
-            html: "<p>Welcome to the code practice sandbox. Select a programming language configuration below to begin.</p>",
-          },
-          constraints: ["No performance limitations applied."],
-          tags: ["Sandbox"],
-          examples: [
-            {
-              id: 0,
-              input: "",
-              output: "",
-            },
-          ],
-        };
-  }, [working]);
 
   /**
    * @hook useEditor
@@ -162,7 +111,7 @@ const CodeIDEContent: React.FC = () => {
       CodeTabExtension,
     ],
     content:
-      dataToShow.codeTemplates?.find((t) => t.language === selectedLang)
+      problem.codeTemplates?.find((t) => t.language === selectedLang)
         ?.starterCode || "",
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
@@ -204,7 +153,7 @@ const CodeIDEContent: React.FC = () => {
 
     isTransitioningRef.current = true;
 
-    const template = dataToShow.codeTemplates?.find((t) => t.language === lang);
+    const template = problem.codeTemplates?.find((t) => t.language === lang);
     const targetContent = template ? template.starterCode : "";
 
     // Wipe old language spans entirely before rendering the new text block canvas string
@@ -226,41 +175,15 @@ const CodeIDEContent: React.FC = () => {
     );
   };
 
-  // ==========================================
-  // WORKSPACE MODE CONTENT SYNCHRONIZER
-  // ==========================================
-  /**
-   * Watches for changes to the active operational mode (Problem vs Practice).
-   * Forcefully clears out stale data and injects the corresponding target boilerplate template.
-   */
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-
-    isTransitioningRef.current = true;
-
-    const template = dataToShow.codeTemplates?.find(
-      (t) => t.language === selectedLang,
-    );
-    const targetContent = template ? template.starterCode : "";
-
-    editor.commands.clearContent();
-
-    editor.commands.setContent(targetContent);
-    isTransitioningRef.current = false;
-
-    const { state, view } = editor;
-    view.dispatch(state.tr);
-  }, [working, editor, selectedLang, dataToShow.codeTemplates]);
-
   return (
     <div
       className={`p-3 w-full h-[calc(100vh-2.25rem)] grid grid-cols-3 gap-3 transition-colors duration-200 overflow-hidden select-none ${
         darkMode ? "bg-[#121214] text-zinc-100" : "bg-gray-50 text-zinc-800"
       }`}
     >
-      {/** Column 1: Left Problem Track Navigation Pane mapping directly to calculated data parameters */}
+      {/** Column 1: Left Problem Track Navigation Pane mapping directly to the active problem */}
       <div className="col-span-1 h-full min-h-0">
-        <ProblemInstructionTrack data={dataToShow} darkMode={darkMode} />
+        <ProblemInstructionTrack data={problem} darkMode={darkMode} />
       </div>
 
       {/** Column 2 & 3: Right Pure Coding Simulator Panel Matrix Layout */}
@@ -272,9 +195,7 @@ const CodeIDEContent: React.FC = () => {
           selectedLanguage={selectedLang}
           onLanguageChange={handleLanguageChange}
           onSave={handleSaveLocalWorkspace}
-          hasTemplates={!!dataToShow.codeTemplates}
-          working={working}
-          onWorkingChange={setWorking}
+          hasTemplates={!!problem.codeTemplates}
         />
 
         {/** Scrollable Text Canvas housing container wrapper element with structural layout controls */}

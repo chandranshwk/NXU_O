@@ -27,6 +27,7 @@ import { TitleBar } from "./App/TitleBar";
 import { EventsProvider } from "./contexts/EventsContext";
 import { CanvasProvider } from "./contexts/Canvas/CanvasContext";
 import CodeIDE from "./Pages/CodeIDE";
+import Folder from "./Pages/FolderPage";
 
 /**
  * @layout Layout
@@ -115,7 +116,7 @@ function Layout() {
     <>
       <TitleBar />
       <div
-        className={`${settings.darkMode ? "bg-black/95" : "bg-slate-100"} h-screen fixed top-9 w-screen flex transition-colors duration-200`}
+        className={`${settings.darkMode ? "bg-black/95" : "bg-[#f4f4f5]"} h-screen fixed top-9 w-screen flex transition-colors duration-200`}
         style={
           {
             "--colorTrack": colorTrack,
@@ -169,6 +170,8 @@ const router = createHashRouter([
       { path: "settings", element: <Settings /> },
       { path: "ide", element: <CodeIDE /> },
       { path: "document/:id", element: <NewDocument /> },
+      { path: "folder/:id", element: <Folder /> },
+      { path: "code/:id", element: <CodeIDE /> },
     ],
   },
 ]);

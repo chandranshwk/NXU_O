@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { NotebookState } from "./types";
+import type { WorkspaceState } from "./types";
 import {
   createNode,
   generateTimestamp,
@@ -14,15 +14,17 @@ import {
   type TreeUpdateResult,
 } from "./utils";
 import {
+  generateMockFolderData,
   generateMockNotebookData,
   type MockPage,
   type MockSubtask,
   type MockTask,
 } from "../assets/SAMPLE";
+import { generateCodeFiles } from "../Pages/CodeIDE.SAMPLE";
 
 const DEFAULT_PRINT_WIDTH = 794;
 
-export const useNotebookStore = create<NotebookState>()(
+export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set, get) => {
       const commit = (result: TreeUpdateResult) =>
@@ -38,11 +40,18 @@ export const useNotebookStore = create<NotebookState>()(
 
       return {
         notebooks: [],
+        folders: [],
+        codeFiles: [],
         activeNotebook: null,
 
         initializeData: () => {
           if (get().notebooks.length > 0) return;
-          set({ notebooks: generateMockNotebookData(18, 25, 3) });
+
+          const notebooks = generateMockNotebookData(18, 5, 3);
+          const codeFiles = generateCodeFiles(18);
+          const folders = generateMockFolderData(notebooks, codeFiles, 6);
+
+          set({ notebooks, folders, codeFiles });
         },
 
         setActiveNotebookById: (id) => {
@@ -283,7 +292,7 @@ export const useNotebookStore = create<NotebookState>()(
       };
     },
     {
-      name: "caldera-notebook-storage-v5",
+      name: "caldera-workspace-storage-v6",
     },
   ),
 );

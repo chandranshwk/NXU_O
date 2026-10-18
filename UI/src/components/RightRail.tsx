@@ -7,13 +7,13 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { MockNotebook, MockSubtask } from "../assets/SAMPLE";
-import { useNotebookStore } from "../Store/store";
 import { useSettings } from "../contexts/settingsContext";
 import CalenderNode from "../Helper/Calendar/CalenderNode";
 import TaskNode from "../Helper/TaskNode";
 import TodoBoard from "../Helper/ToDoBoard";
 import { FiChevronDown, FiSidebar } from "react-icons/fi";
 import { AnimatePresence, motion } from "motion/react";
+import { useWorkspaceStore } from "../Store/store";
 
 interface RightRailProps {
   notebook?: MockNotebook | null;
@@ -109,7 +109,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   notebook: notebookProp,
   darkMode,
 }) => {
-  const activeNotebook = useNotebookStore((s) => s.activeNotebook);
+  const activeNotebook = useWorkspaceStore((s) => s.activeNotebook);
   const notebook = activeNotebook ?? notebookProp ?? null;
 
   const events = notebook?.events ?? [];
@@ -150,7 +150,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   const setFocusedSubtasks = useCallback(
     (next: MockSubtask[]) => {
       if (!focusedTaskId) return;
-      useNotebookStore
+      useWorkspaceStore
         .getState()
         .setTaskSubtasks(notebookId, focusedTaskId, next);
     },

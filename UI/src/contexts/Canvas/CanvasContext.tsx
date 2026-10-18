@@ -7,8 +7,8 @@ import React, {
   type ReactNode,
   type SetStateAction,
 } from "react";
-import { useNotebookStore } from "../../Store/store";
 import type { NodeComponentType } from "./CanvasNodeWrapper";
+import { useWorkspaceStore } from "../../Store/store";
 
 // 1. Define the interface for the context state
 interface CanvasContextType {
@@ -90,7 +90,7 @@ export const CanvasProvider: React.FC<{ children: ReactNode }> = ({
   // ── Store-bound action: add node ─────────────────────────────
   const addNode = useCallback(
     (type: NodeComponentType) => {
-      const { activeNotebook, addNodeToPage } = useNotebookStore.getState();
+      const { activeNotebook, addNodeToPage } = useWorkspaceStore.getState();
 
       if (!activeNotebook || !activePageId) {
         console.warn("[addNode] missing active target", {
@@ -107,7 +107,7 @@ export const CanvasProvider: React.FC<{ children: ReactNode }> = ({
 
   // ── Store-bound action: delete selected node ─────────────────
   const deleteSelectedNode = useCallback(() => {
-    const { activeNotebook, deleteNodeFromPage } = useNotebookStore.getState();
+    const { activeNotebook, deleteNodeFromPage } = useWorkspaceStore.getState();
 
     if (!activeNotebook || !activePageId || !selectedNodeId) {
       console.warn("[deleteSelectedNode] missing target", {

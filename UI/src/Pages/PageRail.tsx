@@ -198,7 +198,7 @@ export const PageRail: React.FC<PageRailProps> = ({
                         !isActive
                           ? darkMode
                             ? "bg-zinc-950 hover:bg-zinc-800/60  hover:text-zinc-200 text-zinc-100"
-                            : "bg-zinc-100 hover:bg-zinc-50 hover:text-zinc-900 text-zinc-900"
+                            : " hover:bg-zinc-100 hover:text-zinc-900 text-zinc-900"
                           : darkMode
                             ? "text-zinc-400 hover:bg-zinc-800/60  hover:text-zinc-200"
                             : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
@@ -210,7 +210,7 @@ export const PageRail: React.FC<PageRailProps> = ({
                             ? "w-3.5 h-0.75 bg-blue-500"
                             : darkMode
                               ? "w-2.5 h-0.5 bg-zinc-700"
-                              : "w-2.5 h-0.5 bg-zinc-300"
+                              : "w-2.5 h-0.5 bg-zinc-400"
                         }`}
                       />
                       <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium">
@@ -268,7 +268,7 @@ export const PageRail: React.FC<PageRailProps> = ({
                                     : "w-3 h-0.5 bg-zinc-400"
                                   : darkMode
                                     ? "w-2 h-0.5 bg-zinc-700"
-                                    : "w-2 h-0.5 bg-zinc-300"
+                                    : "w-2 h-0.5 bg-zinc-400"
                             }`}
                           />
                         </button>

@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { FiCode, FiSave, FiLayers } from "react-icons/fi";
+import { FiCode, FiSave } from "react-icons/fi";
 
 export interface CodeWorkspaceHeaderProps {
   darkMode: boolean;
@@ -18,10 +18,6 @@ export interface CodeWorkspaceHeaderProps {
   selectedLanguage: string;
   onLanguageChange: (lang: string) => void;
   onSave: () => void;
-  /** Active workspace state string bound from the parent component */
-  working: "problem" | "practice";
-  /** State modifier dispatching selection changes back up to the parent shell */
-  onWorkingChange: (mode: "problem" | "practice") => void;
   /** Guard variable tracking whether language matrices exist; locks selection paths on empty values */
   hasTemplates?: boolean;
 }
@@ -32,8 +28,7 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
   selectedLanguage,
   onLanguageChange,
   onSave,
-  working,
-  onWorkingChange,
+  hasTemplates = false,
 }) => {
   return (
     <div
@@ -50,11 +45,19 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
           Coding Space
         </div>
 
-        {/* Runtime Target Selection Dropdown Box */}
+        {/* Runtime Target Selection Dropdown Box — locked when no templates exist */}
         <select
           value={selectedLanguage}
           onChange={(e) => onLanguageChange(e.target.value)}
+          disabled={!hasTemplates}
+          title={
+            hasTemplates
+              ? "Select runtime language"
+              : "No code templates available for this problem"
+          }
           className={`text-xs px-2.5 py-1 rounded-md border outline-none font-semibold transition-all ${
+            !hasTemplates ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          } ${
             darkMode
               ? "bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700"
               : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:border-zinc-300"
@@ -70,28 +73,6 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
 
       {/* Right Operations Core Action Triggers */}
       <div className="flex items-center gap-2">
-        {/* ⚡ THE PROP-DRIVEN TOGGLE BUTTON */}
-        <button
-          type="button"
-          onClick={() =>
-            onWorkingChange(working === "problem" ? "practice" : "problem")
-          }
-          title={`Switch to ${working === "problem" ? "Practice Sandbox" : "Problem Track"}`}
-          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md border transition-all active:scale-95 cursor-pointer font-medium ${
-            darkMode
-              ? "bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-              : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
-          }`}
-        >
-          <FiLayers
-            size={12}
-            className={
-              working === "problem" ? "text-indigo-400" : "text-amber-500"
-            }
-          />
-          <span className="capitalize">{working} Mode</span>
-        </button>
-
         {/* Save/Commit Action Trigger */}
         <button
           type="button"

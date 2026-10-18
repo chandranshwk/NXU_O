@@ -7,7 +7,7 @@
  *
  * @architecture
  * - Delegates pointer gestures to `useCanvasNodeHandlers`.
- * - Persists geometry + color mutations through `useNotebookStore`.
+ * - Persists geometry + color mutations through `useWorkspaceStore`.
  * - Auto-syncs background hex between light/dark palette variants.
  * - Delete lives in the settings dialog; keyboard Del/Backspace is handled
  *   by the workspace's global listener.
@@ -28,9 +28,9 @@ import { CanvasNodeDragHandle } from "./CanvasNodeDragHandle";
 import { useCanvas } from "./CanvasContext";
 import type { MockPageNode } from "../../assets/SAMPLE";
 import { useCanvasNodeHandlers } from "../useCanvasNodeHandlers";
-import { useNotebookStore } from "../../Store/store";
 
 import type { NodeComponentType } from "../../Store/types";
+import { useWorkspaceStore } from "../../Store/store";
 
 /**
  * Re-export for consumers that still import the union from this module.
@@ -121,7 +121,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     const targetHex = darkMode ? match.dark : match.light;
     if (bg === targetHex) return;
 
-    useNotebookStore
+    useWorkspaceStore
       .getState()
       .updateNodeBackgroundColor(notebookId, pageId, node.id, targetHex);
   }, [darkMode, node.id, node.backgroundColor, notebookId, pageId]);
@@ -146,7 +146,7 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
   const handleApplyChanges = useCallback(
     (width: number, height: number, backgroundColor: string) => {
       const { updateNodeSize, updateNodeBackgroundColor } =
-        useNotebookStore.getState();
+        useWorkspaceStore.getState();
 
       updateNodeSize(notebookId, pageId, node.id, width, height);
       updateNodeBackgroundColor(notebookId, pageId, node.id, backgroundColor);
@@ -166,7 +166,9 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
       return;
     }
 
-    useNotebookStore.getState().deleteNodeFromPage(notebookId, pageId, node.id);
+    useWorkspaceStore
+      .getState()
+      .deleteNodeFromPage(notebookId, pageId, node.id);
   }, [selectedNodeId, deleteSelectedNode, notebookId, pageId, node.id]);
 
   // ==========================================

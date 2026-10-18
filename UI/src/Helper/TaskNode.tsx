@@ -20,7 +20,7 @@ import {
 } from "react-icons/lu";
 import { FiPlus, FiX } from "react-icons/fi";
 import type { MockTask, MockSubtask } from "../assets/SAMPLE";
-import { useNotebookStore } from "../Store/store";
+import { useWorkspaceStore } from "../Store/store";
 
 interface TaskNodeProps {
   notebookId: string;
@@ -110,7 +110,7 @@ const SubtaskRow: React.FC<{
       className="flex items-start gap-2 flex-1 min-w-0 pl-6 pr-1 py-1 text-left rounded outline-none focus-visible:ring-1 focus-visible:ring-blue-500/40"
     >
       <span
-        className={`mt-[2px] w-3 h-3 shrink-0 rounded-[3px] border flex items-center justify-center transition-colors ${
+        className={`mt-0.5 w-3 h-3 shrink-0 rounded-0.75 border flex items-center justify-center transition-colors ${
           subtask.done
             ? "bg-blue-500 border-blue-500"
             : darkMode
@@ -121,7 +121,7 @@ const SubtaskRow: React.FC<{
         {subtask.done && <CheckIcon />}
       </span>
       <span
-        className={`min-w-0 flex-1 text-[11.5px] leading-snug break-words ${
+        className={`min-w-0 flex-1 text-[11.5px] leading-snug wrap-break-words ${
           subtask.done
             ? darkMode
               ? "text-zinc-600 line-through"
@@ -138,7 +138,7 @@ const SubtaskRow: React.FC<{
       type="button"
       onClick={onDelete}
       aria-label="Delete subtask"
-      className={`shrink-0 mt-[5px] mr-1.5 flex items-center justify-center w-3 h-3 rounded opacity-0 group-hover/sub:opacity-100 focus-visible:opacity-100 transition-opacity ${
+      className={`shrink-0 mt-1.25 mr-1.5 flex items-center justify-center w-3 h-3 rounded opacity-0 group-hover/sub:opacity-100 focus-visible:opacity-100 transition-opacity ${
         darkMode
           ? "text-zinc-700 hover:text-rose-400"
           : "text-zinc-400 hover:text-rose-500"
@@ -194,7 +194,7 @@ const TaskRow: React.FC<{
   const handleAddSubtask = () => {
     const trimmed = draft.trim();
     if (!trimmed) return;
-    useNotebookStore.getState().addSubtask(notebookId, task.id, trimmed);
+    useWorkspaceStore.getState().addSubtask(notebookId, task.id, trimmed);
     setDraft("");
   };
 
@@ -205,7 +205,7 @@ const TaskRow: React.FC<{
       } ${isFocused ? (darkMode ? "bg-zinc-800/40" : "bg-blue-50/60") : ""}`}
     >
       {isFocused && (
-        <span className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full bg-blue-500" />
+        <span className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-blue-500" />
       )}
 
       <div className="flex items-start gap-1">
@@ -218,7 +218,7 @@ const TaskRow: React.FC<{
               setExpanded((v) => !v);
             }}
             aria-label={expanded ? "Collapse subtasks" : "Expand subtasks"}
-            className={`shrink-0 mt-[7px] ml-1 w-4 h-4 flex items-center justify-center rounded outline-none transition-colors ${
+            className={`shrink-0 mt-1.75 ml-1 w-4 h-4 flex items-center justify-center rounded outline-none transition-colors ${
               darkMode
                 ? "text-zinc-600 hover:text-zinc-300"
                 : "text-zinc-400 hover:text-zinc-700"
@@ -241,12 +241,12 @@ const TaskRow: React.FC<{
           title={rowTooltip}
           className="flex items-start gap-1.5 flex-1 min-w-0 px-1 py-1.5 text-left rounded-md outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
         >
-          <span className="mt-[3px] shrink-0">
+          <span className="mt-0.75 shrink-0">
             <PriorityIcon priority={task.priority} />
           </span>
 
           <span
-            className={`min-w-0 flex-1 text-[12px] leading-snug break-words ${
+            className={`min-w-0 flex-1 text-[12px] leading-snug wrap-break-words ${
               done
                 ? darkMode
                   ? "text-zinc-600 line-through decoration-zinc-700"
@@ -261,7 +261,7 @@ const TaskRow: React.FC<{
 
           {hasSubs && (
             <span
-              className={`shrink-0 mt-[1px] text-[10px] font-mono px-1 rounded transition-colors ${badgeClass}`}
+              className={`shrink-0 mt-px text-[10px] font-mono px-1 rounded transition-colors ${badgeClass}`}
             >
               {doneCount}/{total}
             </span>
@@ -269,7 +269,7 @@ const TaskRow: React.FC<{
 
           {task.dueDate && (
             <span
-              className={`shrink-0 mt-[1px] text-[10px] font-mono ${
+              className={`shrink-0 mt-px text-[10px] font-mono ${
                 overdue && !done
                   ? "text-rose-500"
                   : darkMode
@@ -287,7 +287,7 @@ const TaskRow: React.FC<{
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            useNotebookStore.getState().cycleTaskStatus(notebookId, task.id);
+            useWorkspaceStore.getState().cycleTaskStatus(notebookId, task.id);
           }}
           aria-label="Cycle task status"
           title={
@@ -295,7 +295,7 @@ const TaskRow: React.FC<{
               ? "Blocked — complete all subtasks first"
               : "Click to change status"
           }
-          className="shrink-0 mt-[3px] w-5 h-5 flex items-center justify-center rounded-full outline-none transition-colors hover:bg-zinc-700/40 focus-visible:ring-2 focus-visible:ring-blue-500/40"
+          className="shrink-0 mt-0.75 w-5 h-5 flex items-center justify-center rounded-full outline-none transition-colors hover:bg-zinc-700/40 focus-visible:ring-2 focus-visible:ring-blue-500/40"
         >
           <span
             className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[task.status]}`}
@@ -306,10 +306,10 @@ const TaskRow: React.FC<{
         <button
           type="button"
           onClick={() =>
-            useNotebookStore.getState().deleteTask(notebookId, task.id)
+            useWorkspaceStore.getState().deleteTask(notebookId, task.id)
           }
           aria-label="Delete task"
-          className={`shrink-0 mt-[7px] mr-1.5 flex items-center justify-center w-3.5 h-3.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity ${
+          className={`shrink-0 mt-1.75 mr-1.5 flex items-center justify-center w-3.5 h-3.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity ${
             darkMode
               ? "text-zinc-600 hover:text-rose-400"
               : "text-zinc-400 hover:text-rose-500"
@@ -329,12 +329,12 @@ const TaskRow: React.FC<{
                   subtask={sub}
                   darkMode={darkMode}
                   onToggle={() =>
-                    useNotebookStore
+                    useWorkspaceStore
                       .getState()
                       .toggleSubtask(notebookId, task.id, sub.id)
                   }
                   onDelete={() =>
-                    useNotebookStore
+                    useWorkspaceStore
                       .getState()
                       .deleteSubtask(notebookId, task.id, sub.id)
                   }
@@ -409,7 +409,7 @@ const TaskNode: React.FC<TaskNodeProps> = ({
   const handleAddTask = () => {
     const trimmed = draft.trim();
     if (!trimmed) return;
-    useNotebookStore.getState().addTask(notebookId, trimmed);
+    useWorkspaceStore.getState().addTask(notebookId, trimmed);
     setDraft("");
   };
 

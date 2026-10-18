@@ -4,14 +4,14 @@
  * @description Pointer-event handlers for dragging and resizing canvas nodes.
  *
  * @architecture
- * - Coordinates state dispatch with `useNotebookStore`.
+ * - Coordinates state dispatch with `useWorkspaceStore`.
  * - Uses Pointer Capture so gestures continue outside the node's bounds.
  * - Text nodes resize horizontally only; map nodes resize on both axes.
  */
 
 import React, { useEffect, useRef } from "react";
-import { useNotebookStore } from "../Store/store";
 import type { MockPageNode } from "../assets/SAMPLE";
+import { useWorkspaceStore } from "../Store/store";
 
 interface UseCanvasHandlersProps {
   node: MockPageNode;
@@ -132,7 +132,7 @@ export const useCanvasNodeHandlers = ({
       const targetX = Math.round(nodeStartRef.current.x + deltaX);
       const targetY = Math.round(nodeStartRef.current.y + deltaY);
 
-      useNotebookStore
+      useWorkspaceStore
         .getState()
         .updateNodePosition(notebookId, pageId, node.id, targetX, targetY);
       return;
@@ -160,7 +160,7 @@ export const useCanvasNodeHandlers = ({
               Math.round(nodeStartRef.current.height + deltaY),
             );
 
-      useNotebookStore
+      useWorkspaceStore
         .getState()
         .updateNodeSize(notebookId, pageId, node.id, targetWidth, targetHeight);
     }

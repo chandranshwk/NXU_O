@@ -98,23 +98,6 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
         >
           <div>
             <div className="flex flex-col gap-2 mt-2">
-              {/* Category Partition Segment Line */}
-              <div className="flex items-center h-2 pt-2 w-full px-1 mb-2">
-                {isOpen ? (
-                  <div className="flex items-center gap-3 w-full opacity-60">
-                    <hr className="flex-1 border-t border-slate-300" />
-                    <span
-                      className={`font-bold uppercase text-[10px] ${darkMode ? "text-white" : "text-slate-900"} tracking-widest`}
-                    >
-                      Main
-                    </span>
-                    <hr className="flex-1 border-t border-slate-300" />
-                  </div>
-                ) : (
-                  <hr className="w-full border-slate-200" />
-                )}
-              </div>
-
               {/* ROUTER PAGES MAPPING LIST STREAMS */}
               {PAGES.map((item, index) => {
                 const isExpanded = activeMenu === index && isOpen;

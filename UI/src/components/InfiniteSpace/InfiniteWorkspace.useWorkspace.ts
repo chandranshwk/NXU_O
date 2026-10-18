@@ -12,10 +12,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import type { MockNotebook, MockPage } from "../../assets/SAMPLE";
-import { useNotebookStore } from "../../Store/store";
 import { useEditorContext } from "../../contexts/editorContext";
 import { renderTexturedLine, type BrushType } from "./useDrawingTextures";
 import { useCanvas } from "../../contexts/Canvas/CanvasContext";
+import { useWorkspaceStore } from "../../Store/store";
 
 interface UseWorkspacePanZoomProps {
   currentPage: MockPage | undefined;
@@ -72,7 +72,7 @@ export const useWorkspacePanZoom = ({
     )
       return;
 
-    const { renamePage } = useNotebookStore.getState();
+    const { renamePage } = useWorkspaceStore.getState();
     renamePage(activeNotebook.id, currentPage.id, trimmed);
   };
 
