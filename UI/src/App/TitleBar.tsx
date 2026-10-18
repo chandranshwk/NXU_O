@@ -177,7 +177,7 @@ export function TitleBar() {
               <FiChevronLeft size={20} />
               {/* Tooltip */}
               <span
-                className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-[9999] opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
+                className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-9999 opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
                   darkMode
                     ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
                     : "bg-zinc-900 text-zinc-100"
@@ -206,7 +206,7 @@ export function TitleBar() {
               <FiChevronRight size={20} />
               {/* Tooltip */}
               <span
-                className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-[9999] opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
+                className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-9999 opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
                   darkMode
                     ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
                     : "bg-zinc-900 text-zinc-100"
@@ -236,7 +236,7 @@ export function TitleBar() {
             <FiChevronRight size={14} className="rotate-90 m-2" />
             {/* Tooltip */}
             <span
-              className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-[9999] opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
+              className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-9999 opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
                 darkMode
                   ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
                   : "bg-zinc-900 text-zinc-100"

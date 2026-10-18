@@ -121,6 +121,24 @@ const Folders: React.FC<FoldersProps> = ({ folder }) => {
           </span>
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* 5. CUSTOM ICON STAMP (Top Left Overlay)                   */}
+      {/* ========================================================= */}
+      {folder.icon && (
+        <div className="absolute top-5 left-5 z-30 w-12 h-12 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-xl shadow-lg border border-black/10 dark:border-white/10 flex items-center justify-center -rotate-6 group-hover:rotate-0 transition-all duration-300">
+          {/*  Check if it's an emoji or an image */}
+          {folder.icon.startsWith("data:image") ? (
+            <img
+              src={folder.icon}
+              alt="Custom Folder Icon"
+              className="w-9 h-9 object-contain [image-rendering:pixelated]"
+            />
+          ) : (
+            <span className="text-2xl">{folder.icon}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };

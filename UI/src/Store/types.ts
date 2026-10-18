@@ -89,4 +89,23 @@ export interface WorkspaceState {
     taskId: string,
     subtasks: MockSubtask[],
   ) => void;
+
+  // ── Folder mutations ──────────────────────────────────────
+
+  updateFolderBody: (folderId: string, body: string) => void;
+  updateFolderFooter: (folderId: string, footer: string) => void;
+  addItemToFolder: (
+    folderId: string,
+    item: MockNotebook | CodeFile | Folder,
+  ) => void;
+  reorderFolderContent: (
+    folderId: string,
+    newContent: (MockNotebook | CodeFile | Folder)[],
+  ) => void;
+
+  renameFolder: (folderId: string, newTitle: string) => void;
+  updateFolderColor: (folderId: string, newColor: string) => void;
+  updateFolderDescription: (folderId: string, newDescription: string) => void;
+
+  updateFolderIcon: (folderId: string, icon: string | undefined) => void;
 }

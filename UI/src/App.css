@@ -409,3 +409,11 @@
 .bg-\[\#121214\] .editor-code-row .token-annotation {
   color: #facc15 !important;
 }
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: #9ca3af; /* Tailwind zinc-400 */
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

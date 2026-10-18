@@ -386,10 +386,107 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             })),
           );
         },
+
+        // ── Folder mutations ──────────────────────────────────────
+        addItemToFolder: (folderId, item) => {
+          set((state) => ({
+            folders: state.folders.map((f) => {
+              if (f.id !== folderId) return f;
+              if ("content" in item && item.id === folderId) return f;
+              if (f.content.some((c) => c.id === item.id)) return f;
+              return { ...f, content: [...f.content, item] };
+            }),
+          }));
+        },
+
+        reorderFolderContent: (folderId, newContent) => {
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === folderId ? { ...f, content: newContent } : f,
+            ),
+          }));
+        },
+        updateFolderBody: (folderId, body) => {
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === folderId
+                ? {
+                    ...f,
+                    body,
+                    lastUpdatedDate: new Date().toISOString().split("T")[0],
+                  }
+                : f,
+            ),
+          }));
+        },
+
+        updateFolderFooter: (folderId, footer) => {
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === folderId
+                ? {
+                    ...f,
+                    footer,
+                    lastUpdatedDate: new Date().toISOString().split("T")[0],
+                  }
+                : f,
+            ),
+          }));
+        },
+
+        renameFolder: (folderId, newTitle) => {
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === folderId
+                ? {
+                    ...f,
+                    title: newTitle,
+                    lastUpdatedDate: new Date().toISOString().split("T")[0],
+                  }
+                : f,
+            ),
+          }));
+        },
+
+        updateFolderColor: (folderId, newColor) => {
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === folderId
+                ? {
+                    ...f,
+                    color: newColor,
+                    lastUpdatedDate: new Date().toISOString().split("T")[0],
+                  }
+                : f,
+            ),
+          }));
+        },
+
+        updateFolderDescription: (folderId, newDescription) => {
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === folderId
+                ? {
+                    ...f,
+                    description: newDescription,
+                    lastUpdatedDate: new Date().toISOString().split("T")[0],
+                  }
+                : f,
+            ),
+          }));
+        },
+
+        updateFolderIcon: (folderId, icon) => {
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === folderId ? { ...f, icon } : f,
+            ),
+          }));
+        },
       };
     },
     {
-      name: "caldera-workspace-storage-v7",
+      name: "caldera-workspace-storage-v8", //  Bumped to clear out old broken data
     },
   ),
 );

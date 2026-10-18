@@ -40,11 +40,12 @@ export interface Folder {
   title: string;
   color: string;
   description: string;
-  /** ISO date string (YYYY-MM-DD). Matches MockPage for persist-safe round-trip. */
   createdDate: string;
-  /** ISO date string (YYYY-MM-DD). */
   lastUpdatedDate: string;
-  content: (CodeFile | MockNotebook)[];
+  content: (CodeFile | MockNotebook | Folder)[];
+  body?: string;
+  footer?: string;
+  icon?: string;
 }
 
 export interface MockPrintZone {
@@ -92,7 +93,7 @@ export interface MockNotebook {
   tasks: MockTask[];
 }
 
-const PRESET_COLORS = [
+export const PRESET_COLORS = [
   "#3b82f6",
   "#f97316",
   "#10b981",
@@ -249,10 +250,9 @@ export const generateMockFolderData = (
     const codeFiles = faker.helpers.arrayElements(codePool, cfCount);
 
     // Shuffle so a folder reads as a mixed bag, not "notebooks then code."
-    const content: (CodeFile | MockNotebook)[] = faker.helpers.shuffle([
-      ...notebooks,
-      ...codeFiles,
-    ]);
+    const content: (CodeFile | MockNotebook | Folder)[] = faker.helpers.shuffle(
+      [...notebooks, ...codeFiles],
+    );
 
     return {
       id: faker.string.uuid(),
