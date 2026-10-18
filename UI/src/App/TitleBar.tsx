@@ -1,4 +1,7 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import {
+  getCurrentWindow,
+  type Window as TauriWindow,
+} from "@tauri-apps/api/window";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useMemo, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
@@ -79,7 +82,18 @@ const formatRecentItem = (
 };
 
 export function TitleBar() {
-  const appWindow = getCurrentWindow();
+  const isTauri =
+    typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+  const appWindow = isTauri
+    ? getCurrentWindow()
+    : ({
+        minimize: () => console.log("Browser: minimize"),
+        toggleMaximize: () => console.log("Browser: maximize"),
+        close: () => console.log("Browser: close"),
+        isMaximized: async () => false,
+        onResized: () => Promise.resolve(() => {}),
+      } as unknown as TauriWindow);
   const { darkMode, searchQuery, setSearchQuery, searchingKeys } =
     useSettings();
 

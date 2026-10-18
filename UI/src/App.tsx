@@ -13,7 +13,12 @@
  */
 
 import { useEffect, useState } from "react";
-import { createHashRouter, RouterProvider, Outlet } from "react-router-dom";
+import {
+  createHashRouter,
+  RouterProvider,
+  Outlet,
+  useRouteError, //  Added useRouteError
+} from "react-router-dom";
 import "./App.css";
 import Sidebar from "./components/Sidebar";
 import CommandBar from "./components/CommandBar";
@@ -28,6 +33,13 @@ import { EventsProvider } from "./contexts/EventsContext";
 import { CanvasProvider } from "./contexts/Canvas/CanvasContext";
 import CodeIDE from "./Pages/CodeIDE";
 import Folder from "./Pages/FolderPage";
+import { ErrorScreen } from "./components/ErrorScreen";
+
+//  Wrapper to connect React Router's error state to your custom ErrorScreen
+function RouteErrorBoundary() {
+  const error = useRouteError();
+  return <ErrorScreen error={error} />;
+}
 
 /**
  * @layout Layout
@@ -163,6 +175,8 @@ const router = createHashRouter([
   {
     path: "/",
     element: <Layout />,
+    //  Use the wrapper component so it can pass the error to ErrorScreen
+    errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, element: <Home /> },
       { path: "scratchpad", element: <ScratchPad /> },
@@ -172,6 +186,9 @@ const router = createHashRouter([
       { path: "document/:id", element: <NewDocument /> },
       { path: "folder/:id", element: <Folder /> },
       { path: "code/:id", element: <CodeIDE /> },
+
+      // This handles 404s (invalid URLs) inside the Layout
+      { path: "*", element: <ErrorScreen is404 /> },
     ],
   },
 ]);

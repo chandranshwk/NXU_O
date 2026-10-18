@@ -15,6 +15,7 @@ import { FiChevronDown, FiCode, FiFileText, FiFolder } from "react-icons/fi";
 
 const Home = () => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
+
   const navigate = useNavigate();
 
   const notebooks = useWorkspaceStore((s) => s.notebooks);
