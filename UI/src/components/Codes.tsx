@@ -45,7 +45,7 @@ const Codes: React.FC<CodesProps> = ({ codeFile, darkMode }) => {
 
   return (
     <div
-      onClick={() => navigate(`/code/${codeFile.titleSlug}`)}
+      onClick={() => navigate(`/code/${codeFile.title}`)}
       className={`relative w-60 h-55 rounded-md border flex flex-col cursor-pointer group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl overflow-hidden ${
         darkMode
           ? "bg-[#1e1e1e] border-[#333] hover:border-zinc-600 shadow-black/50"
@@ -61,7 +61,7 @@ const Codes: React.FC<CodesProps> = ({ codeFile, darkMode }) => {
         }`}
       >
         <span className="text-[10px] font-mono opacity-60 flex items-center gap-1.5">
-          {/* ⚡ Added the dynamic icon here */}
+          {/*  Added the dynamic icon here */}
           <FaFileCode
             size={12}
             style={{ color: langColor }}

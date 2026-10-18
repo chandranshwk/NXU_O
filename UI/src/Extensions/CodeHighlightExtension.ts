@@ -3,7 +3,7 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { getDynamicLanguageTheme } from "./ThemeLoader";
 
-// ⚡ Establish a unique, permanent state accessor key for this plugin instance
+//  Establish a unique, permanent state accessor key for this plugin instance
 const codeHighlightPluginKey = new PluginKey("codeHighlightKey");
 
 export const CodeHighlightExtension = Extension.create({
@@ -14,7 +14,7 @@ export const CodeHighlightExtension = Extension.create({
       new Plugin({
         key: codeHighlightPluginKey,
 
-        // ⚡ 1. DEFINE INTERNAL IMMUTABLE PLUGIN STATE
+        //  1. DEFINE INTERNAL IMMUTABLE PLUGIN STATE
         state: {
           init() {
             return { language: "default" }; // Default tracking channel initialization
@@ -29,7 +29,7 @@ export const CodeHighlightExtension = Extension.create({
           },
         },
 
-        // ⚡ 2. RENDER FLOW: Read directly from the updated plugin state
+        //  2. RENDER FLOW: Read directly from the updated plugin state
         props: {
           decorations(state) {
             const decorations: Decoration[] = [];
@@ -74,7 +74,7 @@ export const CodeHighlightExtension = Extension.create({
                     decorations.push(
                       Decoration.inline(
                         pos + match.index,
-                        // ⚡ CRITICAL FIX: Changed match.length to match[0].length
+                        //  CRITICAL FIX: Changed match.length to match[0].length
                         pos + match.index + match[0].length,
                         {
                           class: `token-${key === "controlFlow" ? "control" : key.replace(/s$/, "")}`,
@@ -99,7 +99,7 @@ export const CodeHighlightExtension = Extension.create({
                   let match;
 
                   while ((match = regex.exec(text)) !== null) {
-                    // ⚡ FIXED: Prevent infinite loops using the full match string length
+                    //  FIXED: Prevent infinite loops using the full match string length
                     if (match[0].length === 0) {
                       regex.lastIndex++;
                       continue;
@@ -107,7 +107,7 @@ export const CodeHighlightExtension = Extension.create({
                     decorations.push(
                       Decoration.inline(
                         pos + match.index,
-                        // ⚡ CRITICAL FIX: Changed match.length to match[0].length
+                        //  CRITICAL FIX: Changed match.length to match[0].length
                         pos + match.index + match[0].length,
                         {
                           class: `token-${key.replace(/s$/, "")}`,

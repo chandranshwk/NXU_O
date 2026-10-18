@@ -189,24 +189,45 @@ const makeTestCases = (): CodeFile["testCases"] => {
 };
 
 const makeTemplates = (): CodeFile["codeTemplates"] => {
-  // ~70% chance of having starter templates
+  // ~70% chance of having starter templates (to keep the draft state logic)
   if (!faker.datatype.boolean({ probability: 0.7 })) return undefined;
 
-  const chosen = faker.helpers.arrayElements(
-    TEMPLATE_LANGUAGES,
-    faker.number.int({ min: 1, max: 3 }),
-  );
+  // Map over ALL available languages instead of a random subset
+  return TEMPLATE_LANGUAGES.map(({ language, slug }) => {
+    //eslint ignore
+    let starterCode = "";
 
-  return chosen.map(({ language, slug }) => ({
-    language,
-    slug,
-    starterCode:
-      slug === "python"
-        ? `class Solution:\n    def solve(self, nums: list[int]) -> int:\n        # TODO\n        pass`
-        : slug === "java"
-          ? `class Solution {\n    public int solve(int[] nums) {\n        // TODO\n        return 0;\n    }\n}`
-          : `function solve(nums: number[]): number {\n  // TODO\n  return 0;\n}`,
-  }));
+    switch (slug) {
+      case "python":
+        starterCode = `class Solution:\n    def solve(self, nums: list[int]) -> int:\n        # TODO\n        pass`;
+        break;
+      case "java":
+        starterCode = `class Solution {\n    public int solve(int[] nums) {\n        // TODO\n        return 0;\n    }\n}`;
+        break;
+      case "cpp":
+        starterCode = `class Solution {\npublic:\n    int solve(vector<int>& nums) {\n        // TODO\n        return 0;\n    }\n};`;
+        break;
+      case "go":
+        starterCode = `func solve(nums []int) int {\n    // TODO\n    return 0\n}`;
+        break;
+      case "rust":
+        starterCode = `impl Solution {\n    pub fn solve(nums: Vec<i32>) -> i32 {\n        // TODO\n        0\n    }\n}`;
+        break;
+      case "typescript":
+        starterCode = `function solve(nums: number[]): number {\n  // TODO\n  return 0;\n}`;
+        break;
+      case "javascript":
+      default:
+        starterCode = `function solve(nums) {\n  // TODO\n  return 0;\n}`;
+        break;
+    }
+
+    return {
+      language,
+      slug,
+      starterCode,
+    };
+  });
 };
 
 const makeSampleSolution = (): CodeFile["sampleSolution"] => {

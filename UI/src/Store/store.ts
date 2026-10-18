@@ -19,8 +19,10 @@ import {
   type MockPage,
   type MockSubtask,
   type MockTask,
+  type Folder,
+  type MockNotebook,
 } from "../assets/SAMPLE";
-import { generateCodeFiles } from "../Pages/CodeIDE.SAMPLE";
+import { generateCodeFiles, type CodeFile } from "../Pages/CodeIDE.SAMPLE";
 
 const DEFAULT_PRINT_WIDTH = 794;
 
@@ -60,6 +62,99 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           });
         },
 
+        // ── Top-level creation mutations ───────────────────────────
+        addNotebook: (title = "Untitled Notebook") => {
+          const notebookId = crypto.randomUUID();
+          const pageId = crypto.randomUUID();
+          const { createdDate, createdTime } = generateTimestamp();
+
+          const newNotebook: MockNotebook = {
+            id: notebookId,
+            title,
+            events: [],
+            tasks: [],
+            pages: [
+              {
+                id: pageId,
+                notebookId,
+                title: "Untitled Page 1",
+                createdDate,
+                createdTime,
+                printZone: { x: 40, width: DEFAULT_PRINT_WIDTH },
+                nodes: [],
+                strokes: [],
+              },
+            ],
+          };
+
+          set((state) => ({ notebooks: [newNotebook, ...state.notebooks] }));
+          return notebookId;
+        },
+
+        addFolder: (title = "Untitled Folder") => {
+          const folderId = crypto.randomUUID();
+          const { createdDate } = generateTimestamp();
+
+          const newFolder: Folder = {
+            id: folderId,
+            title,
+            color: "#3b82f6", // Default blue
+            description: "A new workspace folder.",
+            createdDate,
+            lastUpdatedDate: createdDate,
+            content: [],
+          };
+
+          set((state) => ({ folders: [newFolder, ...state.folders] }));
+          return folderId;
+        },
+
+        addCodeFile: (title = "Untitled Problem") => {
+          const timestamp = Date.now();
+          const slug = `${title.toLowerCase().replace(/\s+/g, "-")}`;
+
+          const newFile: CodeFile = {
+            id: timestamp,
+            title,
+            titleSlug: slug,
+            category: "Uncategorized",
+            difficulty: "Easy",
+            likes: 0,
+            dislikes: 0,
+            description: {
+              markdown: `## ${title}\n\nWrite your problem description here.`,
+              html: `<h2>${title}</h2><p>Write your problem description here.</p>`,
+            },
+            constraints: [],
+            examples: [],
+            tags: [],
+            testCases: [],
+            codeTemplates: [
+              {
+                language: "Python",
+                slug: "python",
+                starterCode:
+                  "class Solution:\n    def solve(self):\n        # TODO\n        pass",
+              },
+              {
+                language: "JavaScript",
+                slug: "javascript",
+                starterCode: "function solve() {\n  // TODO\n}",
+              },
+              {
+                language: "Java",
+                slug: "java",
+                starterCode:
+                  "class Solution {\n    public void solve() {\n        // TODO\n    }\n}",
+              },
+            ],
+          };
+
+          set((state) => ({ codeFiles: [newFile, ...state.codeFiles] }));
+          return newFile.titleSlug;
+        },
+
+        // ── Page mutations ─────────────────────────────────────────
         renamePage: (notebookId, pageId, newTitle) => {
           commit(
             mapPage(get().notebooks, notebookId, pageId, (p) => ({
@@ -91,6 +186,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
+        // ── Node mutations ─────────────────────────────────────────
         updateNodePosition: (notebookId, pageId, nodeId, newX, newY) => {
           commit(
             mapNode(get().notebooks, notebookId, pageId, nodeId, (n) => ({
@@ -160,6 +256,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
+        // ── Print zone ─────────────────────────────────────────────
         updatePrintZone: (notebookId, pageId, x, width) => {
           commit(
             mapPrintZone(get().notebooks, notebookId, pageId, (zone) => ({
@@ -170,7 +267,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
-        // ── Task mutations ────────────────────────────────────
+        // ── Task mutations ─────────────────────────────────────────
         addTask: (notebookId, title) => {
           const trimmed = title.trim();
           if (!trimmed) return;
@@ -229,7 +326,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
-        // ── Subtask mutations ─────────────────────────────────
+        // ── Subtask mutations ──────────────────────────────────────
         addSubtask: (notebookId, taskId, text) => {
           const trimmed = text.trim();
           if (!trimmed) return;
@@ -292,7 +389,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       };
     },
     {
-      name: "caldera-workspace-storage-v6",
+      name: "caldera-workspace-storage-v7",
     },
   ),
 );

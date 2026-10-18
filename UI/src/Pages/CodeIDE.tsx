@@ -12,21 +12,20 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useParams } from "react-router-dom";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { getCodeWorkspaceExtensions } from "../assets/TipTapEditor";
 import { SettingsProvider, useSettings } from "../contexts/settingsContext";
 import { EditorProvider } from "../contexts/editorContext";
 import { useScratchContext, ScratchProvider } from "../contexts/scratchContext";
-import { generateCodeFile, type CodeFile } from "./CodeIDE.SAMPLE";
+import type { CodeFile } from "./CodeIDE.SAMPLE";
 import { ProblemInstructionTrack } from "./ProblemInstructionTrack";
 import { CodeWorkspaceHeader } from "./CodeWorkspaceHeader";
 import { LineNumberExtension } from "../Extensions/LineNumberExtension";
 import { CodeHighlightExtension } from "../Extensions/CodeHighlightExtension";
 import { CodeTabExtension } from "../Extensions/CodeTabExtension";
-
-/** Supported programming runtime frameworks populated inside the workspace configuration selector dock */
-const LANGUAGES = ["Java", "Python", "Javascript", "C++", "C"];
+import { useWorkspaceStore } from "../Store/store";
+import { AVAILABLE_LANGUAGES } from "../components/LanguageConfig";
 
 /**
  * @component CodeIDEContent
@@ -40,46 +39,41 @@ const CodeIDEContent: React.FC = () => {
   const settings = useSettings();
   const scratch = useScratchContext();
 
+  /**
+   * Extract the problem ID/slug from the URL and locate it in the global store
+   */
+  const { id } = useParams<{ id: string }>();
+  const codeFiles = useWorkspaceStore((s) => s.codeFiles);
+
+  const problem: CodeFile | undefined = useMemo(() => {
+    if (!id) return undefined;
+    return codeFiles.find((c) => c.titleSlug === id || c.id.toString() === id);
+  }, [id, codeFiles]);
+
   /** Guard reference to block cyclic updates and race conditions during explicit buffer transaction executions */
   const isTransitioningRef = useRef<boolean>(false);
 
-  /**
-   * Single source of truth for the active problem.
-   * Generated once via `useMemo` so its identity is stable across renders
-   * and across the code-editor lifecycle.
-   */
-  const problem: CodeFile = useMemo(() => generateCodeFile(1), []);
-
-  /** Track selected execution target language initialized locally to Python */
+  /** Track selected execution target language, persisting to local storage */
   const [selectedLang, setSelectedLang] = useState<string>(() => {
     try {
       const savedLang = localStorage.getItem("ide_selected_language");
-      return savedLang ? savedLang : "Python";
-    } catch (e) {
-      console.warn("Failed to read initial language from localStorage:", e);
-      return "Python"; // Safe fallback standard
+      // Verify the saved language is valid in our new config
+      const isValid = AVAILABLE_LANGUAGES.some((l) => l.name === savedLang);
+      return isValid && savedLang ? savedLang : "Python";
+    } catch {
+      return "Python";
     }
   });
 
-  /**
-   * Automatically commits any toolbar language updates straight down to system
-   * client disk cache records every time a user flips the language selector dropdown.
-   */
   useEffect(() => {
     try {
       localStorage.setItem("ide_selected_language", selectedLang);
     } catch (e) {
-      console.error(
-        "Failed to persist active language parameter to localStorage:",
-        e,
-      );
+      console.error("Failed to persist active language parameter:", e);
     }
   }, [selectedLang]);
 
-  /**
-   * Moves the theme color state synchronization block
-   * inside a useEffect hook. This safely prevents the "Cannot update a component while rendering a different component" error.
-   */
+  /** Ensure editor text color adapts to the theme */
   const currentThemeColor = darkMode ? "#e4e4e7" : "#18181b";
 
   useEffect(() => {
@@ -88,11 +82,7 @@ const CodeIDEContent: React.FC = () => {
     }
   }, [currentThemeColor, settings]);
 
-  /**
-   * @hook useEditor
-   * @description Core interactive input editor engine. Employs structural width parameters and clamps browser defaults.
-   * Utilizes optional chaining to safely read template buffers without triggering runtime evaluation faults.
-   */
+  /** Core Editor Initialization */
   const codeExtensions = getCodeWorkspaceExtensions();
   const editor = useEditor({
     editorProps: {
@@ -110,9 +100,7 @@ const CodeIDEContent: React.FC = () => {
       CodeHighlightExtension,
       CodeTabExtension,
     ],
-    content:
-      problem.codeTemplates?.find((t) => t.language === selectedLang)
-        ?.starterCode || "",
+    content: "", // Start empty, populated by the useEffect below
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
       const currentHTML = currentEditor.getHTML();
@@ -123,50 +111,52 @@ const CodeIDEContent: React.FC = () => {
   });
 
   // ==========================================
-  // PURE PROSE-MIRROR STATE SYNCHRONIZER
+  // STATE SYNCHRONIZER: CONTENT & HIGHLIGHTING
   // ==========================================
-  /**
-   * Watches language selection state changes and dispatches a transaction
-   * carrying custom metadata tokens to forcefully break ProseMirror's cache.
-   */
   useEffect(() => {
     if (!editor || editor.isDestroyed) return;
 
-    const { state, view } = editor;
-
-    // Create a transaction and attach custom metadata to force a state update
-    const transaction = state.tr.setMeta("setLanguage", selectedLang);
-
-    // Dispatch the transaction to trigger an immediate, comprehensive repaint pass
-    view.dispatch(transaction);
-  }, [selectedLang, editor]);
-
-  /**
-   * @function handleLanguageChange
-   * @description Intercepts active selection updates from the workspace toolbar and swaps the structural
-   * editor content buffer with corresponding code signature templates safely using optional chaining.
-   * Explicitly clears content to forcefully wipe out old stale language HTML tags.
-   */
-  const handleLanguageChange = (lang: string) => {
-    setSelectedLang(lang);
-    if (!editor) return;
-
     isTransitioningRef.current = true;
 
-    const template = problem.codeTemplates?.find((t) => t.language === lang);
-    const targetContent = template ? template.starterCode : "";
+    // 1. Try to find a starter template for the selected language
+    const template = problem?.codeTemplates?.find(
+      (t) => t.language === selectedLang,
+    );
 
-    // Wipe old language spans entirely before rendering the new text block canvas string
-    editor.commands.clearContent();
-    editor.commands.setContent(targetContent);
+    let targetContent = template?.starterCode;
+
+    // 2. Fallback template if the problem doesn't have this language
+    if (!targetContent) {
+      const langConfig = AVAILABLE_LANGUAGES.find(
+        (l) => l.name === selectedLang,
+      );
+      const prefix = langConfig?.commentPrefix || "//";
+      targetContent = `${prefix} Write your ${selectedLang} solution here\n`;
+    }
+
+    // 3. Prevent cursor jumps if content is identical
+    if (editor.getText() !== targetContent) {
+      editor.commands.setContent(targetContent);
+    }
 
     isTransitioningRef.current = false;
+
+    // 4. Trigger Syntax Highlighting UI update
+    const langConfig = AVAILABLE_LANGUAGES.find((l) => l.name === selectedLang);
+    const langSlug = langConfig?.slug || "javascript";
+
+    const { state, view } = editor;
+    const transaction = state.tr.setMeta("setLanguage", langSlug);
+    view.dispatch(transaction);
+  }, [problem, selectedLang, editor]);
+
+  // ==========================================
+  // ACTIONS
+  // ==========================================
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLang(lang);
   };
 
-  /**
-   * @function handleSaveLocalWorkspace
-   * @description Commits active memory character blocks securely down to system files or temporary logs.
-   */
   const handleSaveLocalWorkspace = () => {
     if (!editor) return;
     console.log(
@@ -175,30 +165,74 @@ const CodeIDEContent: React.FC = () => {
     );
   };
 
+  const handleRunCode = async () => {
+    if (!editor) return;
+
+    const code = editor.getText();
+    const langConfig = AVAILABLE_LANGUAGES.find((l) => l.name === selectedLang);
+
+    if (!langConfig) return;
+
+    console.log(`Executing ${langConfig.name}...`);
+    console.log(`Code:\n${code}`);
+
+    //  TAURI INTEGRATION POINT
+    // Uncomment and adjust when your Rust backend is ready:
+    /*
+    try {
+      import { invoke } from "@tauri-apps/api/core";
+      const output = await invoke("execute_code", { 
+        language: langConfig.slug, 
+        code: code 
+      });
+      console.log("Terminal Output:", output);
+      // You can pass `output` to a terminal component here
+    } catch (err) {
+      console.error("Execution failed:", err);
+    }
+    */
+  };
+
+  // ==========================================
+  // RENDER GUARD
+  // ==========================================
+  if (!problem) {
+    return (
+      <div
+        className={`w-full h-[calc(100vh-2.25rem)] flex items-center justify-center ${
+          darkMode ? "bg-[#121214] text-zinc-500" : "bg-gray-50 text-gray-400"
+        }`}
+      >
+        <span className="font-mono text-sm animate-pulse">
+          Loading workspace module...
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`p-3 w-full h-[calc(100vh-2.25rem)] grid grid-cols-3 gap-3 transition-colors duration-200 overflow-hidden select-none ${
         darkMode ? "bg-[#121214] text-zinc-100" : "bg-gray-50 text-zinc-800"
       }`}
     >
-      {/** Column 1: Left Problem Track Navigation Pane mapping directly to the active problem */}
+      {/** Column 1: Left Problem Track Navigation Pane */}
       <div className="col-span-1 h-full min-h-0">
-        <ProblemInstructionTrack data={problem} darkMode={darkMode} />
+        <ProblemInstructionTrack darkMode={darkMode} />
       </div>
 
       {/** Column 2 & 3: Right Pure Coding Simulator Panel Matrix Layout */}
       <div className="col-span-2 flex flex-col h-full overflow-hidden w-[calc(100%+0.5rem)]">
-        {/** Integrated Workspace Operations Action Navigation Dock Row */}
         <CodeWorkspaceHeader
           darkMode={darkMode}
-          languages={LANGUAGES}
+          languages={AVAILABLE_LANGUAGES}
           selectedLanguage={selectedLang}
           onLanguageChange={handleLanguageChange}
           onSave={handleSaveLocalWorkspace}
-          hasTemplates={!!problem.codeTemplates}
+          onRun={handleRunCode}
         />
 
-        {/** Scrollable Text Canvas housing container wrapper element with structural layout controls */}
+        {/** Scrollable Text Canvas */}
         <div
           className={`flex-1 w-full min-h-0 overflow-y-auto rounded-b-xl border-x border-b transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
             darkMode

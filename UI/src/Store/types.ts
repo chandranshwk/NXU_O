@@ -17,6 +17,11 @@ export interface WorkspaceState {
   initializeData: () => void;
   setActiveNotebookById: (id: string) => void;
 
+  // ── Top-level creation mutations ───────────────────────────
+  addNotebook: (title?: string) => string;
+  addFolder: (title?: string) => string;
+  addCodeFile: (title?: string) => string;
+
   // ── Page mutations ─────────────────────────────────────────
   addPageToNotebook: (notebookId: string, pageTitle: string) => void;
   renamePage: (notebookId: string, pageId: string, newTitle: string) => void;

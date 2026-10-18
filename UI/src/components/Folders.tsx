@@ -55,8 +55,9 @@ const Folders: React.FC<FoldersProps> = ({ folder }) => {
       {/* 3. STACKED PAPERS (Inside)                                */}
       {/* ========================================================= */}
       <div className="absolute top-19 left-7.5 right-7.5 bottom-0 z-10 pointer-events-none">
-        {folder.content.map((item, index) => {
-          const total = folder.content.length;
+        {folder.content.slice(0, 4).map((item, index, slicedArray) => {
+          // slicedArray.length will be at most 4, and at least 1
+          const total = slicedArray.length;
           const reverseIdx = total - 1 - index;
 
           const offsetY = reverseIdx * 12;
@@ -78,7 +79,7 @@ const Folders: React.FC<FoldersProps> = ({ folder }) => {
                 transform: `translateY(-${hoverRise}px)`,
               }}
             >
-              <span className="relative truncate mx-5 top-1 text-[8px] font-mono uppercase text-black/40">
+              <span className="relative truncate mx-5 top-1 text-[8px] font-mono font-black uppercase text-black/70">
                 {item.title || "NOTE"}
               </span>
             </div>
@@ -105,7 +106,7 @@ const Folders: React.FC<FoldersProps> = ({ folder }) => {
         </div>
 
         {/* Description */}
-        <p className="px-6 text-[10.5px] font-medium text-black/70 relative -top-2 leading-[1.4] line-clamp-2">
+        <p className="px-6 text-[10.5px] font-semibold text-black/70 relative -top-2 leading-[1.4] line-clamp-2">
           {folder.description}
         </p>
 

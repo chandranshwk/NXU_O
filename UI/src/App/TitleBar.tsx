@@ -91,7 +91,7 @@ export function TitleBar() {
 
   const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory();
 
-  // ⚡ Using the new cache hook
+  //  Using the new cache hook
   const { recent, hasRecent, navigateTo, clear } = useRecentPages();
   const [recentOpen, setRecentOpen] = useState(false);
 
@@ -107,9 +107,7 @@ export function TitleBar() {
   }, [location.pathname]);
 
   const getTitleTextBound = useCallback(
-    // ⚡ Fixed: Added folders here
     (pathname: string) => getTitleText(pathname, notebooks, folders),
-    // ⚡ Fixed: Added folders to dependency array
     [notebooks, folders],
   );
 
@@ -160,13 +158,13 @@ export function TitleBar() {
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="flex items-center rounded-md">
+            {/*  BACK BUTTON */}
             <button
               type="button"
               onClick={goBack}
               disabled={!canGoBack}
-              title="Back"
               aria-label="Go back"
-              className={`flex items-center justify-center w-6 h-6 rounded-l-md transition-colors ${
+              className={`group/btn relative flex items-center justify-center w-6 h-6 rounded-l-md transition-colors ${
                 !canGoBack
                   ? darkMode
                     ? "text-zinc-700 cursor-not-allowed"
@@ -177,14 +175,25 @@ export function TitleBar() {
               }`}
             >
               <FiChevronLeft size={20} />
+              {/* Tooltip */}
+              <span
+                className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-[9999] opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
+                  darkMode
+                    ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
+                    : "bg-zinc-900 text-zinc-100"
+                }`}
+              >
+                Back
+              </span>
             </button>
+
+            {/*  FORWARD BUTTON */}
             <button
               type="button"
               onClick={goForward}
               disabled={!canGoForward}
-              title="Forward"
               aria-label="Go forward"
-              className={`flex items-center justify-center w-6 h-6 rounded-r-md transition-colors ml-0.5 ${
+              className={`group/btn relative flex items-center justify-center w-6 h-6 rounded-r-md transition-colors ml-0.5 ${
                 !canGoForward
                   ? darkMode
                     ? "text-zinc-700 cursor-not-allowed"
@@ -195,16 +204,26 @@ export function TitleBar() {
               }`}
             >
               <FiChevronRight size={20} />
+              {/* Tooltip */}
+              <span
+                className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-[9999] opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
+                  darkMode
+                    ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
+                    : "bg-zinc-900 text-zinc-100"
+                }`}
+              >
+                Forward
+              </span>
             </button>
           </div>
 
+          {/*  RECENT PAGES BUTTON */}
           <button
             type="button"
-            disabled={!hasRecent} // ⚡ Disabled only if there's no cache
-            title="Recent pages"
+            disabled={!hasRecent} //  Disabled only if there's no cache
             aria-label="Recent pages"
             onClick={() => setRecentOpen((v) => !v)}
-            className={`flex items-center justify-center rounded-md transition-colors ${
+            className={`group/btn relative flex items-center justify-center rounded-md transition-colors ${
               !hasRecent
                 ? darkMode
                   ? "text-zinc-700 cursor-not-allowed"
@@ -215,6 +234,16 @@ export function TitleBar() {
             }`}
           >
             <FiChevronRight size={14} className="rotate-90 m-2" />
+            {/* Tooltip */}
+            <span
+              className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-[9999] opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
+                darkMode
+                  ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
+                  : "bg-zinc-900 text-zinc-100"
+              }`}
+            >
+              Recent Pages
+            </span>
           </button>
 
           {recentOpen && (

@@ -134,7 +134,7 @@ export const initializeCustomLanguages = async (): Promise<void> => {
       "load_all_custom_themes",
     );
 
-    // 2. ⚡ MERGE ENGINE: Combine themes cleanly. User-added files overwrite built-in themes!
+    // 2.  MERGE ENGINE: Combine themes cleanly. User-added files overwrite built-in themes!
     loadedThemesRegistry = {
       ...PREDEFINED_THEMES,
       ...customUserThemes,
@@ -157,7 +157,7 @@ export const initializeCustomLanguages = async (): Promise<void> => {
 /**
  * @function getDynamicLanguageTheme
  * @description Instant lookup dictionary retrieval for the code highlighting extension loops.
- * ⚡ STRICT ENFORCEMENT FIX: Reads strictly from the normalized language target key.
+ *  STRICT ENFORCEMENT FIX: Reads strictly from the normalized language target key.
  * Completely blocks accidental Java leaking by returning explicit null on missing profiles.
  */
 export const getDynamicLanguageTheme = (

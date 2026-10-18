@@ -15,7 +15,7 @@ fn get_languages_path() -> Result<PathBuf, String> {
 /**
  * @function seed_default_languages_on_boot
  * @description Programmatically writes default Java and Python configurations to disk on first boot.
- * ⚡ FIXED: Shifted to double-hashed raw literal syntax r##"..."## to prevent quotes inside regex from breaking compilation.
+ *  FIXED: Shifted to double-hashed raw literal syntax r##"..."## to prevent quotes inside regex from breaking compilation.
  */
 pub fn seed_default_languages_on_boot() -> Result<(), String> {
     let lang_dir = get_languages_path()?;

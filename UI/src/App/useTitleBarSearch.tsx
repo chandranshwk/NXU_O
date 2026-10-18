@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { NavigateFunction } from "react-router-dom";
-import { FiBook, FiCode, FiFileText, FiFolder } from "react-icons/fi"; // ⚡ Added FiFolder
+import { FiBook, FiCode, FiFileText, FiFolder } from "react-icons/fi"; //  Added FiFolder
 import { settingsList } from "../Pages/Setting-Sections/settingsList";
 import type { Folder, MockNotebook } from "../assets/SAMPLE";
-import type { CodeFile } from "../Pages/CodeIDE.SAMPLE"; // ⚡ Added CodeFile
+import type { CodeFile } from "../Pages/CodeIDE.SAMPLE"; //  Added CodeFile
 import type { SearchItems } from "./SearchDrop";
 import {
   computePredictiveResult,
@@ -198,7 +198,7 @@ export const useTitleBarSearch = ({
     if (scope === "folder") return filterByQuery(folderContents, searchQuery);
     if (scope === "pages") return filterByQuery(pages, searchQuery);
     if (scope === "settings") return filterByQuery(settingsItems, searchQuery);
-    // ⚡ Use homeItems for the "notes" (Home) scope and limit to 30 results to keep UI fast
+    //  Use homeItems for the "notes" (Home) scope and limit to 30 results to keep UI fast
     if (scope === "notes")
       return filterByQuery(homeItems, searchQuery).slice(0, 30);
     return [];

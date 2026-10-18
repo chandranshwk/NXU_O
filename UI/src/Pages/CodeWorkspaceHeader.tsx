@@ -1,25 +1,14 @@
-/**
- * @file CodeWorkspaceHeader.tsx
- * @component CodeWorkspaceHeader
- * @description Standardized action toolbar row layout managing runtime selection frameworks and manual workspace saves.
- *
- * @architecture
- * - Explicitly types property bounds using a strict contract definition layer.
- * - Single source of truth driven directly by parent properties.
- * - Adheres to a minimalist 2D interface profile utilizing raw element parameters instead of heavy graphics.
- */
-
 import React from "react";
-import { FiCode, FiSave } from "react-icons/fi";
+import { FiCode, FiSave, FiPlay } from "react-icons/fi";
+import type { LanguageConfig } from "../components/LanguageConfig";
 
 export interface CodeWorkspaceHeaderProps {
   darkMode: boolean;
-  languages: string[];
+  languages: LanguageConfig[];
   selectedLanguage: string;
   onLanguageChange: (lang: string) => void;
   onSave: () => void;
-  /** Guard variable tracking whether language matrices exist; locks selection paths on empty values */
-  hasTemplates?: boolean;
+  onRun: () => void; //  Added
 }
 
 export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
@@ -28,7 +17,7 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
   selectedLanguage,
   onLanguageChange,
   onSave,
-  hasTemplates = false,
+  onRun,
 }) => {
   return (
     <div
@@ -45,27 +34,18 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
           Coding Space
         </div>
 
-        {/* Runtime Target Selection Dropdown Box — locked when no templates exist */}
         <select
           value={selectedLanguage}
           onChange={(e) => onLanguageChange(e.target.value)}
-          disabled={!hasTemplates}
-          title={
-            hasTemplates
-              ? "Select runtime language"
-              : "No code templates available for this problem"
-          }
-          className={`text-xs px-2.5 py-1 rounded-md border outline-none font-semibold transition-all ${
-            !hasTemplates ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-          } ${
+          className={`text-xs px-2.5 py-1 rounded-md border outline-none font-semibold transition-all cursor-pointer ${
             darkMode
               ? "bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700"
               : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:border-zinc-300"
           }`}
         >
-          {languages.map((lang, idx) => (
-            <option key={idx} value={lang}>
-              {lang}
+          {languages.map((lang) => (
+            <option key={lang.slug} value={lang.name}>
+              {lang.name}
             </option>
           ))}
         </select>
@@ -73,6 +53,21 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
 
       {/* Right Operations Core Action Triggers */}
       <div className="flex items-center gap-2">
+        {/* Run Action Trigger */}
+        <button
+          type="button"
+          onClick={onRun}
+          title="Run Code"
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border transition-all active:scale-95 cursor-pointer ${
+            darkMode
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
+              : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+          }`}
+        >
+          <FiPlay size={12} className="fill-current" />
+          Run
+        </button>
+
         {/* Save/Commit Action Trigger */}
         <button
           type="button"

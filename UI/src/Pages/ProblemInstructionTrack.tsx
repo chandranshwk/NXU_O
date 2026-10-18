@@ -1,8 +1,9 @@
 import React from "react";
+import { useParams } from "react-router-dom";
+import { useWorkspaceStore } from "../Store/store";
 import type { CodeFile } from "./CodeIDE.SAMPLE";
 
 interface ProblemInstructionTrackProps {
-  data: CodeFile;
   darkMode: boolean;
 }
 
@@ -13,9 +14,28 @@ interface ProblemInstructionTrackProps {
  */
 export const ProblemInstructionTrack: React.FC<
   ProblemInstructionTrackProps
-> = ({ data, darkMode }) => {
-  // Map standard parameters to explicit semantic badges without decorators
-  const Mode = localStorage.getItem("ide_workspace_mode") === "practice";
+> = ({ darkMode }) => {
+  //  Extract the URL parameter (could be titleSlug or id)
+  const { id } = useParams<{ id: string }>();
+
+  //  Access the global codeFiles array from the store
+  const codeFiles = useWorkspaceStore((s) => s.codeFiles);
+
+  //  Find the matching CodeFile based on the URL parameter
+  const data: CodeFile | undefined = codeFiles.find(
+    (c) => c.titleSlug === id || c.id.toString() === id,
+  );
+
+  // Fallback if the file isn't found (e.g., data is still loading)
+  if (!data) {
+    return (
+      <div className="h-full flex items-center justify-center p-5 border rounded-xl border-zinc-800/80 bg-zinc-900/40">
+        <span className="text-xs font-mono text-zinc-500 animate-pulse">
+          Loading problem data...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -31,9 +51,7 @@ export const ProblemInstructionTrack: React.FC<
       </span>
 
       {/* Main Title Heading */}
-      <h1 className="text-base font-bold tracking-tight mb-3">
-        {!Mode && `${data.id}.`} {data.title}
-      </h1>
+      <h1 className="text-base font-bold tracking-tight mb-3">{data.title}</h1>
 
       {/* Core Question HTML Target Layer */}
       <div

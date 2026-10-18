@@ -280,13 +280,13 @@ export const getEditorExtensions = ({
 
 export const getCodeWorkspaceExtensions = () => [
   StarterKit.configure({
-    // ⚡ STRIP ALL INLINE FORMATTING MARKS
+    //  STRIP ALL INLINE FORMATTING MARKS
     bold: false,
     italic: false,
     strike: false,
     code: false,
 
-    // ⚡ STRIP BLOCK ELEMENT STRUCTURES
+    //  STRIP BLOCK ELEMENT STRUCTURES
     bulletList: false,
     orderedList: false,
     codeBlock: false,
