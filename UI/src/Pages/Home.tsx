@@ -13,6 +13,10 @@ import Codes from "../components/Codes";
 import { BiChevronDown } from "react-icons/bi";
 import { FiChevronDown, FiCode, FiFileText, FiFolder } from "react-icons/fi";
 
+// 1. ADD THESE IMPORTS
+import { useTourAutoStart } from "../Hooks/useTourAutoStart";
+import { HOME_STEPS } from "../tours/pageTours";
+
 const Home = () => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
 
@@ -21,11 +25,20 @@ const Home = () => {
   const notebooks = useWorkspaceStore((s) => s.notebooks);
   const folders = useWorkspaceStore((s) => s.folders);
   const codeFiles = useWorkspaceStore((s) => s.codeFiles);
-  const initializeData = useWorkspaceStore((s) => s.initializeData);
 
-  useEffect(() => {
-    initializeData();
-  }, [initializeData]);
+  // 2. ADD THE HOOK HERE
+  // Check if the user has already seen the Welcome Modal
+  const hasSeenWelcome =
+    typeof window !== "undefined"
+      ? !!localStorage.getItem("nxuo-welcome-v1")
+      : true;
+
+  useTourAutoStart({
+    storageKey: "nxuo-tour-home-v1",
+    steps: HOME_STEPS,
+    // Only auto-start the tour if the Welcome Modal is already dismissed
+    enabled: hasSeenWelcome,
+  });
 
   const [expandedSection, setExpandedSection] = useState<
     ("Notebook" | "Code" | "Folders")[]
@@ -94,6 +107,7 @@ const Home = () => {
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
+            data-tour="home-create"
             onClick={() => setIsCreateOpen((prev) => !prev)}
             className="px-5 py-2.5 bg-blue-600 text-white font-medium text-sm rounded-lg hover:bg-blue-500 shadow-md transition-all active:scale-95 flex items-center gap-2"
           >
@@ -147,7 +161,10 @@ const Home = () => {
       </div>
 
       {/* NOTEBOOK GRID */}
-      <div className="flex items-center justify-between w-full mt-4 px-6 pr-18">
+      <div
+        className="flex items-center justify-between w-full mt-4 px-6 pr-18"
+        data-tour="home-notebooks"
+      >
         <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-widest">
           Notebooks
         </h2>
@@ -227,7 +244,6 @@ const Home = () => {
             .map((code) => (
               <motion.div
                 layout
-                //  FIXED: Use code.id instead of code.title
                 key={code.id}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}

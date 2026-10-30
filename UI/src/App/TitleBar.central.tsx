@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
 import SearchDrop, { type SearchItems } from "./SearchDrop";
+import ShortcutChip from "../components/ShortcutChip";
 
 // Explicitly define your separated central search bar properties interface
 interface TitleBarCentralProps {
@@ -45,6 +46,7 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
 }) => {
   return (
     <motion.div
+      data-tour="titlebar-search"
       layout
       transition={{ type: "spring", stiffness: 350, damping: 30 }}
       className={`text-xs font-semibold tracking-wide h-7 flex items-center p-1.5 px-4 rounded-lg select-none relative ${
@@ -60,9 +62,6 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
                 : "text-zinc-700 bg-zinc-200/50 hover:bg-zinc-200")
           : "w-auto justify-center cursor-default text-zinc-500 bg-transparent"
       }`}
-      onClick={() => {
-        if (!searching && isShowRoute) setSearching(true);
-      }}
     >
       {/* Input Field View State Transitions */}
       <AnimatePresence mode="wait">
@@ -73,6 +72,12 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -2 }}
             transition={{ duration: 0.15 }}
+            // onClick lives here (not on the outer wrapper) so that an
+            // outside mousedown that closes the search doesn't have its
+            // subsequent `click` bubble into an "open the search" handler.
+            onClick={() => {
+              if (isShowRoute) setSearching(true);
+            }}
             className="flex items-center justify-center gap-2 w-full whitespace-nowrap"
           >
             {isShowRoute && (
@@ -96,7 +101,13 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
           >
             <FiSearch className="text-sm opacity-50 shrink-0" />
 
-            <div className="relative flex-1 h-full flex items-center">
+            {/* data-search-area keeps the outside-click listener from
+                closing the search when the click lands on the input or
+                its predictive-suggestion overlay. */}
+            <div
+              className="relative flex-1 h-full flex items-center"
+              data-search-area
+            >
               <input
                 ref={(el) => {
                   if (inputRef) inputRef.current = el;
@@ -144,6 +155,18 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Discovery chip — visible on every page, in the exact click target
+    that opens the command bar. Hover shows the tooltip. */}
+      {isShowRoute && (
+        <ShortcutChip
+          hotkey="search" // <-- RESTORED TO SEARCH
+          label="Press"
+          title="Search within this page"
+          darkMode={darkMode}
+          className="ml-2 shrink-0"
+        />
+      )}
 
       {/* Isolated Dropdown Animations to let spring mathematics execute cleanly */}
       <AnimatePresence>

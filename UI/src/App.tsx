@@ -7,12 +7,15 @@
  * - Uses settings from `src/contexts/settingsContext.tsx`.
  * - Sidebar stays fixed while pages change inside the Outlet.
  * - CommandBar opens on top as an overlay.
+ * - The dark-mode circular reveal is handled entirely by `setDarkMode` inside
+ *   `settingsContext.tsx`; this file only mirrors `settings.darkMode` onto
+ *   the <html> `dark` class so Tailwind's `dark:` variants apply.
  *
  * @platform
  * Uses Hash Router so navigation works correctly inside Tauri without breaking local file paths.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   createHashRouter,
   RouterProvider,
@@ -34,6 +37,8 @@ import { CanvasProvider } from "./contexts/Canvas/CanvasContext";
 import CodeIDE from "./Pages/CodeIDE";
 import Folder from "./Pages/FolderPage";
 import { ErrorScreen } from "./components/ErrorScreen";
+import { WelcomeModal } from "./components/WelcomeModal";
+import SpotlightTour from "./components/SpotlightTour";
 
 //  Wrapper to connect React Router's error state to your custom ErrorScreen
 function RouteErrorBoundary() {
@@ -56,15 +61,21 @@ function Layout() {
   // DARK MODE HTML CLASS SYNC
   // ==========================================
   /**
-   * Automatically adds or removes the 'dark' class on the HTML root element.
-   * This lets Tailwind's dark mode selectors work across the entire app instantly.
+   * Mirrors `settings.darkMode` onto the <html> root so Tailwind's `dark:`
+   * variants cascade through the whole tree.
+   *
+   * `useLayoutEffect` runs before paint, so a fresh hydration lands with the
+   * correct class already applied — no flash of the wrong theme.
+   *
+   * The animated circular reveal is NOT handled here. Every caller that
+   * changes the theme (CommandBar, BGEcho, OS preference listener, etc.)
+   * goes through the wrapped `setDarkMode` in `settingsContext.tsx`, which
+   * opens the View Transition, flushes the React commit synchronously, and
+   * plays the clip-path animation. This effect then simply reflects the
+   * resulting boolean onto the DOM as part of that same commit.
    */
-  useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+  useLayoutEffect(() => {
+    document.documentElement.classList.toggle("dark", settings.darkMode);
   }, [settings.darkMode]);
 
   // ==========================================
@@ -124,11 +135,35 @@ function Layout() {
   const thumbColor = settings.darkMode ? "#D8D9DC" : "#222223";
   const thumbHover = settings.darkMode ? "#B1B8C1" : "#40526C";
 
+  // ==========================================
+  // TOUR MODAL EVENT LISTENERS
+  // ==========================================
+  useEffect(() => {
+    const handleOpen = () => setOpenCommandBar(true);
+    const handleClose = () => setOpenCommandBar(false);
+
+    window.addEventListener("nxuo:open-command-bar", handleOpen);
+    window.addEventListener("nxuo:close-command-bar", handleClose);
+
+    return () => {
+      window.removeEventListener("nxuo:open-command-bar", handleOpen);
+      window.removeEventListener("nxuo:close-command-bar", handleClose);
+    };
+  }, []);
+
   return (
     <>
       <TitleBar />
+      <WelcomeModal darkMode={settings.darkMode} />
+      <SpotlightTour darkMode={settings.darkMode} />
       <div
-        className={`${settings.darkMode ? "bg-black/95" : "bg-[#f4f4f5]"} h-screen fixed top-9 w-screen flex transition-colors duration-200`}
+        // Background is driven by the `dark` class (not the boolean) so it
+        // flips together with the class toggle inside the View Transition
+        // callback — keeping old/new snapshots internally consistent.
+        // `transition-colors` is intentionally omitted: the View Transition
+        // handles the animation, and a CSS transition would freeze mid-flight
+        // into the "new" snapshot and cause visible stutter.
+        className={`h-screen fixed top-9 w-screen flex ${!settings.darkMode ? "bg-[#f4f4f5]" : "bg-black/95"}`}
         style={
           {
             "--colorTrack": colorTrack,

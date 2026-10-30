@@ -81,6 +81,7 @@ const SearchDrop: React.FC<SearchDropProps> = ({
   if (searchItems.length === 0) {
     return (
       <motion.div
+        data-search-area
         variants={animationVariants}
         initial="initial"
         animate="animate"
@@ -100,6 +101,7 @@ const SearchDrop: React.FC<SearchDropProps> = ({
 
   return (
     <motion.div
+      data-search-area
       ref={containerRef}
       variants={animationVariants}
       initial="initial"

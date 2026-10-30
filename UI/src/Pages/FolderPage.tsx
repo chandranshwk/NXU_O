@@ -26,6 +26,8 @@ import type { CodeFile } from "./CodeIDE.SAMPLE";
 import { FolderHeader } from "./FolderHeader";
 import { SortableGroup } from "./SortableGroup";
 import { SortableRow } from "./SortableRow";
+import { useTourAutoStart } from "../Hooks/useTourAutoStart";
+import { FOLDER_STEPS } from "../tours/pageTours";
 
 // ── Type guards ───────────────────────────────────────────────────
 const isNotebook = (
@@ -110,10 +112,19 @@ const FolderContent = () => {
     return ["group-problems", "group-notebooks", "group-folders"];
   }, [folder]);
 
+  // ── MOVE HOOK UP: must run unconditionally before any early return ──
+  useTourAutoStart({
+    storageKey: "nxuo-tour-folder-v1",
+    steps: FOLDER_STEPS,
+    enabled: !!folder,
+  });
+
   if (!folder) {
     return (
       <div
-        className={`h-screen w-full flex flex-col items-center justify-center gap-3 ${darkMode ? "bg-[#191919] text-zinc-500" : "bg-white text-zinc-500"}`}
+        className={`h-screen w-full flex flex-col items-center justify-center gap-3 ${
+          darkMode ? "bg-[#191919] text-zinc-500" : "bg-white text-zinc-500"
+        }`}
       >
         <FiFolder size={32} />
         <span className="text-sm font-medium">Locating folder…</span>
@@ -228,9 +239,13 @@ const FolderContent = () => {
 
   return (
     <div
-      className={`h-screen w-full overflow-y-auto font-sans ${darkMode ? "bg-[#191919] text-zinc-200" : "bg-white text-zinc-900"}`}
+      className={`h-screen w-full overflow-y-auto font-sans ${
+        darkMode ? "bg-[#191919] text-zinc-200" : "bg-white text-zinc-900"
+      }`}
     >
-      <FolderHeader folder={folder} darkMode={darkMode} />
+      <div data-tour="folder-header">
+        <FolderHeader folder={folder} darkMode={darkMode} />
+      </div>
 
       <div className="max-w-4xl mx-auto w-full px-12 pt-4">
         {/* TOP TEXTAREA */}
@@ -241,327 +256,350 @@ const FolderContent = () => {
           rows={3}
           className={textAreaClass}
         />
-        {/*  TOOLBAR WITH ADD BUTTON */}
-        <div className="flex items-center justify-between mt-8 mb-2">
-          <h2
-            className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}
-          >
-            Folder Contents
-          </h2>
-
-          <div className="relative" ref={addMenuRef}>
-            <button
-              onClick={() => setIsAddMenuOpen((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
-                darkMode
-                  ? "bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-zinc-200"
-                  : "bg-zinc-100 border-zinc-200 hover:bg-zinc-200 text-zinc-700"
+        <div data-tour="folder-contents">
+          {/*  TOOLBAR WITH ADD BUTTON */}
+          <div className="flex items-center justify-between mt-8 mb-2">
+            <h2
+              className={`text-xs font-semibold uppercase tracking-wider ${
+                darkMode ? "text-zinc-500" : "text-zinc-400"
               }`}
             >
-              <FiPlus size={14} />
-              Add Item
-            </button>
+              Folder Contents
+            </h2>
 
-            {/*  THE NOTION-STYLE DROPDOWN MENU */}
-            {isAddMenuOpen && (
-              <div
-                className={`absolute right-0 top-full mt-2 w-85 rounded-xl shadow-2xl border flex flex-col overflow-hidden z-50 ${
+            <div className="relative" ref={addMenuRef}>
+              <button
+                onClick={() => setIsAddMenuOpen((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${
                   darkMode
-                    ? "bg-[#202020] border-zinc-800"
-                    : "bg-white border-zinc-200"
+                    ? "bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-zinc-200"
+                    : "bg-zinc-100 border-zinc-200 hover:bg-zinc-200 text-zinc-700"
                 }`}
               >
-                {/* Search Input Area */}
+                <FiPlus size={14} />
+                Add Item
+              </button>
+
+              {/*  THE NOTION-STYLE DROPDOWN MENU */}
+              {isAddMenuOpen && (
                 <div
-                  className={`flex items-center gap-2 px-3 py-2 border-b ${darkMode ? "border-zinc-800" : "border-zinc-100"}`}
+                  className={`absolute right-0 top-full mt-2 w-85 rounded-xl shadow-2xl border flex flex-col overflow-hidden z-50 ${
+                    darkMode
+                      ? "bg-[#202020] border-zinc-800"
+                      : "bg-white border-zinc-200"
+                  }`}
                 >
-                  <FiSearch
-                    size={16}
-                    className={darkMode ? "text-zinc-500" : "text-zinc-400"}
-                  />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Search items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full bg-transparent text-sm outline-none ${
-                      darkMode
-                        ? "text-zinc-200 placeholder:text-zinc-600"
-                        : "text-zinc-800 placeholder:text-zinc-400"
+                  {/* Search Input Area */}
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2 border-b ${
+                      darkMode ? "border-zinc-800" : "border-zinc-100"
                     }`}
-                  />
-                </div>
+                  >
+                    <FiSearch
+                      size={16}
+                      className={darkMode ? "text-zinc-500" : "text-zinc-400"}
+                    />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder="Search items..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={`w-full bg-transparent text-sm outline-none ${
+                        darkMode
+                          ? "text-zinc-200 placeholder:text-zinc-600"
+                          : "text-zinc-800 placeholder:text-zinc-400"
+                      }`}
+                    />
+                  </div>
 
-                {/* Scrollable Results */}
-                <div className="max-h-80 overflow-y-auto p-1.5">
-                  {!hasResults && (
-                    <div
-                      className={`px-3 py-6 text-center text-xs ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}
-                    >
-                      No items found.
-                    </div>
-                  )}
-
-                  {/* Notebooks Section */}
-                  {availableNotebooks.length > 0 && (
-                    <div className="mb-1">
+                  {/* Scrollable Results */}
+                  <div className="max-h-80 overflow-y-auto p-1.5">
+                    {!hasResults && (
                       <div
-                        className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}
+                        className={`px-3 py-6 text-center text-xs ${
+                          darkMode ? "text-zinc-500" : "text-zinc-400"
+                        }`}
                       >
-                        Notebooks
+                        No items found.
                       </div>
-                      {availableNotebooks.map((nb) => (
-                        <button
-                          key={nb.id}
-                          onClick={() => handleAdd(nb)}
-                          className={`w-full flex items-center gap-3 px-2 py-1.5 text-[14px] rounded-md text-left transition-colors ${
-                            darkMode
-                              ? "hover:bg-zinc-800/80 text-zinc-300"
-                              : "hover:bg-zinc-100 text-zinc-700"
+                    )}
+
+                    {/* Notebooks Section */}
+                    {availableNotebooks.length > 0 && (
+                      <div className="mb-1">
+                        <div
+                          className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
+                            darkMode ? "text-zinc-500" : "text-zinc-400"
                           }`}
                         >
-                          <div className="w-6 h-6 rounded flex items-center justify-center bg-blue-500/10 shrink-0">
-                            <FiBook size={14} className="text-blue-500" />
-                          </div>
-                          <span className="truncate">{nb.title}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Code Files Section */}
-                  {availableCodeFiles.length > 0 && (
-                    <div>
-                      <div
-                        className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}
-                      >
-                        Code Problems
+                          Notebooks
+                        </div>
+                        {availableNotebooks.map((nb) => (
+                          <button
+                            key={nb.id}
+                            onClick={() => handleAdd(nb)}
+                            className={`w-full flex items-center gap-3 px-2 py-1.5 text-[14px] rounded-md text-left transition-colors ${
+                              darkMode
+                                ? "hover:bg-zinc-800/80 text-zinc-300"
+                                : "hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            <div className="w-6 h-6 rounded flex items-center justify-center bg-blue-500/10 shrink-0">
+                              <FiBook size={14} className="text-blue-500" />
+                            </div>
+                            <span className="truncate">{nb.title}</span>
+                          </button>
+                        ))}
                       </div>
-                      {availableCodeFiles.map((cf) => (
-                        <button
-                          key={cf.id}
-                          onClick={() => handleAdd(cf)}
-                          className={`w-full flex items-center gap-3 px-2 py-1.5 text-[14px] rounded-md text-left transition-colors ${
-                            darkMode
-                              ? "hover:bg-zinc-800/80 text-zinc-300"
-                              : "hover:bg-zinc-100 text-zinc-700"
+                    )}
+
+                    {/* Code Files Section */}
+                    {availableCodeFiles.length > 0 && (
+                      <div>
+                        <div
+                          className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
+                            darkMode ? "text-zinc-500" : "text-zinc-400"
                           }`}
                         >
-                          <div className="w-6 h-6 rounded flex items-center justify-center bg-emerald-500/10 shrink-0">
-                            <FiCode size={14} className="text-emerald-500" />
-                          </div>
-                          <span className="truncate">{cf.title}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                          Code Problems
+                        </div>
+                        {availableCodeFiles.map((cf) => (
+                          <button
+                            key={cf.id}
+                            onClick={() => handleAdd(cf)}
+                            className={`w-full flex items-center gap-3 px-2 py-1.5 text-[14px] rounded-md text-left transition-colors ${
+                              darkMode
+                                ? "hover:bg-zinc-800/80 text-zinc-300"
+                                : "hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            <div className="w-6 h-6 rounded flex items-center justify-center bg-emerald-500/10 shrink-0">
+                              <FiCode size={14} className="text-emerald-500" />
+                            </div>
+                            <span className="truncate">{cf.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* THE GROUPS */}
+          <div className="pb-8">
+            {folder.content.length === 0 && (
+              <div
+                className={`py-10 text-sm ${
+                  darkMode ? "text-zinc-500" : "text-zinc-400"
+                }`}
+              >
+                This folder is empty. Click "Add Item" to get started.
               </div>
             )}
-          </div>
-        </div>
-        {/* THE GROUPS */}
-        <div className="pb-8">
-          {folder.content.length === 0 && (
-            <div
-              className={`py-10 text-sm ${darkMode ? "text-zinc-500" : "text-zinc-400"}`}
-            >
-              This folder is empty. Click "Add Item" to get started.
-            </div>
-          )}
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            modifiers={[restrictToVerticalAxis]}
-          >
-            <SortableContext
-              items={groupOrder}
-              strategy={verticalListSortingStrategy}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis]}
             >
-              {groupOrder.map((group) => {
-                if (group === "group-folders" && nestedFolders.length > 0) {
-                  return (
-                    <SortableGroup
-                      key={group}
-                      id={group}
-                      title="Folders"
-                      darkMode={darkMode}
-                    >
-                      <SortableContext
-                        items={nestedFolders.map((f) => f.id.toString())}
-                        strategy={verticalListSortingStrategy}
+              <SortableContext
+                items={groupOrder}
+                strategy={verticalListSortingStrategy}
+              >
+                {groupOrder.map((group) => {
+                  if (group === "group-folders" && nestedFolders.length > 0) {
+                    return (
+                      <SortableGroup
+                        key={group}
+                        id={group}
+                        title="Folders"
+                        darkMode={darkMode}
                       >
-                        <div className="flex flex-col">
-                          {nestedFolders.map((nestedFolder) => (
+                        <SortableContext
+                          items={nestedFolders.map((f) => f.id.toString())}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="flex flex-col">
+                            {nestedFolders.map((nestedFolder) => (
+                              <SortableRow
+                                key={nestedFolder.id}
+                                item={nestedFolder}
+                                isNotebook={false}
+                                isFolder={true}
+                                darkMode={darkMode}
+                                onNavigate={() =>
+                                  navigate(`/folder/${nestedFolder.id}`)
+                                }
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </SortableGroup>
+                    );
+                  }
+                  if (
+                    group === "group-notebooks" &&
+                    folderNotebooks.length > 0
+                  ) {
+                    return (
+                      <SortableGroup
+                        key={group}
+                        id={group}
+                        title="Notebooks"
+                        darkMode={darkMode}
+                      >
+                        <SortableContext
+                          items={folderNotebooks.map((n) => n.id.toString())}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="flex flex-col">
+                            {folderNotebooks.map((nb) => (
+                              <SortableRow
+                                key={nb.id}
+                                item={nb}
+                                isNotebook={true}
+                                isFolder={false}
+                                darkMode={darkMode}
+                                onNavigate={() =>
+                                  navigate(`/document/${nb.id}`)
+                                }
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </SortableGroup>
+                    );
+                  }
+                  if (
+                    group === "group-problems" &&
+                    folderCodeFiles.length > 0
+                  ) {
+                    return (
+                      <SortableGroup
+                        key={group}
+                        id={group}
+                        title="Problems"
+                        darkMode={darkMode}
+                      >
+                        <SortableContext
+                          items={folderCodeFiles.map((c) => c.id.toString())}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="flex flex-col">
+                            {folderCodeFiles.map((file) => (
+                              <SortableRow
+                                key={file.id}
+                                item={file}
+                                isNotebook={false}
+                                isFolder={false}
+                                darkMode={darkMode}
+                                onNavigate={() =>
+                                  navigate(`/code/${file.titleSlug}`)
+                                }
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </SortableGroup>
+                    );
+                  }
+                  return null;
+                })}
+              </SortableContext>
+
+              <DragOverlay
+                dropAnimation={{
+                  duration: 200,
+                  easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+                }}
+              >
+                {activeFolder ? (
+                  <SortableRow
+                    item={activeFolder}
+                    isNotebook={false}
+                    isFolder={true}
+                    darkMode={darkMode}
+                    onNavigate={() => {}}
+                    isOverlay
+                  />
+                ) : activeNotebook ? (
+                  <SortableRow
+                    item={activeNotebook}
+                    isNotebook={true}
+                    isFolder={false}
+                    darkMode={darkMode}
+                    onNavigate={() => {}}
+                    isOverlay
+                  />
+                ) : activeCodeFile ? (
+                  <SortableRow
+                    item={activeCodeFile}
+                    isNotebook={false}
+                    isFolder={false}
+                    darkMode={darkMode}
+                    onNavigate={() => {}}
+                    isOverlay
+                  />
+                ) : activeGroup ? (
+                  <SortableGroup
+                    id={activeGroup}
+                    title={
+                      activeGroup === "group-folders"
+                        ? "Folders"
+                        : activeGroup === "group-notebooks"
+                          ? "Notebooks"
+                          : "Problems"
+                    }
+                    darkMode={darkMode}
+                    isOverlay
+                  >
+                    <div className="flex flex-col opacity-40 pointer-events-none">
+                      {activeGroup === "group-folders"
+                        ? nestedFolders.map((f) => (
                             <SortableRow
-                              key={nestedFolder.id}
-                              item={nestedFolder}
+                              key={f.id}
+                              item={f}
                               isNotebook={false}
                               isFolder={true}
-                              darkMode={darkMode}
-                              onNavigate={() =>
-                                navigate(`/folder/${nestedFolder.id}`)
-                              }
-                            />
-                          ))}
-                        </div>
-                      </SortableContext>
-                    </SortableGroup>
-                  );
-                }
-                if (group === "group-notebooks" && folderNotebooks.length > 0) {
-                  return (
-                    <SortableGroup
-                      key={group}
-                      id={group}
-                      title="Notebooks"
-                      darkMode={darkMode}
-                    >
-                      <SortableContext
-                        items={folderNotebooks.map((n) => n.id.toString())}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="flex flex-col">
-                          {folderNotebooks.map((nb) => (
-                            <SortableRow
-                              key={nb.id}
-                              item={nb}
-                              isNotebook={true}
-                              isFolder={false}
-                              darkMode={darkMode}
-                              onNavigate={() => navigate(`/document/${nb.id}`)}
-                            />
-                          ))}
-                        </div>
-                      </SortableContext>
-                    </SortableGroup>
-                  );
-                }
-                if (group === "group-problems" && folderCodeFiles.length > 0) {
-                  return (
-                    <SortableGroup
-                      key={group}
-                      id={group}
-                      title="Problems"
-                      darkMode={darkMode}
-                    >
-                      <SortableContext
-                        items={folderCodeFiles.map((c) => c.id.toString())}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="flex flex-col">
-                          {folderCodeFiles.map((file) => (
-                            <SortableRow
-                              key={file.id}
-                              item={file}
-                              isNotebook={false}
-                              isFolder={false}
-                              darkMode={darkMode}
-                              onNavigate={() =>
-                                navigate(`/code/${file.titleSlug}`)
-                              }
-                            />
-                          ))}
-                        </div>
-                      </SortableContext>
-                    </SortableGroup>
-                  );
-                }
-                return null;
-              })}
-            </SortableContext>
-
-            <DragOverlay
-              dropAnimation={{
-                duration: 200,
-                easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
-              }}
-            >
-              {activeFolder ? (
-                <SortableRow
-                  item={activeFolder}
-                  isNotebook={false}
-                  isFolder={true}
-                  darkMode={darkMode}
-                  onNavigate={() => {}}
-                  isOverlay
-                />
-              ) : activeNotebook ? (
-                <SortableRow
-                  item={activeNotebook}
-                  isNotebook={true}
-                  isFolder={false}
-                  darkMode={darkMode}
-                  onNavigate={() => {}}
-                  isOverlay
-                />
-              ) : activeCodeFile ? (
-                <SortableRow
-                  item={activeCodeFile}
-                  isNotebook={false}
-                  isFolder={false}
-                  darkMode={darkMode}
-                  onNavigate={() => {}}
-                  isOverlay
-                />
-              ) : activeGroup ? (
-                <SortableGroup
-                  id={activeGroup}
-                  title={
-                    activeGroup === "group-folders"
-                      ? "Folders"
-                      : activeGroup === "group-notebooks"
-                        ? "Notebooks"
-                        : "Problems"
-                  }
-                  darkMode={darkMode}
-                  isOverlay
-                >
-                  <div className="flex flex-col opacity-40 pointer-events-none">
-                    {activeGroup === "group-folders"
-                      ? nestedFolders.map((f) => (
-                          <SortableRow
-                            key={f.id}
-                            item={f}
-                            isNotebook={false}
-                            isFolder={true}
-                            darkMode={darkMode}
-                            onNavigate={() => {}}
-                            isOverlay
-                          />
-                        ))
-                      : activeGroup === "group-notebooks"
-                        ? folderNotebooks.map((nb) => (
-                            <SortableRow
-                              key={nb.id}
-                              item={nb}
-                              isNotebook={true}
-                              isFolder={false}
                               darkMode={darkMode}
                               onNavigate={() => {}}
                               isOverlay
                             />
                           ))
-                        : folderCodeFiles.map((file) => (
-                            <SortableRow
-                              key={file.id}
-                              item={file}
-                              isNotebook={false}
-                              isFolder={false}
-                              darkMode={darkMode}
-                              onNavigate={() => {}}
-                              isOverlay
-                            />
-                          ))}
-                  </div>
-                </SortableGroup>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+                        : activeGroup === "group-notebooks"
+                          ? folderNotebooks.map((nb) => (
+                              <SortableRow
+                                key={nb.id}
+                                item={nb}
+                                isNotebook={true}
+                                isFolder={false}
+                                darkMode={darkMode}
+                                onNavigate={() => {}}
+                                isOverlay
+                              />
+                            ))
+                          : folderCodeFiles.map((file) => (
+                              <SortableRow
+                                key={file.id}
+                                item={file}
+                                isNotebook={false}
+                                isFolder={false}
+                                darkMode={darkMode}
+                                onNavigate={() => {}}
+                                isOverlay
+                              />
+                            ))}
+                    </div>
+                  </SortableGroup>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </div>
         </div>
         {/* BOTTOM TEXTAREA */}
         <textarea

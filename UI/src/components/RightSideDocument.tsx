@@ -48,7 +48,9 @@ export const RightSideDocument: React.FC<RightSideDocumentProps> = ({
         currentPage={currentPage}
         darkMode={darkMode}
       />
-      <RightRail notebook={activeNotebook} darkMode={darkMode} />
+      <div data-tour="notebook-rightrail" className="h-full shrink-0 flex">
+        <RightRail notebook={activeNotebook} darkMode={darkMode} />
+      </div>
     </div>
   );
 };

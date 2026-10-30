@@ -10,7 +10,7 @@ import {
   filterByQuery,
   pickSearchScope,
   isNotebook,
-  isCodeFile, // ⚡ Added isCodeFile import
+  isCodeFile,
 } from "./titleBarUtils";
 
 interface UseTitleBarSearchOptions {
@@ -266,6 +266,48 @@ export const useTitleBarSearch = ({
       }, 0);
     }
   }, [isShowRoute, setSearchQuery]);
+
+  // ── Outside-click / global-Escape dismissal ─────────────────
+  /**
+   * While `searching` is true, closes the search when the user clicks
+   * anywhere outside the search UI, or presses Escape regardless of which
+   * element currently has focus (e.g. after clicking a result row, the input
+   * is no longer focused, so the input's onKeyDown can't catch it).
+   *
+   * `mousedown` (not `click`) is used so the dismissal fires before the
+   * click event resolves — otherwise the clicked target's own handlers
+   * would see a stale "searching" state.
+   *
+   * Anything that should keep the search open is marked with
+   * `data-search-area`: the input wrapper in TitleBar.central.tsx, and
+   * both root containers in SearchDrop.tsx.
+   */
+  useEffect(() => {
+    if (!searching) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest("[data-search-area]")) return;
+
+      setSearching(false);
+      setSearchQuery("");
+    };
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSearching(false);
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [searching, setSearchQuery]);
 
   // ── Command shortcut ────────────────────────────────────────
   useEffect(() => {

@@ -17,6 +17,8 @@ import EditorDoc from "../components/EditorDoc";
 import { EditorProvider, useEditorContext } from "../contexts/editorContext";
 import Pages from "./Pages";
 import { ScratchProvider, useScratchContext } from "../contexts/scratchContext";
+import { SCRATCHPAD_STEPS } from "../tours/pageTours";
+import { useTourAutoStart } from "../Hooks/useTourAutoStart";
 
 /**
  * @component ScratchPadContent
@@ -33,6 +35,12 @@ const ScratchPadContent = () => {
   /** Tracks active workspace data, open drafts, and tab slots */
   const settings = useScratchContext();
 
+  useTourAutoStart({
+    storageKey: "nxuo-tour-scratchpad-v1",
+    steps: SCRATCHPAD_STEPS,
+    enabled: settings.activeSlots.length > 0 && !settings.loading,
+  });
+
   return (
     /* MAIN WRAPPER CONTAINER: min-w-0 lets the entire panel shrink sideways when the sidebar expands */
     <div
@@ -41,7 +49,10 @@ const ScratchPadContent = () => {
       {/* ==========================================
           HEADER MENU ROW (TABS & TOOLBAR)
           ========================================== */}
-      <div className="w-full h-11 pb-5 mt-4 shrink-0 flex px-4 items-center justify-between bg-transparent relative z-40 border-b border-zinc-800/40">
+      <div
+        data-tour="scratchpad-tabbar"
+        className="w-full h-11 pb-5 mt-4 shrink-0 flex px-4 items-center justify-between bg-transparent relative z-40 border-b border-zinc-800/40"
+      >
         {/* LEFT BLOCK: Handles horizontal tab truncation dynamically */}
         <div className="flex-1 min-w-0 pr-4 h-full flex items-center">
           <Pages
@@ -54,7 +65,10 @@ const ScratchPadContent = () => {
         </div>
 
         {/* RIGHT BLOCK: Locks formatting tools securely on the right edge */}
-        <div className="shrink-0 h-full flex items-center">
+        <div
+          data-tour="scratchpad-toolbar"
+          className="shrink-0 h-full flex items-center"
+        >
           <SimpleToolBar
             darkMode={darkMode}
             type="simple"
@@ -68,7 +82,10 @@ const ScratchPadContent = () => {
           PRIMARY ACTIVE TEXT EDITOR CANVAS
           ========================================== */}
       {/* WORKSPACE CANVAS: This is the ONLY element allowed to absorb the remaining screen height */}
-      <div className="flex-1 overflow-y-auto focus:outline-none pb-12 mt-4 w-full">
+      <div
+        data-tour="scratchpad-editor"
+        className="flex-1 overflow-y-auto focus:outline-none pb-12 mt-4 w-full"
+      >
         {/* Checks if there is at least one active scratchpad tab open before loading the editor */}
         {settings.activeSlots.length > 0 ? (
           <EditorDoc size="full" content={settings.info} />

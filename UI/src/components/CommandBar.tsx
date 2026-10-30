@@ -21,6 +21,7 @@ import { useSettings } from "../contexts/settingsContext";
 import { LuCode, LuNotepadText, LuSettings2 } from "react-icons/lu";
 import { VscColorMode } from "react-icons/vsc";
 import { FormatHotkey } from "../assets/FormatHotKeys";
+import { FirstTimeHint } from "./FirstTimeHint";
 
 interface CommandBarProps {
   /** Visibility toggle flag controlling the overlay canvas pane layout */
@@ -292,7 +293,7 @@ const CommandBar: React.FC<CommandBarProps> = ({
   /** Unified stylesheet theme classes mapping light vs dark surface modes */
   const theme = {
     overlay:
-      "fixed inset-0 z-999 flex items-start justify-center pt-[12vh] px-4",
+      "fixed inset-0 z-[99999] flex items-start justify-center pt-[12vh] px-4", // <-- FIXED Z-INDEX
     backdrop: "fixed inset-0",
     panel: `relative w-full border-1 border-zinc-500/80 max-w-xl overflow-hidden border border-zinc-400/20 rounded-xl shadow-2xl transition-all duration-300 ${
       darkMode
@@ -314,11 +315,12 @@ const CommandBar: React.FC<CommandBarProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onMouseDown={onClose}
           className={theme.backdrop}
         />
         {/* OSCILLATING PANEL VIEW CONTAINER */}
         <motion.div
+          data-tour="command-bar-modal"
           initial={{ opacity: 0, scale: 0.98, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: -20 }}
@@ -445,6 +447,13 @@ const CommandBar: React.FC<CommandBarProps> = ({
                 to close
               </span>
             </div>
+            <FirstTimeHint
+              storageKey="nxuo-hint-commandbar-v1"
+              placement="bottom"
+              title="Try a slash command"
+              body="Type /dark, /light, or /home for instant navigation. Arrow keys to move, Enter to run."
+              darkMode={darkMode}
+            />
             <span>NXU_O OS V 1.0.4</span>
           </div>
         </motion.div>

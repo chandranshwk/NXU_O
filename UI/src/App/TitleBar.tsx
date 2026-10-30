@@ -3,8 +3,8 @@ import {
   type Window as TauriWindow,
 } from "@tauri-apps/api/window";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useCallback, useMemo, useState } from "react";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { FiChevronLeft, FiChevronRight, FiHelpCircle } from "react-icons/fi";
 import { useSettings } from "../contexts/settingsContext";
 import { useWorkspaceStore } from "../Store/store";
 import { TitleBarCentral } from "./TitleBar.central";
@@ -15,6 +15,7 @@ import { useTitleBarTabs } from "./useTitleBarTabs";
 import { useNavigationHistory } from "./useNavigationHistory";
 import { useRecentPages, type RecentPage } from "./useRecentPages";
 import { RecentPagesDropdown, type RecentItem } from "./RecentPagesDropdown";
+import { HelpOverlay } from "../components/HelpOverlay";
 import type { MockNotebook, Folder } from "../assets/SAMPLE";
 
 /** Build a human-readable label for a visited URL. */
@@ -109,9 +110,40 @@ export function TitleBar() {
   const { recent, hasRecent, navigateTo, clear } = useRecentPages();
   const [recentOpen, setRecentOpen] = useState(false);
 
+  /** Global keyboard-shortcuts overlay. Opened via the ? button or the `?` key. */
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // ==========================================
+  // GLOBAL `?` HOTKEY → OPEN HELP OVERLAY
+  // ==========================================
+  /**
+   * Listening here (rather than in HelpOverlay) lets the `?` key open the
+   * overlay from anywhere in the app without the overlay needing to be
+   * mounted. Ignores keystrokes typed into inputs, textareas, or any
+   * contentEditable surface (so `?` still types a `?` in the editor).
+   */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable
+      )
+        return;
+
+      if (e.key === "?") {
+        e.preventDefault();
+        setHelpOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const isShowRoute =
     location.pathname.startsWith("/document") ||
-    location.pathname.startsWith("/folder") || // Added folder just in case
+    location.pathname.startsWith("/folder") ||
     location.pathname.startsWith("/") ||
     location.pathname.startsWith("/settings");
 
@@ -189,7 +221,6 @@ export function TitleBar() {
               }`}
             >
               <FiChevronLeft size={20} />
-              {/* Tooltip */}
               <span
                 className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-9999 opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
                   darkMode
@@ -218,7 +249,6 @@ export function TitleBar() {
               }`}
             >
               <FiChevronRight size={20} />
-              {/* Tooltip */}
               <span
                 className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-9999 opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
                   darkMode
@@ -234,7 +264,7 @@ export function TitleBar() {
           {/*  RECENT PAGES BUTTON */}
           <button
             type="button"
-            disabled={!hasRecent} //  Disabled only if there's no cache
+            disabled={!hasRecent}
             aria-label="Recent pages"
             onClick={() => setRecentOpen((v) => !v)}
             className={`group/btn relative flex items-center justify-center rounded-md transition-colors ${
@@ -248,7 +278,6 @@ export function TitleBar() {
             }`}
           >
             <FiChevronRight size={14} className="rotate-90 m-2" />
-            {/* Tooltip */}
             <span
               className={`text-[10px] tracking-wide pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-1 rounded-md shadow-lg whitespace-nowrap z-9999 opacity-0 translate-y-1 group-hover/btn:opacity-100 group-hover/btn:translate-y-0 transition-all duration-150 ease-out ${
                 darkMode
@@ -294,17 +323,57 @@ export function TitleBar() {
         inputRef={search.inputRef}
       />
 
-      <TitleBarControl
-        appWindow={appWindow}
-        darkMode={darkMode}
-        tabs={tabsState.tabs}
-        maxTabs={MAX_TABS}
-        createActions={tabsState.createActions}
-        pageLinks={tabsState.pageLinks}
-        onSelectTab={tabsState.navigateToTab}
-        onCloseTab={tabsState.closeTab}
-        onAddCustomTab={tabsState.addCustomTab}
-      />
+      {/* ── Right cluster: help button + window controls ─────────────
+          Grouped so `justify-between` keeps them together on the right
+          instead of spreading them out. */}
+      <div className="flex items-stretch h-full">
+        <div
+          className="flex items-center"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            data-tour="titlebar-help"
+            onClick={() => setHelpOpen(true)}
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (press ?)"
+            className={`group/btn relative flex items-center justify-center w-9 h-full outline-none transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500/40 ${
+              darkMode
+                ? "text-zinc-400 hover:text-zinc-100 hover:bg-white/8"
+                : "text-zinc-600 hover:text-zinc-900 hover:bg-black/6"
+            }`}
+          >
+            <FiHelpCircle size={15} />
+            <span
+              role="tooltip"
+              className={`text-[10px] tracking-wide pointer-events-none hidden group-hover/btn:block absolute right-2 top-[calc(100%+6px)] px-2 py-1 rounded shadow-md whitespace-nowrap z-50 ${
+                darkMode
+                  ? "bg-zinc-800 text-zinc-200 border border-zinc-700"
+                  : "bg-zinc-900 text-zinc-100"
+              }`}
+            >
+              Shortcuts (?)
+            </span>
+          </button>
+        </div>
+
+        <TitleBarControl
+          appWindow={appWindow}
+          darkMode={darkMode}
+          tabs={tabsState.tabs}
+          maxTabs={MAX_TABS}
+          createActions={tabsState.createActions}
+          pageLinks={tabsState.pageLinks}
+          onSelectTab={tabsState.navigateToTab}
+          onCloseTab={tabsState.closeTab}
+          onAddCustomTab={tabsState.addCustomTab}
+        />
+      </div>
+
+      {/* Keyboard-shortcuts reference overlay */}
+      {helpOpen && (
+        <HelpOverlay darkMode={darkMode} onClose={() => setHelpOpen(false)} />
+      )}
     </div>
   );
 }

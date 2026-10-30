@@ -26,6 +26,8 @@ import { CodeHighlightExtension } from "../Extensions/CodeHighlightExtension";
 import { CodeTabExtension } from "../Extensions/CodeTabExtension";
 import { useWorkspaceStore } from "../Store/store";
 import { AVAILABLE_LANGUAGES } from "../components/LanguageConfig";
+import { useTourAutoStart } from "../Hooks/useTourAutoStart";
+import { CODEIDE_STEPS } from "../tours/pageTours";
 
 /**
  * @component CodeIDEContent
@@ -49,6 +51,12 @@ const CodeIDEContent: React.FC = () => {
     if (!id) return undefined;
     return codeFiles.find((c) => c.titleSlug === id || c.id.toString() === id);
   }, [id, codeFiles]);
+
+  useTourAutoStart({
+    storageKey: "nxuo-tour-codeide-v1",
+    steps: CODEIDE_STEPS,
+    enabled: !!problem,
+  });
 
   /** Guard reference to block cyclic updates and race conditions during explicit buffer transaction executions */
   const isTransitioningRef = useRef<boolean>(false);
@@ -217,7 +225,7 @@ const CodeIDEContent: React.FC = () => {
       }`}
     >
       {/** Column 1: Left Problem Track Navigation Pane */}
-      <div className="col-span-1 h-full min-h-0">
+      <div data-tour="ide-problem" className="col-span-1 h-full min-h-0">
         <ProblemInstructionTrack darkMode={darkMode} />
       </div>
 
@@ -234,6 +242,7 @@ const CodeIDEContent: React.FC = () => {
 
         {/** Scrollable Text Canvas */}
         <div
+          data-tour="ide-editor"
           className={`flex-1 w-full min-h-0 overflow-y-auto rounded-b-xl border-x border-b transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
             darkMode
               ? "bg-[#151518] border-zinc-800/80"

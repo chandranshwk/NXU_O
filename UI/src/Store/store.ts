@@ -14,15 +14,24 @@ import {
   type TreeUpdateResult,
 } from "./utils";
 import {
-  generateMockFolderData,
-  generateMockNotebookData,
   type MockPage,
   type MockSubtask,
   type MockTask,
   type Folder,
   type MockNotebook,
 } from "../assets/SAMPLE";
-import { generateCodeFiles, type CodeFile } from "../Pages/CodeIDE.SAMPLE";
+import { type CodeFile } from "../Pages/CodeIDE.SAMPLE";
+
+// Static import — MUST be sync so `initializeData()` populates the store
+// before `root.render()` in `main.tsx`. A dynamic `import().then(...)` inside
+// the store action returns synchronously with an empty state and races the
+// first render, which is exactly what makes the WelcomeModal render empty.
+import {
+  welcomeNotebook,
+  shortcutsNotebook,
+  playgroundFolder,
+  gettingStartedCode,
+} from "./demoContent";
 
 const DEFAULT_PRINT_WIDTH = 794;
 
@@ -47,13 +56,26 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeNotebook: null,
 
         initializeData: () => {
+          // Guard: if the store already has content (returning user, or the
+          // effect fired twice under StrictMode), do nothing.
           if (get().notebooks.length > 0) return;
 
-          const notebooks = generateMockNotebookData(18, 5, 3);
-          const codeFiles = generateCodeFiles(18);
-          const folders = generateMockFolderData(notebooks, codeFiles, 6);
+          // Normalize page.notebookId pointers. `demoContent.ts` authors ids
+          // by hand, so this small safety net keeps navigation working even
+          // if the constants drift.
+          const notebooks = [welcomeNotebook, shortcutsNotebook].map((nb) => ({
+            ...nb,
+            pages: nb.pages.map((p) => ({ ...p, notebookId: nb.id })),
+          }));
 
-          set({ notebooks, folders, codeFiles });
+          // Single `set` — populates all three collections atomically so
+          // any subscriber (WelcomeModal, Home, sidebar) sees a coherent
+          // workspace on its very first render.
+          set({
+            notebooks,
+            folders: [playgroundFolder],
+            codeFiles: [gettingStartedCode],
+          });
         },
 
         setActiveNotebookById: (id) => {

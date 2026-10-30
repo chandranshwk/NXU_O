@@ -417,3 +417,27 @@
   height: 0;
   pointer-events: none;
 }
+
+/* ==========================================================================
+   CATEGORY 6: VIEW TRANSITIONS — THEME REVEAL (EXPAND / CONTRACT)
+   ========================================================================== */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  display: block;
+}
+
+::view-transition-old(root) {
+  z-index: var(--vt-old-z, 1);
+}
+::view-transition-new(root) {
+  z-index: var(--vt-new-z, 2);
+}
+
+[data-vt] *,
+[data-vt] *::before,
+[data-vt] *::after {
+  transition: none !important;
+}

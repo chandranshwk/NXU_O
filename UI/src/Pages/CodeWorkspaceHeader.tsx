@@ -36,6 +36,7 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
 
         <select
           value={selectedLanguage}
+          data-tour="ide-language"
           onChange={(e) => onLanguageChange(e.target.value)}
           className={`text-xs px-2.5 py-1 rounded-md border outline-none font-semibold transition-all cursor-pointer ${
             darkMode
@@ -56,6 +57,7 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
         {/* Run Action Trigger */}
         <button
           type="button"
+          data-tour="ide-run"
           onClick={onRun}
           title="Run Code"
           className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border transition-all active:scale-95 cursor-pointer ${

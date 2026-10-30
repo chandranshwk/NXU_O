@@ -74,6 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
   return (
     /* MAIN SHIELD WRAPPER: Collapses panel down to 0px width whenever open documents take focus */
     <div
+      data-tour="sidebar"
       className={`xl:block sm:hidden  transition-all duration-300 ease-in-out ${
         show ? "w-0 overflow-hidden mr-0" : "w-auto mr-1"
       }`}

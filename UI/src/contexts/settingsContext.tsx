@@ -8,18 +8,56 @@
  * - Coordinates settings serialization parameters into atomic structured objects.
  * - Communicates directly with Tauri backend storage systems via `invoke("save_portable_settings")`.
  * - Uses matching media query event captures to track OS system color schemes in real time.
+ * - Wraps `setDarkMode` in the View Transitions API: dark → light *contracts* the dark
+ *   bubble back into the centre-top anchor; light → dark *expands* it out again.
+ * - Caches `systemView` in localStorage so the app boots straight into the saved theme
+ *   with no spurious animation on refresh.
+ * - `defaultColor` is aligned synchronously inside the same `flushSync` commit as the
+ *   theme flip, so the "new" snapshot never captures a white-on-light / black-on-dark
+ *   mismatch (which previously read as a post-bubble "refresh").
  */
 
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   useRef,
   type SetStateAction,
 } from "react";
+import { flushSync } from "react-dom";
 import { FONTS, ORDEREDLISTRESPRESENTER } from "../assets/assets";
 import { invoke } from "@tauri-apps/api/core";
+
+// ── Theme cache (fixes the refresh animation) ──────────────────
+const SYSTEM_VIEW_CACHE_KEY = "nxuo-system-view";
+const VALID_SYSTEM_VIEWS = [
+  "Dark Mode",
+  "Light Mode",
+  "System-Settings",
+] as const;
+
+const readCachedSystemView = (): string => {
+  try {
+    const cached = localStorage.getItem(SYSTEM_VIEW_CACHE_KEY);
+    if (cached && (VALID_SYSTEM_VIEWS as readonly string[]).includes(cached)) {
+      return cached;
+    }
+  } catch {
+    /* localStorage unavailable */
+  }
+  return "Dark Mode";
+};
+
+const writeCachedSystemView = (view: string): void => {
+  try {
+    localStorage.setItem(SYSTEM_VIEW_CACHE_KEY, view);
+  } catch {
+    /* ignore */
+  }
+};
 
 export interface settingsContextType {
   /** Baseline fallback typography font sizing metric layout rule */
@@ -128,7 +166,8 @@ export const SettingsProvider = ({
   /** Integrity lock preventing state updates from triggering premature empty saves on mount */
   const isHydrated = useRef<boolean>(false);
 
-  const [systemView, setSystemView] = useState<string>("Dark Mode");
+  // Boots directly into the cached theme — no flash, no spurious animation.
+  const [systemView, setSystemView] = useState<string>(readCachedSystemView);
 
   /** Evaluation logic verifying if dark mode applies matching theme properties or system preferences */
   const isDarkMode =
@@ -136,8 +175,132 @@ export const SettingsProvider = ({
     (systemView === "System-Settings" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-  const [darkMode, setDarkMode] = useState<boolean>(isDarkMode);
+  // Raw state setter — do NOT expose directly; always go through `setDarkMode`.
+  const [darkMode, setDarkModeState] = useState<boolean>(isDarkMode);
+
+  // Ref mirrors state so the wrapper can compare against the latest value
+  // without being recreated on every render.
+  const darkModeRef = useRef<boolean>(isDarkMode);
+  useEffect(() => {
+    darkModeRef.current = darkMode;
+  }, [darkMode]);
+
   const [searchingKeys, setSearchingKeys] = useState<string>("ctrl-P");
+
+  // Keep the localStorage cache in sync so the next refresh boots correctly.
+  useEffect(() => {
+    writeCachedSystemView(systemView);
+  }, [systemView]);
+
+  // ==========================================
+  // THEME TRANSITION — SINGLE CHOKE POINT
+  // ==========================================
+  /**
+   * Every caller — CommandBar, BGEcho_O, the Settings page, the OS preference
+   * listener, and any child route using the outlet context — ends up here.
+   *
+   * Direction:
+   *   next === true  → "expand"    — new (dark) snapshot grows from the anchor,
+   *                                   covering old (light). Dark bubble appears.
+   *   next === false → "contract"  — old (dark) snapshot shrinks to the anchor,
+   *                                   revealing new (light). Dark bubble recedes.
+   *
+   * Anchor: horizontal centre of the viewport, top edge (centre-top).
+   *
+   * `flushSync` forces React to commit synchronously inside the VT callback so
+   * the "new" snapshot is fully rendered before the browser captures it. Any
+   * `useLayoutEffect` inside that commit (e.g. LIFECYCLE 3 aligning
+   * `defaultColor`) therefore also lands inside the snapshot — no post-bubble
+   * colour snap.
+   */
+  const setDarkMode = useCallback((action: React.SetStateAction<boolean>) => {
+    const current = darkModeRef.current;
+    const next = typeof action === "function" ? action(current) : action;
+
+    if (next === current) return;
+
+    // Optimistic ref update so rapid successive toggles see the latest value.
+    darkModeRef.current = next;
+
+    // Fallback for WebViews without View Transitions support.
+    if (!document.startViewTransition) {
+      setDarkModeState(next);
+      return;
+    }
+
+    const root = document.documentElement;
+
+    // ── ORIGIN: horizontal centre, top edge ──────────────────────
+    const originX = window.innerWidth / 2;
+    const originY = 0;
+
+    // Farthest corner from the origin — covers the whole viewport.
+    const endRadius = Math.hypot(
+      Math.max(originX, window.innerWidth - originX),
+      Math.max(originY, window.innerHeight - originY),
+    );
+
+    // Direction drives both the freeze selector and the stacking order.
+    //   expand   → new (dark) on top, old (light) behind
+    //   contract → old (dark) on top, new (light) behind
+    const direction: "expand" | "contract" = next ? "expand" : "contract";
+    root.setAttribute("data-vt", direction);
+    root.style.setProperty("--vt-old-z", direction === "contract" ? "2" : "1");
+    root.style.setProperty("--vt-new-z", direction === "expand" ? "2" : "1");
+
+    const transition = document.startViewTransition(() => {
+      // Inside flushSync, React commits `darkMode` and runs layout effects
+      // (LIFECYCLE 3 → setDefaultColor) synchronously, so the "new" snapshot
+      // is fully consistent: correct theme AND correct text colour.
+      flushSync(() => setDarkModeState(next));
+    });
+
+    transition.ready
+      .then(() => {
+        if (direction === "expand") {
+          // Dark bubble grows from centre-top.
+          root.animate(
+            {
+              clipPath: [
+                `circle(0px at ${originX}px ${originY}px)`,
+                `circle(${endRadius}px at ${originX}px ${originY}px)`,
+              ],
+            },
+            {
+              duration: 500,
+              easing: "ease-in-out",
+              fill: "both", // ← keeps the new snapshot at full radius after the animation
+              pseudoElement: "::view-transition-new(root)",
+            },
+          );
+        } else {
+          // Dark bubble shrinks back into centre-top.
+          root.animate(
+            {
+              clipPath: [
+                `circle(${endRadius}px at ${originX}px ${originY}px)`,
+                `circle(0px at ${originX}px ${originY}px)`,
+              ],
+            },
+            {
+              duration: 500,
+              easing: "ease-in-out",
+              fill: "both", // ← keeps the old snapshot invisible after the animation
+              pseudoElement: "::view-transition-old(root)",
+            },
+          );
+        }
+      })
+      .catch(() => {
+        /* rapid toggling aborted the transition — state is already correct */
+      });
+
+    transition.finished.finally(() => {
+      root.removeAttribute("data-vt");
+      root.style.removeProperty("--vt-old-z");
+      root.style.removeProperty("--vt-new-z");
+    });
+  }, []);
 
   // ==========================================
   // LIFECYCLE 1: INTERNAL THEME RESYNC
@@ -147,7 +310,7 @@ export const SettingsProvider = ({
     setTimeout(() => {
       setDarkMode(isDarkMode);
     }, 0);
-  }, [systemView, isDarkMode]);
+  }, [systemView, isDarkMode, setDarkMode]);
 
   // ==========================================
   // LIFECYCLE 2: OS SYSTEM PREFERENCE LISTENER
@@ -159,12 +322,12 @@ export const SettingsProvider = ({
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleSystemChange = (e: MediaQueryListEvent) => {
-      setDarkMode(e.matches); // Syncs state immediately when OS theme changes
+      setDarkMode(e.matches); // goes through the wrapped setter — animates
     };
 
     mediaQuery.addEventListener("change", handleSystemChange);
     return () => mediaQuery.removeEventListener("change", handleSystemChange);
-  }, [systemView]);
+  }, [systemView, setDarkMode]);
 
   const [defaultFontSize, setDefaultFontSize] = useState<string>("12px");
   const [defaultFont, setDefaultFont] = useState<string>(FONTS[0]);
@@ -180,7 +343,12 @@ export const SettingsProvider = ({
   const [defaultOLRepresenter, setDefaultOLRepresenter] = useState(
     ORDEREDLISTRESPRESENTER[0],
   );
-  const [defaultColor, setDefaultColor] = useState("");
+
+  // Seed from the boot theme so the first painted frame already matches.
+  const [defaultColor, setDefaultColor] = useState(
+    isDarkMode ? "#ffffff" : "#000000",
+  );
+
   const [defaultStrikeThroughShortcut, setDefaultStrikeThroughShortcut] =
     useState<string>("Mod-Shift-x");
 
@@ -202,16 +370,20 @@ export const SettingsProvider = ({
   // ==========================================
   // LIFECYCLE 3: CONTRAST COLOR SELECTOR ALIGNER
   // ==========================================
-  /** Adjusts global typography fallbacks to match dark or light surface elements */
-  useEffect(() => {
-    if (!darkMode)
-      setTimeout(() => {
-        setDefaultColor("#000000");
-      }, 0);
-    else
-      setTimeout(() => {
-        setDefaultColor("#ffffff");
-      }, 0);
+  /**
+   * Adjusts global typography fallbacks to match dark or light surface elements.
+   *
+   * MUST be a `useLayoutEffect` (not `useEffect` + `setTimeout`): when
+   * `setDarkMode` fires, `darkMode` flips inside a `flushSync`, React commits,
+   * and this layout effect runs synchronously inside that same commit — i.e.
+   * BEFORE the View Transition captures its "new" snapshot. The snapshot
+   * therefore contains both the new theme AND the matching text colour, and
+   * the page never flashes white-on-light or black-on-dark after the bubble.
+   */
+  useLayoutEffect(() => {
+    setTimeout(() => {
+      setDefaultColor(darkMode ? "#ffffff" : "#000000");
+    }, 0);
   }, [darkMode]);
 
   // ==========================================

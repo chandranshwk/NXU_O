@@ -12,6 +12,7 @@ import { SettingsProvider } from "./contexts/settingsContext.tsx";
 import { WorkspaceProvider } from "./contexts/workspaceContext.tsx";
 import { initializeCustomLanguages } from "./Extensions/ThemeLoader.ts";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
+import { useWorkspaceStore } from "./Store/store.ts";
 
 const container = document.getElementById("root")!;
 const root = createRoot(container);
@@ -25,6 +26,17 @@ const root = createRoot(container);
  */
 initializeCustomLanguages()
   .then(() => {
+    // ── Seed the workspace before React mounts ──────────────────
+    // `WelcomeModal` (mounted inside `Layout`) reads notebooks/folders/
+    // codeFiles on its very first render. If we let React mount first and
+    // seed inside a `useEffect`, the modal would capture an empty store and
+    // render with no jump chips. Seeding synchronously here guarantees the
+    // store is fully populated before any component sees it.
+    //
+    // `initializeData()` is idempotent (guarded by `notebooks.length > 0`),
+    // so StrictMode's dev double-invoke of this block does nothing harmful.
+    useWorkspaceStore.getState().initializeData();
+
     root.render(
       <StrictMode>
         <ErrorBoundary>

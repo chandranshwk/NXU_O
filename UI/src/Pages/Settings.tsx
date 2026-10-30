@@ -19,9 +19,16 @@ import SectionB from "./Setting-Sections/SectionB";
 import SectionC from "./Setting-Sections/SectionC";
 import SectionD from "./Setting-Sections/SectionD";
 import { useSettings } from "../contexts/settingsContext";
+import { useTourAutoStart } from "../Hooks/useTourAutoStart";
+import { SETTINGS_STEPS } from "../tours/pageTours";
 
 export const Settings = () => {
   const settings = useSettings();
+
+  useTourAutoStart({
+    storageKey: "nxuo-tour-settings-v1",
+    steps: SETTINGS_STEPS,
+  });
 
   /** Accesses the global dark mode state passed down from the App shell router */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
@@ -119,24 +126,30 @@ export const Settings = () => {
         >
           <div className="flex flex-col gap-6 font-sans w-full">
             {/* SECTION A: Handles background data auto-saves, directories, and paths */}
-            <SectionA
-              darkMode={darkMode}
-              autoSaveDelay={autoSaveDelay}
-              setAutoSaveDelay={setAutoSaveDelay}
-              settings={settings}
-            />
-
-            {/* SECTION B: Manages default fonts, line-splays, and baseline reading scales */}
-            <SectionB darkMode={darkMode} settings={settings} />
+            <div data-tour="settings-theme">
+              <SectionA
+                darkMode={darkMode}
+                autoSaveDelay={autoSaveDelay}
+                setAutoSaveDelay={setAutoSaveDelay}
+                settings={settings}
+              />
+            </div>
 
             {/* SECTION C: Grid listing active hotkeys and triggers the input listener dialog */}
-            <SectionC
-              darkMode={darkMode}
-              settings={settings}
-              setKeys={setKeys}
-              setOpenKeyEditor={setOpenKeyEditor}
-              setTitleEditor={setTitleEditor}
-            />
+            <div data-tour="settings-shortcuts">
+              <SectionC
+                darkMode={darkMode}
+                settings={settings}
+                setKeys={setKeys}
+                setOpenKeyEditor={setOpenKeyEditor}
+                setTitleEditor={setTitleEditor}
+              />
+            </div>
+
+            {/* SECTION B: Manages default fonts, line-splays, and baseline reading scales */}
+            <div data-tour="settings-typography">
+              <SectionB darkMode={darkMode} settings={settings} />
+            </div>
 
             {/* SECTION D: Adjusts canvas padding setups and handles cache wipes */}
             <SectionD

@@ -25,15 +25,10 @@ import { useWorkspaceStore } from "../Store/store";
 import { RightSideDocument } from "../components/RightSideDocument";
 import { useSettings } from "../contexts/settingsContext";
 import { PageRail } from "./PageRail";
+import { useTourAutoStart } from "../Hooks/useTourAutoStart";
+import { NOTEBOOK_STEPS } from "../tours/pageTours";
 
 // ── Shortcut helpers ─────────────────────────────────────────────
-// Tokens in `zenModeShortcut` are dash-separated, e.g. "mod-shift-k".
-// Recognized modifier aliases (case-insensitive):
-//   mod / cmd / meta / win   → platform primary (⌘ on Mac, Ctrl elsewhere)
-//   ctrl / control           → Ctrl
-//   shift                    → Shift
-//   alt / option             → Alt
-// The first non-modifier token is treated as the primary key.
 const MODIFIER_TOKENS = new Set([
   "mod",
   "cmd",
@@ -52,7 +47,6 @@ interface ParsedShortcut {
   needsCtrl: boolean;
   needsShift: boolean;
   needsAlt: boolean;
-  /** True when the shortcut explicitly wants cmd/win/meta distinct from ctrl. */
   modIsMetaOnly: boolean;
 }
 
@@ -108,6 +102,14 @@ const NewDocumentContent = () => {
   );
   const initializeData = useWorkspaceStore((s) => s.initializeData);
 
+  // ── HOOK MOVED HERE (must be before any early return, and after
+  //    `activeNotebook` is in scope so `enabled` can reference it) ──
+  useTourAutoStart({
+    storageKey: "nxuo-tour-notebook-v1",
+    steps: NOTEBOOK_STEPS,
+    enabled: !!activeNotebook,
+  });
+
   // ==========================================
   // LIFECYCLE 1: NOTEBOOK LOADER CORE
   // ==========================================
@@ -139,10 +141,6 @@ const NewDocumentContent = () => {
   // ==========================================
   // LIFECYCLE 2: ENSURE A VALID PAGE IS SELECTED
   // ==========================================
-  /**
-   * If the URL has no `?page=` (or the id doesn't exist in the notebook),
-   * redirect to the first page. Keeps the URL and the store consistent.
-   */
   useEffect(() => {
     if (!activeNotebook) return;
 
@@ -160,22 +158,19 @@ const NewDocumentContent = () => {
     }
   }, [activeNotebook, targetPageId, navigate]);
 
+  // ==========================================
+  // LIFECYCLE 3: ZEN MODE SHORTCUT
+  // ==========================================
   useEffect(() => {
     const parsed = parseShortcut(settings.zenModeShortcut);
     if (!parsed) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't hijack keystrokes while the user is typing.
       if (isEditableTarget(e.target)) return;
 
       const modKey = e.ctrlKey || e.metaKey;
-
-      // If the shortcut names ctrl/shift/alt explicitly, require them; if it
-      // names none, require their absence. `mod` is checked on top.
       const modOk = parsed.needsMod ? modKey : true;
 
-      // If `cmd`/`win`/`meta` was named specifically, require meta and NOT
-      // ctrl; otherwise the `needsCtrl` flag governs.
       const ctrlOk = parsed.modIsMetaOnly
         ? e.metaKey && !e.ctrlKey
         : parsed.needsCtrl
@@ -214,17 +209,14 @@ const NewDocumentContent = () => {
   const currentPage: MockPage | undefined =
     pages.find((p) => p.id === targetPageId) ?? pages[0];
 
-  /** Navigate to a specific page within the current notebook. */
   const handleNavigation = (pageId: string) => {
     navigate(`/document/${activeNotebook.id}?page=${pageId}`);
   };
 
-  /** Appends a blank page to the notebook and navigates to it. */
   const handleAddPage = () => {
     const { addPageToNotebook } = useWorkspaceStore.getState();
     addPageToNotebook(activeNotebook.id, "Untitled Page");
 
-    // Re-read fresh state to grab the newly appended page.
     const refreshed = useWorkspaceStore.getState().activeNotebook;
     const newPage = refreshed?.pages.at(-1);
     if (newPage) handleNavigation(newPage.id);
@@ -239,22 +231,29 @@ const NewDocumentContent = () => {
       <Toolbar />
 
       <div className="h-full w-full flex flex-1 overflow-hidden">
-        <PageRail
-          pages={pages.map((p: MockPage) => ({
-            id: p.id,
-            title: String(p.title ?? ""),
-          }))}
-          activePageId={currentPage?.id ?? null}
-          onSelectPage={handleNavigation}
-          onAddPage={handleAddPage}
-          darkMode={darkMode}
-        />
+        {/* data-tour wrapper around the left page rail */}
+        <div data-tour="notebook-pagerail" className="h-full shrink-0 flex">
+          <PageRail
+            pages={pages.map((p: MockPage) => ({
+              id: p.id,
+              title: String(p.title ?? ""),
+            }))}
+            activePageId={currentPage?.id ?? null}
+            onSelectPage={handleNavigation}
+            onAddPage={handleAddPage}
+            darkMode={darkMode}
+          />
+        </div>
 
-        <RightSideDocument
-          darkMode={darkMode}
-          activeNotebook={activeNotebook}
-          currentPage={currentPage}
-        />
+        {/* data-tour wrapper around the canvas + right rail area.
+            RightSideDocument's internal flex-1 keeps its layout intact. */}
+        <div data-tour="notebook-canvas" className="flex-1 min-w-0 h-full flex">
+          <RightSideDocument
+            darkMode={darkMode}
+            activeNotebook={activeNotebook}
+            currentPage={currentPage}
+          />
+        </div>
       </div>
     </div>
   );
