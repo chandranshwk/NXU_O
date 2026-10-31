@@ -1,4 +1,9 @@
-import React from "react";
+/**
+ * @component ProblemInstructionTrack
+ * @description Isolates the static markdown/HTML prompt renderings, structured variable examples,
+ * and program limitations into an independent scrollable layout container.
+ */
+import React, { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useWorkspaceStore } from "../Store/store";
 import type { CodeFile } from "./CodeIDE.SAMPLE";
@@ -22,16 +27,27 @@ export const ProblemInstructionTrack: React.FC<
   const codeFiles = useWorkspaceStore((s) => s.codeFiles);
 
   //  Find the matching CodeFile based on the URL parameter
-  const data: CodeFile | undefined = codeFiles.find(
-    (c) => c.titleSlug === id || c.id.toString() === id,
-  );
+  const data: CodeFile | undefined = useMemo(() => {
+    if (!codeFiles || codeFiles.length === 0) return undefined;
 
-  // Fallback if the file isn't found (e.g., data is still loading)
+    if (id) {
+      // Try to find the specific problem from the URL
+      const found = codeFiles.find(
+        (c) => c.titleSlug === id || c.id.toString() === id,
+      );
+      if (found) return found;
+    }
+
+    // Fallback: If no ID in URL (like the /ide route) or ID not found, just show the first problem
+    return codeFiles[0];
+  }, [id, codeFiles]);
+
+  // Fallback if the file isn't found (e.g., data is still loading or store is empty)
   if (!data) {
     return (
       <div className="h-full flex items-center justify-center p-5 border rounded-xl border-zinc-800/80 bg-zinc-900/40">
         <span className="text-xs font-mono text-zinc-500 animate-pulse">
-          Loading problem data...
+          No problem data available...
         </span>
       </div>
     );

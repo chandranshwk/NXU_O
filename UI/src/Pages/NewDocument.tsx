@@ -247,7 +247,7 @@ const NewDocumentContent = () => {
 
         {/* data-tour wrapper around the canvas + right rail area.
             RightSideDocument's internal flex-1 keeps its layout intact. */}
-        <div data-tour="notebook-canvas" className="flex-1 min-w-0 h-full flex">
+        <div className="flex-1 min-w-0 h-full flex">
           <RightSideDocument
             darkMode={darkMode}
             activeNotebook={activeNotebook}

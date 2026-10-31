@@ -48,8 +48,18 @@ const CodeIDEContent: React.FC = () => {
   const codeFiles = useWorkspaceStore((s) => s.codeFiles);
 
   const problem: CodeFile | undefined = useMemo(() => {
-    if (!id) return undefined;
-    return codeFiles.find((c) => c.titleSlug === id || c.id.toString() === id);
+    if (!codeFiles || codeFiles.length === 0) return undefined;
+
+    if (id) {
+      // Try to find the specific problem from the URL
+      const found = codeFiles.find(
+        (c) => c.titleSlug === id || c.id.toString() === id,
+      );
+      if (found) return found;
+    }
+
+    // Fallback: If no ID in URL (like the /ide route) or ID not found, just open the first problem
+    return codeFiles[0];
   }, [id, codeFiles]);
 
   useTourAutoStart({
@@ -207,12 +217,10 @@ const CodeIDEContent: React.FC = () => {
   if (!problem) {
     return (
       <div
-        className={`w-full h-[calc(100vh-2.25rem)] flex items-center justify-center ${
-          darkMode ? "bg-[#121214] text-zinc-500" : "bg-gray-50 text-gray-400"
-        }`}
+        className={`w-full h-[calc(100vh-2.25rem)] flex items-center justify-center ${darkMode ? "bg-[#121214] text-zinc-500" : "bg-gray-50 text-gray-400"}`}
       >
         <span className="font-mono text-sm animate-pulse">
-          Loading workspace module...
+          No code problems found. Go to the Home page to create one!
         </span>
       </div>
     );

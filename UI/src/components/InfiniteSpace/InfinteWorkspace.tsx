@@ -109,6 +109,7 @@ export const InfiniteWorkspace: React.FC<InfiniteWorkspaceProps> = ({
 
   return (
     <div
+      data-tour="notebook-canvas"
       className={`flex-1 min-w-0 relative h-full overflow-hidden px-4 py-2 pr-1 flex flex-col select-none ${
         darkMode ? "bg-zinc-950" : "bg-zinc-50"
       }`}

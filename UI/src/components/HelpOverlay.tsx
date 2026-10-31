@@ -67,7 +67,7 @@ export const HelpOverlay: React.FC<HelpOverlayProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 8 }}

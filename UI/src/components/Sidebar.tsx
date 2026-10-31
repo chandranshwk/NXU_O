@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode }) => {
             MIDDLE NAVIGATION RAILS BODY: LINK LISTINGS
             ========================================== */}
         <div
-          className={`flex-1 overflow-y-auto rounded-lg overflow-x-hidden justify-between flex flex-col p-3 pt-2 custom-scrollbar ${darkMode ? "bg-[#141414] text-white border-[#242425ab]" : "bg-white border-slate-100"}`}
+          className={`flex-1 overflow-y-auto rounded-lg overflow-x-hidden justify-between flex flex-col p-3 pt-2 custom-scrollbar ${darkMode ? "bg-transparent text-white border-[#242425ab]" : "bg-transparent border-slate-100"}`}
         >
           <div>
             <div className="flex flex-col gap-2 mt-2">
