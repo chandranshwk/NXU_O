@@ -14,13 +14,60 @@ fn get_languages_path() -> Result<PathBuf, String> {
 
 /**
  * @function seed_default_languages_on_boot
- * @description Programmatically writes default Java and Python configurations to disk on first boot.
- *  FIXED: Shifted to double-hashed raw literal syntax r##"..."## to prevent quotes inside regex from breaking compilation.
+ * @description Programmatically writes default language configurations and syntax themes to disk on first boot.
  */
 pub fn seed_default_languages_on_boot() -> Result<(), String> {
     let lang_dir = get_languages_path()?;
+    let store_dir = get_store_path()?;
 
-    // ☕ Java Predefined Template Seeder
+    // ==========================================
+    // 1. SEED EXECUTION ENGINE CONFIG (languages.json)
+    // ==========================================
+    let exec_config_path = store_dir.join("languages.json");
+    if !exec_config_path.exists() {
+        let exec_raw = r##"{
+  "python": {
+    "name": "Python",
+    "slug": "python",
+    "extension": "py",
+    "commentPrefix": "#",
+    "runCmd": ["python", "{file}"]
+  },
+  "javascript": {
+    "name": "JavaScript",
+    "slug": "javascript",
+    "extension": "js",
+    "commentPrefix": "//",
+    "runCmd": ["node", "{file}"]
+  },
+  "cpp": {
+    "name": "C++",
+    "slug": "cpp",
+    "extension": "cpp",
+    "commentPrefix": "//",
+    "compileCmd": ["g++", "{file}", "-o", "{exePath}"],
+    "runCmd": ["{exePath}"]
+  },
+  "java": {
+    "name": "Java",
+    "slug": "java",
+    "extension": "java",
+    "commentPrefix": "//",
+    "compileCmd": ["javac", "{file}"],
+    "runCmd": ["java", "-cp", "{dir}", "Solution"]
+  }
+}"##;
+
+        let parsed_exec: Value = serde_json::from_str(exec_raw).map_err(|e| e.to_string())?;
+        let pretty_exec = serde_json::to_string_pretty(&parsed_exec).map_err(|e| e.to_string())?;
+        fs::write(exec_config_path, pretty_exec).map_err(|e| e.to_string())?;
+    }
+
+    // ==========================================
+    // 2. SEED SYNTAX HIGHLIGHTING THEMES
+    // ==========================================
+    
+    // Java Predefined Template Seeder
     let java_path = lang_dir.join("java-theme.json");
     if !java_path.exists() {
         let java_raw = r##"{
@@ -40,7 +87,7 @@ pub fn seed_default_languages_on_boot() -> Result<(), String> {
         fs::write(java_path, pretty_java).map_err(|e| e.to_string())?;
     }
 
-    // 🐍 Python Predefined Template Seeder
+    // Python Predefined Template Seeder
     let python_path = lang_dir.join("python-theme.json");
     if !python_path.exists() {
         let python_raw = r##"{

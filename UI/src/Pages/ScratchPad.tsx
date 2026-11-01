@@ -11,6 +11,11 @@
  * - Combines `<Pages />` (tab switcher) and `<SimpleToolBar />` into a single top menu bar.
  */
 
+/**
+ * @file ScratchPad.tsx
+ * @component ScratchPad
+ */
+
 import { useOutletContext } from "react-router-dom";
 import SimpleToolBar from "../components/SimpleToolBar";
 import EditorDoc from "../components/EditorDoc";
@@ -20,19 +25,9 @@ import { ScratchProvider, useScratchContext } from "../contexts/scratchContext";
 import { SCRATCHPAD_STEPS } from "../tours/pageTours";
 import { useTourAutoStart } from "../Hooks/useTourAutoStart";
 
-/**
- * @component ScratchPadContent
- * @description Renders the structured workspace layout, coordinating open tab views,
- * editing toolbar inputs, and the active text editor document canvas.
- */
 const ScratchPadContent = () => {
-  /** Accesses dark mode state provided globally by the main layout shell */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
-
-  /** Connects to the text editor engine commands and selection states */
   const context = useEditorContext();
-
-  /** Tracks active workspace data, open drafts, and tab slots */
   const settings = useScratchContext();
 
   useTourAutoStart({
@@ -42,19 +37,24 @@ const ScratchPadContent = () => {
   });
 
   return (
-    /* MAIN WRAPPER CONTAINER: min-w-0 lets the entire panel shrink sideways when the sidebar expands */
     <div
-      className={`h-full flex-1 min-w-0 flex flex-col justify-start overflow-hidden ${!darkMode ? "bg-white" : "bg-[#141414]"}`}
+      className={`h-full flex-1 min-w-0 flex flex-col overflow-hidden ${
+        !darkMode ? "bg-[#f4f4f5]" : "bg-[#141414]"
+      }`}
     >
       {/* ==========================================
-          HEADER MENU ROW (TABS & TOOLBAR)
+          SOLID STICKY HEADER (TABS & TOOLBAR)
           ========================================== */}
       <div
         data-tour="scratchpad-tabbar"
-        className="w-full h-11 pb-5 mt-4 shrink-0 flex px-4 items-center justify-between bg-transparent relative z-40 border-b border-zinc-800/40"
+        className={`w-full shrink-0 flex px-4 items-center justify-between relative z-40 border-b ${
+          darkMode
+            ? "bg-[#181818] border-zinc-800/80"
+            : "bg-white border-zinc-200"
+        }`}
       >
-        {/* LEFT BLOCK: Handles horizontal tab truncation dynamically */}
-        <div className="flex-1 min-w-0 pr-4 h-full flex items-center">
+        {/* LEFT BLOCK: Tabs */}
+        <div className="flex-1 min-w-0 h-12 flex items-center">
           <Pages
             darkMode={darkMode}
             allPads={settings.allPads}
@@ -64,10 +64,10 @@ const ScratchPadContent = () => {
           />
         </div>
 
-        {/* RIGHT BLOCK: Locks formatting tools securely on the right edge */}
+        {/* RIGHT BLOCK: Toolbar */}
         <div
           data-tour="scratchpad-toolbar"
-          className="shrink-0 h-full flex items-center"
+          className="shrink-0 h-full flex items-center pl-4"
         >
           <SimpleToolBar
             darkMode={darkMode}
@@ -79,18 +79,35 @@ const ScratchPadContent = () => {
       </div>
 
       {/* ==========================================
-          PRIMARY ACTIVE TEXT EDITOR CANVAS
+          CENTERED PAPER CANVAS
           ========================================== */}
-      {/* WORKSPACE CANVAS: This is the ONLY element allowed to absorb the remaining screen height */}
       <div
         data-tour="scratchpad-editor"
-        className="flex-1 overflow-y-auto focus:outline-none pb-12 mt-4 w-full"
+        // 🔥 FIX: Focus the editor when clicking anywhere on the gray background
+        onClick={() => {
+          if (context.editor && !context.editor.isFocused) {
+            context.editor.commands.focus("end");
+          }
+        }}
+        className="flex-1 overflow-y-auto focus:outline-none w-full px-4 sm:px-8"
       >
-        {/* Checks if there is at least one active scratchpad tab open before loading the editor */}
         {settings.activeSlots.length > 0 ? (
-          <EditorDoc size="full" content={settings.info} />
+          <div className="w-full max-w-4xl mx-auto min-h-full flex justify-center">
+            {/* THE "PAPER" CONTAINER */}
+            <div
+              className={`w-full max-w-3xl border flex flex-col transition-all duration-200 ${
+                darkMode
+                  ? "bg-[#1a1a1a] border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
+                  : "bg-white border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+              }`}
+            >
+              {/* Internal padding creates the "margin" of the paper */}
+              <div className="flex-1 px-12 py-12">
+                <EditorDoc size="full" content={settings.info} />
+              </div>
+            </div>
+          </div>
         ) : (
-          /* FALLBACK WORKSPACE STATE: Prompt shown when all temporary tabs are completely closed */
           <div className="flex flex-col items-center justify-center w-full h-full text-zinc-500 italic text-sm">
             No active scratchpads opened. Use the menu dropdown to create or
             load a file.
@@ -101,11 +118,6 @@ const ScratchPadContent = () => {
   );
 };
 
-/**
- * @component ScratchPad
- * @description Context wrapper initialization layer. Protects the inner content
- * lifecycle by injecting independent state providers before component rendering occurs.
- */
 const ScratchPad = () => {
   return (
     <EditorProvider>

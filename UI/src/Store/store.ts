@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { invoke } from "@tauri-apps/api/core";
 
 import type { WorkspaceState } from "./types";
 import {
@@ -22,10 +23,6 @@ import {
 } from "../assets/SAMPLE";
 import { type CodeFile } from "../Pages/CodeIDE.SAMPLE";
 
-// Static import — MUST be sync so `initializeData()` populates the store
-// before `root.render()` in `main.tsx`. A dynamic `import().then(...)` inside
-// the store action returns synchronously with an empty state and races the
-// first render, which is exactly what makes the WelcomeModal render empty.
 import {
   welcomeNotebook,
   shortcutsNotebook,
@@ -38,11 +35,24 @@ const DEFAULT_PRINT_WIDTH = 794;
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set, get) => {
-      const commit = (result: TreeUpdateResult) =>
+      const commit = (result: TreeUpdateResult) => {
+        const updatedNotebook = result.activeNotebook;
+        let newIsDirty = get().isDirty;
+
+        if (
+          updatedNotebook &&
+          get().activeNotebook?.id === updatedNotebook.id
+        ) {
+          const currentJson = JSON.stringify(updatedNotebook);
+          newIsDirty = currentJson !== get().lastSavedNotebookJson;
+        }
+
         set({
           notebooks: result.notebooks,
-          activeNotebook: result.activeNotebook ?? get().activeNotebook,
+          activeNotebook: updatedNotebook ?? get().activeNotebook,
+          isDirty: newIsDirty,
         });
+      };
 
       const findPage = (notebookId: string, pageId: string) =>
         get()
@@ -54,37 +64,220 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         folders: [],
         codeFiles: [],
         activeNotebook: null,
+        isDirty: false,
+        isCodeDirty: false,
+        lastSavedNotebookJson: null,
 
-        initializeData: () => {
-          // Guard: if the store already has content (returning user, or the
-          // effect fired twice under StrictMode), do nothing.
+        initializeData: async () => {
           if (get().notebooks.length > 0) return;
 
-          // Normalize page.notebookId pointers. `demoContent.ts` authors ids
-          // by hand, so this small safety net keeps navigation working even
-          // if the constants drift.
-          const notebooks = [welcomeNotebook, shortcutsNotebook].map((nb) => ({
-            ...nb,
-            pages: nb.pages.map((p) => ({ ...p, notebookId: nb.id })),
-          }));
+          let loadedNotebooks: MockNotebook[] = [];
+          let loadedCodes: CodeFile[] = [];
 
-          // Single `set` — populates all three collections atomically so
-          // any subscriber (WelcomeModal, Home, sidebar) sees a coherent
-          // workspace on its very first render.
-          set({
-            notebooks,
-            folders: [playgroundFolder],
-            codeFiles: [gettingStartedCode],
-          });
+          try {
+            const loadedStrings = await invoke<string[]>("load_all_notebooks");
+            loadedNotebooks = loadedStrings.map(
+              (str) => JSON.parse(str) as MockNotebook,
+            );
+          } catch (err) {
+            console.warn("Could not load notebooks from disk:", err);
+          }
+
+          try {
+            const loadedCodesStrings = await invoke<string[]>(
+              "load_all_code_files",
+            );
+            loadedCodes = loadedCodesStrings.map(
+              (str) => JSON.parse(str) as CodeFile,
+            );
+          } catch (err) {
+            console.warn("Could not load code files from disk:", err);
+          }
+
+          if (loadedNotebooks.length > 0 || loadedCodes.length > 0) {
+            set({
+              notebooks:
+                loadedNotebooks.length > 0
+                  ? loadedNotebooks
+                  : [welcomeNotebook, shortcutsNotebook],
+              codeFiles:
+                loadedCodes.length > 0 ? loadedCodes : [gettingStartedCode],
+              folders: [playgroundFolder],
+            });
+          } else {
+            const notebooks = [welcomeNotebook, shortcutsNotebook].map(
+              (nb) => ({
+                ...nb,
+                pages: nb.pages.map((p) => ({ ...p, notebookId: nb.id })),
+              }),
+            );
+
+            set({
+              notebooks,
+              folders: [playgroundFolder],
+              codeFiles: [gettingStartedCode],
+              isDirty: false,
+              lastSavedNotebookJson: null,
+            });
+
+            for (const nb of notebooks) {
+              try {
+                await invoke("save_notebook", {
+                  notebookId: nb.id,
+                  contents: JSON.stringify(nb, null, 2),
+                });
+              } catch (e) {
+                console.error("Failed to seed demo notebook to disk", e);
+              }
+            }
+
+            try {
+              await invoke("save_code_file", {
+                codeId: gettingStartedCode.id.toString(),
+                contents: JSON.stringify(gettingStartedCode, null, 2),
+              });
+            } catch (e) {
+              console.error("Failed to seed demo code file to disk", e);
+            }
+          }
         },
 
         setActiveNotebookById: (id) => {
+          const notebook = get().notebooks.find((n) => n.id === id) ?? null;
+
           set({
-            activeNotebook: get().notebooks.find((n) => n.id === id) ?? null,
+            activeNotebook: notebook,
+            isDirty: false,
+            lastSavedNotebookJson: notebook ? JSON.stringify(notebook) : null,
           });
         },
 
-        // ── Top-level creation mutations ───────────────────────────
+        saveNotebookToDisk: async (notebookId: string) => {
+          const notebook = get().notebooks.find((n) => n.id === notebookId);
+          if (!notebook) return;
+
+          try {
+            await invoke("save_notebook", {
+              notebookId: notebook.id,
+              contents: JSON.stringify(notebook, null, 2),
+            });
+            console.log(`[Disk] Saved notebook: ${notebook.title}`);
+
+            if (get().activeNotebook?.id === notebookId) {
+              set({
+                isDirty: false,
+                lastSavedNotebookJson: JSON.stringify(notebook),
+              });
+            }
+          } catch (error) {
+            console.error(
+              `[Disk] Failed to save notebook ${notebookId}:`,
+              error,
+            );
+          }
+        },
+
+        // ── Code File Mutations ────────────────────────────────────
+        saveCodeFileToDisk: async (codeId: string) => {
+          const codeFile = get().codeFiles.find(
+            (c) => c.id.toString() === codeId,
+          );
+          if (!codeFile) return;
+
+          try {
+            // 1. Save internal JSON metadata
+            await invoke("save_code_file", {
+              codeId: codeFile.id.toString(),
+              contents: JSON.stringify(codeFile, null, 2),
+            });
+
+            // 2. Find out which language is currently active in the IDE
+            const activeLangName =
+              localStorage.getItem("ide_selected_language") || "Python";
+            const activeTemplate = codeFile.codeTemplates?.find(
+              (t) => t.language === activeLangName,
+            );
+
+            // 3. Only export the file for the active language
+            if (activeTemplate) {
+              const safeTitle = codeFile.title
+                .replace(/[\\/:*?"<>|]/g, "-")
+                .trim();
+
+              const extMap: Record<string, string> = {
+                python: "py",
+                javascript: "js",
+                java: "java",
+                cpp: "cpp",
+              };
+              const ext = extMap[activeTemplate.slug] || "txt";
+
+              const extractCode = (html: string) => {
+                let text = html
+                  .replace(/<br\s*\/?>/gi, "\n")
+                  .replace(/<\/p>/gi, "\n")
+                  .replace(/<\/div>/gi, "\n")
+                  .replace(/<\/li>/gi, "\n")
+                  .replace(/<\/h[1-6]>/gi, "\n")
+                  .replace(/<\/blockquote>/gi, "\n");
+
+                text = text.replace(/<[^>]+>/g, "");
+
+                const textarea = document.createElement("textarea");
+                textarea.innerHTML = text;
+                text = textarea.value;
+
+                return text.replace(/\n{3,}/g, "\n\n").trim();
+              };
+
+              const rawCode = extractCode(activeTemplate.starterCode);
+
+              await invoke("export_raw_code", {
+                filename: `${safeTitle}.${ext}`,
+                contents: rawCode,
+              });
+            }
+
+            console.log(
+              `[Disk] Saved and exported code file: ${codeFile.title} (${activeLangName})`,
+            );
+            set({ isCodeDirty: false });
+          } catch (error) {
+            console.error(`[Disk] Failed to save code file ${codeId}:`, error);
+          }
+        },
+
+        updateCodeFileCode: (codeId, language, code) => {
+          set((state) => ({
+            codeFiles: state.codeFiles.map((c) => {
+              if (c.id.toString() !== codeId.toString()) return c;
+
+              return {
+                ...c,
+                codeTemplates: c.codeTemplates?.map((t) =>
+                  t.language === language ? { ...t, starterCode: code } : t,
+                ),
+              };
+            }),
+            isCodeDirty: true,
+          }));
+        },
+
+        updateCodeFileMetadata: (codeId, metadata) => {
+          set((state) => ({
+            codeFiles: state.codeFiles.map((c) => {
+              if (c.id.toString() !== codeId.toString()) return c;
+              return {
+                ...c,
+                ...metadata,
+              };
+            }),
+            isCodeDirty: true,
+          }));
+        },
+
+        clearCodeDirty: () => set({ isCodeDirty: false }),
+
         addNotebook: (title = "Untitled Notebook") => {
           const notebookId = crypto.randomUUID();
           const pageId = crypto.randomUUID();
@@ -110,7 +303,21 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           };
 
           set((state) => ({ notebooks: [newNotebook, ...state.notebooks] }));
+          setTimeout(() => get().saveNotebookToDisk(notebookId), 0);
+
           return notebookId;
+        },
+
+        deleteNotebook: (id) => {
+          set((state) => ({
+            notebooks: state.notebooks.filter((n) => n.id !== id),
+            activeNotebook:
+              state.activeNotebook?.id === id ? null : state.activeNotebook,
+          }));
+
+          invoke("delete_notebook", { notebookId: id }).catch((err) =>
+            console.error("Failed to delete notebook from disk", err),
+          );
         },
 
         addFolder: (title = "Untitled Folder") => {
@@ -120,7 +327,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const newFolder: Folder = {
             id: folderId,
             title,
-            color: "#3b82f6", // Default blue
+            color: "#3b82f6",
             description: "A new workspace folder.",
             createdDate,
             lastUpdatedDate: createdDate,
@@ -129,6 +336,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
           set((state) => ({ folders: [newFolder, ...state.folders] }));
           return folderId;
+        },
+
+        deleteFolder: (id) => {
+          set((state) => ({
+            folders: state.folders.filter((f) => f.id !== id),
+          }));
         },
 
         addCodeFile: (title = "Untitled Problem") => {
@@ -173,10 +386,41 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           };
 
           set((state) => ({ codeFiles: [newFile, ...state.codeFiles] }));
+          setTimeout(() => get().saveCodeFileToDisk(newFile.id.toString()), 0);
+
           return newFile.titleSlug;
         },
 
-        // ── Page mutations ─────────────────────────────────────────
+        deleteCodeFile: (id) => {
+          const fileToDelete = get().codeFiles.find(
+            (c) => c.id.toString() === id.toString(),
+          );
+
+          set((state) => ({
+            codeFiles: state.codeFiles.filter(
+              (c) => c.id.toString() !== id.toString(),
+            ),
+          }));
+
+          invoke("delete_code_file", { codeId: id.toString() }).catch((err) =>
+            console.error("Failed to delete internal code file", err),
+          );
+
+          if (fileToDelete) {
+            const safeTitle = fileToDelete.title
+              .replace(/[\\/:*?"<>|]/g, "-")
+              .trim();
+            const exts = ["py", "js", "java", "cpp", "txt"];
+            exts.forEach((ext) => {
+              invoke("delete_raw_code", {
+                filename: `${safeTitle}.${ext}`,
+              }).catch(() => {
+                // Ignore errors for missing extensions
+              });
+            });
+          }
+        },
+
         renamePage: (notebookId, pageId, newTitle) => {
           commit(
             mapPage(get().notebooks, notebookId, pageId, (p) => ({
@@ -208,7 +452,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
-        // ── Node mutations ─────────────────────────────────────────
+        updateNodeContent: (notebookId, pageId, nodeId, newContent) => {
+          commit(
+            mapNode(get().notebooks, notebookId, pageId, nodeId, (n) => ({
+              ...n,
+              content: newContent,
+            })),
+          );
+        },
+
         updateNodePosition: (notebookId, pageId, nodeId, newX, newY) => {
           commit(
             mapNode(get().notebooks, notebookId, pageId, nodeId, (n) => ({
@@ -240,14 +492,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         addNodeToPage: (notebookId, pageId, nodeType) => {
           const targetPage = findPage(notebookId, pageId);
-
-          if (!targetPage) {
-            console.warn("[addNodeToPage] stale id chain", {
-              notebookId,
-              pageId,
-            });
-            return;
-          }
+          if (!targetPage) return;
 
           const node = createNode(nodeType, targetPage.nodes.length);
 
@@ -261,14 +506,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         deleteNodeFromPage: (notebookId, pageId, nodeId) => {
           const targetPage = findPage(notebookId, pageId);
-
-          if (!targetPage) {
-            console.warn("[deleteNodeFromPage] stale id chain", {
-              notebookId,
-              pageId,
-            });
-            return;
-          }
+          if (!targetPage) return;
 
           commit(
             mapPage(get().notebooks, notebookId, pageId, (p) => ({
@@ -278,7 +516,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
-        // ── Print zone ─────────────────────────────────────────────
         updatePrintZone: (notebookId, pageId, x, width) => {
           commit(
             mapPrintZone(get().notebooks, notebookId, pageId, (zone) => ({
@@ -289,7 +526,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
-        // ── Task mutations ─────────────────────────────────────────
         addTask: (notebookId, title) => {
           const trimmed = title.trim();
           if (!trimmed) return;
@@ -348,7 +584,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
-        // ── Subtask mutations ──────────────────────────────────────
         addSubtask: (notebookId, taskId, text) => {
           const trimmed = text.trim();
           if (!trimmed) return;
@@ -409,7 +644,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
         },
 
-        // ── Folder mutations ──────────────────────────────────────
         addItemToFolder: (folderId, item) => {
           set((state) => ({
             folders: state.folders.map((f) => {
@@ -508,7 +742,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       };
     },
     {
-      name: "caldera-workspace-storage-v8", //  Bumped to clear out old broken data
+      name: "caldera-workspace-storage-v8",
+      partialize: (state) => ({
+        folders: state.folders,
+      }),
     },
   ),
 );

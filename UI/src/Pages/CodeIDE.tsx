@@ -2,22 +2,16 @@
  * @file CodeIDE.tsx
  * @component CodeIDE
  * @description The primary application gateway module for the local practice simulator code editor workspace.
- * It manages context routing states, synchronizes active text editor frames via TipTap hooks, and handles
- * layout state distributions inside the problem prompt track and coding workspace panels.
- *
- * @architecture
- * - Utilizes an isolated local context matrix layer wrapping `SettingsProvider`, `EditorProvider`, and `ScratchProvider`.
- * - Employs absolute layout structural sizing algorithms to freeze window height shifts inside native desktop app viewports.
- * - Adheres strictly to a minimalist 2D user interface convention utilizing clean semantic elements without unnecessary graphic icons.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { invoke } from "@tauri-apps/api/core";
 import { getCodeWorkspaceExtensions } from "../assets/TipTapEditor";
 import { SettingsProvider, useSettings } from "../contexts/settingsContext";
 import { EditorProvider } from "../contexts/editorContext";
-import { useScratchContext, ScratchProvider } from "../contexts/scratchContext";
+import { ScratchProvider } from "../contexts/scratchContext";
 import type { CodeFile } from "./CodeIDE.SAMPLE";
 import { ProblemInstructionTrack } from "./ProblemInstructionTrack";
 import { CodeWorkspaceHeader } from "./CodeWorkspaceHeader";
@@ -25,40 +19,66 @@ import { LineNumberExtension } from "../Extensions/LineNumberExtension";
 import { CodeHighlightExtension } from "../Extensions/CodeHighlightExtension";
 import { CodeTabExtension } from "../Extensions/CodeTabExtension";
 import { useWorkspaceStore } from "../Store/store";
-import { AVAILABLE_LANGUAGES } from "../components/LanguageConfig";
 import { useTourAutoStart } from "../Hooks/useTourAutoStart";
 import { CODEIDE_STEPS } from "../tours/pageTours";
+import { FiTerminal, FiX } from "react-icons/fi";
 
-/**
- * @component CodeIDEContent
- * @description Internal layout management controller wrapping localized state contexts and layout listeners.
- */
+// Fallback just in case the JSON file fails to load
+const FALLBACK_LANGS = [
+  { name: "Python", slug: "python", extension: "py", commentPrefix: "#" },
+];
+
 const CodeIDEContent: React.FC = () => {
-  /** Capture dark mode state parameters propagated via standard multi-tier outlet router contexts */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
-
-  /** Retrieve global settings properties and text track state modifiers */
   const settings = useSettings();
-  const scratch = useScratchContext();
-
-  /**
-   * Extract the problem ID/slug from the URL and locate it in the global store
-   */
   const { id } = useParams<{ id: string }>();
+
   const codeFiles = useWorkspaceStore((s) => s.codeFiles);
+  const updateCodeFileCode = useWorkspaceStore((s) => s.updateCodeFileCode);
+  const saveCodeFileToDisk = useWorkspaceStore((s) => s.saveCodeFileToDisk);
+
+  // Dynamic Languages State
+  const [availableLanguages, setAvailableLanguages] = useState<any[]>([]);
+  const [selectedLang, setSelectedLang] = useState<string>("Python");
+
+  // Execution State
+  const [isRunning, setIsRunning] = useState(false);
+  const [terminalOutput, setTerminalOutput] = useState<{
+    stdout: string;
+    stderr: string;
+    success: boolean;
+  } | null>(null);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+
+  // Load Languages from Rust dynamically
+  useEffect(() => {
+    invoke<Record<string, any>>("get_available_languages")
+      .then((langMap) => {
+        const langArray = Object.values(langMap);
+        setAvailableLanguages(langArray);
+
+        const savedLang = localStorage.getItem("ide_selected_language");
+        const isValid = langArray.some((l) => l.name === savedLang);
+        if (isValid && savedLang) {
+          setSelectedLang(savedLang);
+        } else if (langArray.length > 0) {
+          setSelectedLang(langArray[0].name);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load languages, using fallback", err);
+        setAvailableLanguages(FALLBACK_LANGS);
+      });
+  }, []);
 
   const problem: CodeFile | undefined = useMemo(() => {
     if (!codeFiles || codeFiles.length === 0) return undefined;
-
     if (id) {
-      // Try to find the specific problem from the URL
       const found = codeFiles.find(
         (c) => c.titleSlug === id || c.id.toString() === id,
       );
       if (found) return found;
     }
-
-    // Fallback: If no ID in URL (like the /ide route) or ID not found, just open the first problem
     return codeFiles[0];
   }, [id, codeFiles]);
 
@@ -68,39 +88,22 @@ const CodeIDEContent: React.FC = () => {
     enabled: !!problem,
   });
 
-  /** Guard reference to block cyclic updates and race conditions during explicit buffer transaction executions */
   const isTransitioningRef = useRef<boolean>(false);
-
-  /** Track selected execution target language, persisting to local storage */
-  const [selectedLang, setSelectedLang] = useState<string>(() => {
-    try {
-      const savedLang = localStorage.getItem("ide_selected_language");
-      // Verify the saved language is valid in our new config
-      const isValid = AVAILABLE_LANGUAGES.some((l) => l.name === savedLang);
-      return isValid && savedLang ? savedLang : "Python";
-    } catch {
-      return "Python";
-    }
-  });
+  const lastLoadedRef = useRef<string | null>(null);
 
   useEffect(() => {
     try {
       localStorage.setItem("ide_selected_language", selectedLang);
-    } catch (e) {
-      console.error("Failed to persist active language parameter:", e);
-    }
+    } catch (e) {}
   }, [selectedLang]);
 
-  /** Ensure editor text color adapts to the theme */
   const currentThemeColor = darkMode ? "#e4e4e7" : "#18181b";
-
   useEffect(() => {
     if (settings.defaultColor !== currentThemeColor) {
       settings.setDefaultColor(currentThemeColor);
     }
   }, [currentThemeColor, settings]);
 
-  /** Core Editor Initialization */
   const codeExtensions = getCodeWorkspaceExtensions();
   const editor = useEditor({
     editorProps: {
@@ -118,102 +121,113 @@ const CodeIDEContent: React.FC = () => {
       CodeHighlightExtension,
       CodeTabExtension,
     ],
-    content: "", // Start empty, populated by the useEffect below
+    content: "",
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
       const currentHTML = currentEditor.getHTML();
-      if (scratch.info !== currentHTML) {
-        scratch.setInfo(currentHTML);
+      if (problem) {
+        updateCodeFileCode(problem.id.toString(), selectedLang, currentHTML);
       }
     },
   });
 
-  // ==========================================
-  // STATE SYNCHRONIZER: CONTENT & HIGHLIGHTING
-  // ==========================================
   useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
+    if (
+      !editor ||
+      editor.isDestroyed ||
+      !problem ||
+      availableLanguages.length === 0
+    )
+      return;
 
+    const currentKey = `${problem.id}-${selectedLang}`;
+    if (lastLoadedRef.current === currentKey) return;
+
+    lastLoadedRef.current = currentKey;
     isTransitioningRef.current = true;
 
-    // 1. Try to find a starter template for the selected language
     const template = problem?.codeTemplates?.find(
       (t) => t.language === selectedLang,
     );
 
     let targetContent = template?.starterCode;
 
-    // 2. Fallback template if the problem doesn't have this language
     if (!targetContent) {
-      const langConfig = AVAILABLE_LANGUAGES.find(
+      const langConfig = availableLanguages.find(
         (l) => l.name === selectedLang,
       );
       const prefix = langConfig?.commentPrefix || "//";
       targetContent = `${prefix} Write your ${selectedLang} solution here\n`;
     }
 
-    // 3. Prevent cursor jumps if content is identical
-    if (editor.getText() !== targetContent) {
-      editor.commands.setContent(targetContent);
-    }
+    editor.commands.setContent(targetContent, { emitUpdate: false });
 
-    isTransitioningRef.current = false;
-
-    // 4. Trigger Syntax Highlighting UI update
-    const langConfig = AVAILABLE_LANGUAGES.find((l) => l.name === selectedLang);
+    const langConfig = availableLanguages.find((l) => l.name === selectedLang);
     const langSlug = langConfig?.slug || "javascript";
-
     const { state, view } = editor;
     const transaction = state.tr.setMeta("setLanguage", langSlug);
     view.dispatch(transaction);
-  }, [problem, selectedLang, editor]);
+
+    setTimeout(() => {
+      isTransitioningRef.current = false;
+    }, 50);
+  }, [problem?.id, selectedLang, editor, availableLanguages]);
 
   // ==========================================
-  // ACTIONS
+  // MANUAL SAVE ONLY (CTRL+S)
   // ==========================================
-  const handleLanguageChange = (lang: string) => {
-    setSelectedLang(lang);
-  };
+  useEffect(() => {
+    const handleSave = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (problem) {
+          saveCodeFileToDisk(problem.id.toString());
+        }
+      }
+    };
 
-  const handleSaveLocalWorkspace = () => {
-    if (!editor) return;
-    console.log(
-      "Committing buffer sequence safely down to system file logs:",
-      editor.getHTML(),
-    );
-  };
+    window.addEventListener("keydown", handleSave);
+
+    return () => {
+      window.removeEventListener("keydown", handleSave);
+    };
+  }, [problem, saveCodeFileToDisk]);
 
   const handleRunCode = async () => {
-    if (!editor) return;
+    if (!editor || !problem) return;
 
     const code = editor.getText();
-    const langConfig = AVAILABLE_LANGUAGES.find((l) => l.name === selectedLang);
+    const langConfig = availableLanguages.find((l) => l.name === selectedLang);
 
     if (!langConfig) return;
 
-    console.log(`Executing ${langConfig.name}...`);
-    console.log(`Code:\n${code}`);
+    setIsRunning(true);
+    setIsTerminalOpen(true);
+    setTerminalOutput(null);
 
-    //  TAURI INTEGRATION POINT
-    // Uncomment and adjust when your Rust backend is ready:
-    /*
     try {
-      import { invoke } from "@tauri-apps/api/core";
-      const output = await invoke("execute_code", { 
-        language: langConfig.slug, 
-        code: code 
+      const result = await invoke<{
+        stdout: string;
+        stderr: string;
+        success: boolean;
+      }>("execute_code", {
+        languageSlug: langConfig.slug, // <-- Matches Rust `language_slug`
+        code: code,
+        fileId: problem.id.toString(),
       });
-      console.log("Terminal Output:", output);
-      // You can pass `output` to a terminal component here
-    } catch (err) {
-      console.error("Execution failed:", err);
+
+      setTerminalOutput(result);
+    } catch (err: any) {
+      setTerminalOutput({
+        stdout: "",
+        stderr: err.toString() || "Failed to execute code.",
+        success: false,
+      });
+    } finally {
+      setIsRunning(false);
     }
-    */
   };
 
-  // ==========================================
-  // RENDER GUARD
-  // ==========================================
   if (!problem) {
     return (
       <div
@@ -228,30 +242,30 @@ const CodeIDEContent: React.FC = () => {
 
   return (
     <div
-      className={`p-3 w-full h-[calc(100vh-2.25rem)] grid grid-cols-3 gap-3 transition-colors duration-200 overflow-hidden select-none ${
+      className={`p-1 pl-2 pr-3.5 w-full h-[calc(100vh-2.25rem)] grid grid-cols-3 gap-1 transition-colors duration-200 overflow-hidden select-none ${
         darkMode ? "bg-[#121214] text-zinc-100" : "bg-gray-50 text-zinc-800"
       }`}
     >
-      {/** Column 1: Left Problem Track Navigation Pane */}
       <div data-tour="ide-problem" className="col-span-1 h-full min-h-0">
         <ProblemInstructionTrack darkMode={darkMode} />
       </div>
 
-      {/** Column 2 & 3: Right Pure Coding Simulator Panel Matrix Layout */}
-      <div className="col-span-2 flex flex-col h-full overflow-hidden w-[calc(100%+0.5rem)]">
+      <div className="col-span-2 flex flex-col h-full overflow-hidden w-[calc(100%+0.5rem)] relative">
         <CodeWorkspaceHeader
           darkMode={darkMode}
-          languages={AVAILABLE_LANGUAGES}
+          languages={availableLanguages}
           selectedLanguage={selectedLang}
-          onLanguageChange={handleLanguageChange}
-          onSave={handleSaveLocalWorkspace}
+          onLanguageChange={(lang) => setSelectedLang(lang)}
+          onSave={() => saveCodeFileToDisk(problem.id.toString())}
           onRun={handleRunCode}
+          isRunning={isRunning}
         />
 
-        {/** Scrollable Text Canvas */}
         <div
           data-tour="ide-editor"
-          className={`flex-1 w-full min-h-0 overflow-y-auto rounded-b-xl border-x border-b transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
+          className={`flex-1 w-full min-h-0 overflow-y-auto border-x border-b transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
+            isTerminalOpen ? "rounded-none border-b-0" : "rounded-b-sm"
+          } ${
             darkMode
               ? "bg-[#151518] border-zinc-800/80"
               : "bg-zinc-50/50 border-zinc-200"
@@ -259,13 +273,11 @@ const CodeIDEContent: React.FC = () => {
         >
           <EditorContent
             editor={editor}
-            className={`w-full min-h-full flex flex-col font-mono text-xs transition-colors duration-200
-              [&_.tiptap]:flex-1 [&_.tiptap]:outline-none [&_.tiptap]:p-2
-              ${
-                darkMode
-                  ? "bg-[#151518] border-zinc-800/80 [&_.tiptap]:text-zinc-200"
-                  : "bg-zinc-50/50 border-zinc-200 [&_.tiptap]:text-zinc-800"
-              }`}
+            className={`w-full min-h-full flex flex-col font-mono text-xs transition-colors duration-200 [&_.tiptap]:flex-1 [&_.tiptap]:outline-none [&_.tiptap]:p-2 ${
+              darkMode
+                ? "bg-[#151518] [&_.tiptap]:text-zinc-200"
+                : "bg-zinc-50/50 [&_.tiptap]:text-zinc-800"
+            }`}
             style={
               {
                 "--editor-line-height": "10px",
@@ -277,15 +289,70 @@ const CodeIDEContent: React.FC = () => {
             }
           />
         </div>
+
+        {/* Terminal Panel */}
+        {isTerminalOpen && (
+          <div
+            className={`h-64 shrink-0 flex flex-col border-x border-b rounded-b-xl overflow-hidden font-mono text-xs ${
+              darkMode
+                ? "bg-[#0c0c0d] border-zinc-800/80 text-zinc-300"
+                : "bg-white border-zinc-200 text-zinc-700"
+            }`}
+          >
+            <div
+              className={`flex items-center justify-between px-3 py-1.5 border-b ${darkMode ? "border-zinc-800/80 bg-[#121214]" : "border-zinc-200 bg-zinc-100"}`}
+            >
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider opacity-60">
+                <FiTerminal /> Output
+              </div>
+              <button
+                onClick={() => setIsTerminalOpen(false)}
+                className="hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity"
+              >
+                <FiX size={14} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 whitespace-pre-wrap">
+              {isRunning ? (
+                <span className="text-amber-500 animate-pulse">
+                  Compiling and executing...
+                </span>
+              ) : terminalOutput ? (
+                <>
+                  {terminalOutput.stdout && (
+                    <div
+                      className={
+                        darkMode ? "text-emerald-400" : "text-emerald-600"
+                      }
+                    >
+                      {terminalOutput.stdout}
+                    </div>
+                  )}
+                  {terminalOutput.stderr && (
+                    <div className="text-rose-500 mt-2">
+                      {terminalOutput.stderr}
+                    </div>
+                  )}
+                  {!terminalOutput.stdout && !terminalOutput.stderr && (
+                    <span className="opacity-50 italic">
+                      Process finished with exit code 0 (no output)
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="opacity-50 italic">
+                  Press "Run" to execute your code.
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-/**
- * @component CodeIDE
- * @description Structural setup entry point mounting core baseline context providers safely above execution frames.
- */
 const CodeIDE = () => {
   return (
     <SettingsProvider>

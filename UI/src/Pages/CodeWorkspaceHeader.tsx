@@ -1,5 +1,5 @@
 import React from "react";
-import { FiCode, FiSave, FiPlay } from "react-icons/fi";
+import { FiCode, FiSave, FiPlay, FiLoader } from "react-icons/fi";
 import type { LanguageConfig } from "../components/LanguageConfig";
 
 export interface CodeWorkspaceHeaderProps {
@@ -8,7 +8,8 @@ export interface CodeWorkspaceHeaderProps {
   selectedLanguage: string;
   onLanguageChange: (lang: string) => void;
   onSave: () => void;
-  onRun: () => void; //  Added
+  onRun: () => void;
+  isRunning?: boolean;
 }
 
 export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
@@ -18,10 +19,11 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
   onLanguageChange,
   onSave,
   onRun,
+  isRunning = false,
 }) => {
   return (
     <div
-      className={`flex items-center justify-between px-4 h-11 border rounded-t-xl shrink-0 select-none ${
+      className={`flex items-center justify-between px-4 h-11 border rounded-t-sm shrink-0 select-none ${
         darkMode
           ? "bg-[#18181c] border-zinc-800/80"
           : "bg-white border-zinc-200"
@@ -59,6 +61,7 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
           type="button"
           data-tour="ide-run"
           onClick={onRun}
+          disabled={isRunning}
           title="Run Code"
           className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border transition-all active:scale-95 cursor-pointer ${
             darkMode
@@ -66,8 +69,12 @@ export const CodeWorkspaceHeader: React.FC<CodeWorkspaceHeaderProps> = ({
               : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
           }`}
         >
-          <FiPlay size={12} className="fill-current" />
-          Run
+          {isRunning ? (
+            <FiLoader size={12} className="animate-spin" />
+          ) : (
+            <FiPlay size={12} className="fill-current" />
+          )}
+          {isRunning ? "Running..." : "Run"}
         </button>
 
         {/* Save/Commit Action Trigger */}

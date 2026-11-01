@@ -12,7 +12,6 @@
 
 import React, { useEffect } from "react";
 
-import { NodeContentFactory } from "../../Extensions/NodeContentFactory";
 import type { MockNotebook, MockPage, MockPageNode } from "../../assets/SAMPLE";
 import { useSettings } from "../../contexts/settingsContext";
 import { useCanvas } from "../../contexts/Canvas/CanvasContext";
@@ -281,9 +280,7 @@ export const InfiniteWorkspace: React.FC<InfiniteWorkspaceProps> = ({
                 darkMode={darkMode}
                 isSelected={node.id === selectedNodeId}
                 onSelect={setSelectedNodeId}
-              >
-                <NodeContentFactory node={node} />
-              </CanvasNodeWrapper>
+              />
             ))}
         </div>
       </div>

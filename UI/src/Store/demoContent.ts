@@ -8,6 +8,7 @@
  * — see `initializeData` in `store.ts`.
  */
 
+import { faker } from "@faker-js/faker";
 import type {
   MockNotebook,
   Folder,
@@ -142,7 +143,7 @@ export const shortcutsNotebook: MockNotebook = {
 
 // ── Code problem: Hello, NXU_O ──────────────────────────────────────
 export const gettingStartedCode: CodeFile = {
-  id: 900001,
+  id: faker.number.int(),
   title: "Hello, NXU_O",
   titleSlug: "hello-nxuo",
   category: "Getting Started",
@@ -170,24 +171,22 @@ export const gettingStartedCode: CodeFile = {
     {
       language: "Python",
       slug: "python",
-      starterCode: 'print("Hello, NXU_O!")',
+      starterCode: "",
     },
     {
       language: "JavaScript",
       slug: "javascript",
-      starterCode: 'console.log("Hello, NXU_O!");',
+      starterCode: "",
     },
     {
       language: "Java",
       slug: "java",
-      starterCode:
-        'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, NXU_O!");\n    }\n}',
+      starterCode: "public class Solution {\n   \n}",
     },
     {
       language: "C++",
       slug: "cpp",
-      starterCode:
-        '#include <iostream>\nint main() {\n    std::cout << "Hello, NXU_O!" << std::endl;\n    return 0;\n}',
+      starterCode: "",
     },
   ],
 };

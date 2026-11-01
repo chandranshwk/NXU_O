@@ -23,66 +23,42 @@ import { useScratchContext } from "../contexts/scratchContext";
 import ContextMenu from "./ContextMenu";
 
 interface props {
-  /** Variant toggle mapping a fluid 100% viewport container vs a restricted, centered paper canvas */
   size: "full" | "short";
-  /** Initial raw HTML layout text string loaded from file state streams */
   content: string;
 }
 
 export const EditorDoc: React.FC<props> = ({ size, content }) => {
-  /** Accesses dark mode state provided globally by the main layout shell */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
-
-  /** Connects to global text formatting state hooks and selections indicators */
   const context = useEditorContext();
-
-  /** Fetches baseline IDE parameters, spacing dimensions, and custom hotkey maps */
   const settings = useSettings();
-
-  /** References scratchpad state variables, tracking draft content buffer adjustments */
   const scratch = useScratchContext();
 
-  // Enforce background color fallbacks based on sizing rules and visual modes
   settings.setDefaultColor(
     size === "full" ? (darkMode ? "#fff" : "#000") : "#000",
   );
 
-  /** Lock flag tracking asset transformations to prevent infinite loop draw updates */
   const isTransitioningRef = useRef<boolean>(false);
 
-  // ==========================================
-  // TIPTAP ENGINE TEXT COMPILER INITIALIZER
-  // ==========================================
   const editor = useEditor({
     editorProps: {
       attributes: {
+        // INCREASED font size, line-height, and removed weird margins
         className:
-          "prose dark:prose-invert max-w-full w-full break-words [word-break:break-word] outline-none min-h-[500px] px-4 py-2 [&_span[style*='CalibriLocal']]:leading-[0.4]",
+          "prose dark:prose-invert max-w-full w-full break-words [word-break:break-word] outline-none min-h-[60vh] text-lg leading-relaxed [&_span[style*='CalibriLocal']]:leading-[0.4]",
       },
     },
-
     extensions: getEditorExtensions({ settings }),
     content: content,
 
-    // Triggered whenever text inputs alter data structures inside fields
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
       const currentHTML = currentEditor.getHTML();
-      // Pipe fresh modifications directly back into the temporary tab data store
       if (scratch.info !== currentHTML) {
         scratch.setInfo(currentHTML);
       }
     },
 
-    // ==========================================
-    // TRANSACTION LOOP: ALIGN SELECTION TRAPS
-    // ==========================================
-    /**
-     * Triggers continuously on cursor changes. Scrapes marks, block styles, alignment matrices,
-     * and heading tags out of active selections and synchronizes them with parent toolbar indicators.
-     */
     onTransaction: ({ editor: currentEditor }) => {
-      // 1. Audit active character inline layout format modifications
       const isBold = currentEditor.isActive("bold");
       const isItalic = currentEditor.isActive("italic");
       const isUnderline = currentEditor.isActive("underline");
@@ -92,7 +68,6 @@ export const EditorDoc: React.FC<props> = ({ size, content }) => {
       const isBlockquote = currentEditor.isActive("blockquote");
       const isCodeBlock = currentEditor.isActive("codeBlock");
 
-      // Sync button indicators only if values genuinely deviate to avoid render thrashing
       if (context.isBold !== isBold) context.setIsBold(isBold);
       if (context.isItalic !== isItalic) context.setIsItalic(isItalic);
       if (context.isUnderline !== isUnderline)
@@ -111,7 +86,6 @@ export const EditorDoc: React.FC<props> = ({ size, content }) => {
       const targetHighlight = attrs.backgroundColor || "";
       const targetColor = attrs.color || settings.defaultColor;
 
-      // 2. Propagate text color states up towards main formatting channels
       if (context.highlightedColor !== targetHighlight) {
         context.setHighlightedColor(targetHighlight);
       }
@@ -119,7 +93,6 @@ export const EditorDoc: React.FC<props> = ({ size, content }) => {
         context.setTextColor(targetColor);
       }
 
-      // 3. Scan heading weight properties to map heading states (H1-H6)
       let activeHeading = 0;
       for (let i = 1; i <= 6; i++) {
         if (currentEditor.isActive("heading", { level: i })) {
@@ -138,10 +111,6 @@ export const EditorDoc: React.FC<props> = ({ size, content }) => {
     },
   });
 
-  // ==========================================
-  // LIFECYCLE 1: EXTERNAL DATA SYNC LOOP
-  // ==========================================
-  /** Forces content text updates down the engine if storage files change out parameters */
   useEffect(() => {
     if (!editor) return;
 
@@ -155,59 +124,36 @@ export const EditorDoc: React.FC<props> = ({ size, content }) => {
     }
   }, [content, editor]);
 
-  // ==========================================
-  // LIFECYCLE 2: INSTANCE HOOK INTERCEPTOR
-  // ==========================================
-  /** Binds the initialized engine wrapper directly into shared context focus channels */
   useEffect(() => {
     if (editor) {
       context.setEditor(editor);
     }
   }, [editor, context]);
 
-  /** Viewport tracking coordinates used to anchor table modification option menus */
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
   } | null>(null);
-  /** Dismisses open contextual overlay layout cards */
   const closeContextMenu = () => setContextMenu(null);
 
   return (
     <div
       onClick={closeContextMenu}
-      className={`flex flex-col overflow-hidden transition-all outline-none duration-200 relative ${
-        size === "full"
-          ? "w-full h-full"
-          : "w-2/3 h-[120vh] top-0 border border-zinc-200/50 relative left-[16.666667%]"
-      } ${
-        size === "short" ? "bg-white" : darkMode ? "bg-[#141414]" : "bg-white"
-      }`}
+      className={`w-full relative transition-all outline-none duration-200 `}
     >
-      {/* ==========================================
-          SCROLLING PANELS: TEXT EDITOR INTERFACE AREA
-          ========================================== */}
       <div
-        className="flex-1 h-[120vh] overflow-y-auto px-10 py-0 pt-0 focus:outline-none"
+        className="w-full focus:outline-none"
         onContextMenu={(e) => {
           if (!editor) return;
-
           const targetElement = e.target as HTMLElement;
-          const isClickedOnTable = targetElement.closest("table") !== null;
-
-          // Catch context triggers specifically when right-clicking cells inside tables
-          if (isClickedOnTable) {
+          if (targetElement.closest("table") !== null) {
             e.preventDefault();
-            setContextMenu({
-              x: e.clientX,
-              y: e.clientY,
-            });
+            setContextMenu({ x: e.clientX, y: e.clientY });
           } else {
             closeContextMenu();
           }
         }}
         onClick={() => {
-          // Relocate typing indicators straight down to line endings if clicking blank bounds
           if (editor && !editor.isFocused) {
             editor.commands.focus("end");
           }
@@ -215,13 +161,11 @@ export const EditorDoc: React.FC<props> = ({ size, content }) => {
       >
         <EditorContent
           editor={editor}
-          className={`w-full ${
-            size === "full" ? "w-full min-h-[calc(100%-2rem)]" : "w-full pt-4"
-          } focus:outline-none outline-none font-sans text-base leading-relaxed [&_.tiptap]:outline-none
+          className={`w-full focus:outline-none outline-none font-sans text-base leading-relaxed [&_.tiptap]:outline-none
               ${
                 darkMode
-                  ? " [&_.tiptap_h1]:text-white [&_.tiptap_p]:text-zinc-200 [&_.tiptap_ul]:text-zinc-100 [&_.tiptap_ol]:text-zinc-100"
-                  : " [&_.tiptap_ul]:text-zinc-800 [&_.tiptap_ol]:text-zinc-800"
+                  ? " [&_.tiptap_h1]:text-white [&_.tiptap_h2]:text-zinc-100 [&_.tiptap_h3]:text-zinc-200 [&_.tiptap_p]:text-zinc-300 [&_.tiptap_ul]:text-zinc-300 [&_.tiptap_ol]:text-zinc-300"
+                  : " [&_.tiptap_h1]:text-black [&_.tiptap_h2]:text-zinc-900 [&_.tiptap_h3]:text-zinc-800 [&_.tiptap_p]:text-zinc-700 [&_.tiptap_ul]:text-zinc-700 [&_.tiptap_ol]:text-zinc-700"
               }`}
           style={
             {
@@ -235,7 +179,6 @@ export const EditorDoc: React.FC<props> = ({ size, content }) => {
         />
       </div>
 
-      {/* FLOATING RIGHT-CLICK CELL MODIFIER SETTING MATRIX */}
       {contextMenu && (
         <ContextMenu
           contextMenu={contextMenu}

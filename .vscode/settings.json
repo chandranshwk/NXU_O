@@ -17,5 +17,11 @@
     "TEXTSTYLE",
     "tiptap",
     "uuidv"
-  ]
+  ],
+
+  "eslint.workingDirectories": [
+    { "directory": "UI", "changeProcessCWD": true }
+  ],
+  "eslint.useFlatConfig": true,
+  "rust-analyzer.linkedProjects": ["UI/src-tauri/Cargo.toml"]
 }

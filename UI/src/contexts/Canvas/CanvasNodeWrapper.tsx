@@ -4,13 +4,6 @@
  * @description Structural chassis for absolute-positioned canvas cards. Handles
  * drag/resize, background color theming, and a settings dialog for size + color
  * + delete.
- *
- * @architecture
- * - Delegates pointer gestures to `useCanvasNodeHandlers`.
- * - Persists geometry + color mutations through `useWorkspaceStore`.
- * - Auto-syncs background hex between light/dark palette variants.
- * - Delete lives in the settings dialog; keyboard Del/Backspace is handled
- *   by the workspace's global listener.
  */
 
 import React, {
@@ -28,13 +21,9 @@ import { CanvasNodeDragHandle } from "./CanvasNodeDragHandle";
 import { useCanvas } from "./CanvasContext";
 import type { MockPageNode, NodeComponentType } from "../../assets/SAMPLE";
 import { useCanvasNodeHandlers } from "../useCanvasNodeHandlers";
-
+import { NodeContentFactory } from "../../Extensions/NodeContentFactory";
 import { useWorkspaceStore } from "../../Store/store";
 
-/**
- * Re-export for consumers that still import the union from this module.
- * Canonical definition lives in `stores/notebook/types`.
- */
 export type { NodeComponentType };
 
 interface CanvasNodeWrapperProps {
@@ -42,17 +31,10 @@ interface CanvasNodeWrapperProps {
   notebookId: string;
   pageId: string;
   darkMode: boolean;
-  /** Whether this node currently holds focus. */
   isSelected: boolean;
-  /** Focus assignment callback. */
   onSelect: (id: string) => void;
-  children: React.ReactNode;
 }
 
-/**
- * Palette of tag-able backgrounds. Module-scoped so the auto-sync effect
- * doesn't need it in its dependency list.
- */
 const PRESET_COLORS: AdaptableColor[] = [
   { name: "White/Charcoal", light: "#ffffff", dark: "#1f1f1f" },
   { name: "Gray", light: "#f3f4f6", dark: "#2d3139" },
@@ -69,7 +51,7 @@ const PRESET_COLORS: AdaptableColor[] = [
 ];
 
 export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
-  const { node, notebookId, pageId, darkMode, isSelected, children } = props;
+  const { node, notebookId, pageId, darkMode, isSelected } = props;
 
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -87,7 +69,6 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
 
   const { zoom, selectedNodeId, deleteSelectedNode } = useCanvas();
 
-  // Local prop wins; fall back to context selection as a safety net.
   const isActive =
     isSelected || (selectedNodeId !== null && selectedNodeId === node.id);
 
@@ -102,6 +83,18 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     resizeHandleRef,
     zoom,
   });
+
+  // ==========================================
+  // ACTION: SYNC CONTENT TO ZUSTAND
+  // ==========================================
+  const handleContentChange = useCallback(
+    (newContent: string) => {
+      useWorkspaceStore
+        .getState()
+        .updateNodeContent(notebookId, pageId, node.id, newContent);
+    },
+    [notebookId, pageId, node.id],
+  );
 
   // ==========================================
   // LIFECYCLE: AUTO PALETTE SYNC
@@ -125,9 +118,6 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
       .updateNodeBackgroundColor(notebookId, pageId, node.id, targetHex);
   }, [darkMode, node.id, node.backgroundColor, notebookId, pageId]);
 
-  // ==========================================
-  // ACTIONS
-  // ==========================================
   const handleOpenDialog = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     const rect = nodeRef.current?.getBoundingClientRect();
@@ -154,11 +144,6 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
     [notebookId, pageId, node.id],
   );
 
-  /**
-   * Deletes this node. Routes through `deleteSelectedNode` when this node is
-   * the current selection (so context state clears), otherwise falls back to
-   * a direct store call.
-   */
   const handleDelete = useCallback(() => {
     if (selectedNodeId === node.id) {
       deleteSelectedNode();
@@ -170,12 +155,8 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
       .deleteNodeFromPage(notebookId, pageId, node.id);
   }, [selectedNodeId, deleteSelectedNode, notebookId, pageId, node.id]);
 
-  // ==========================================
-  // COMPUTED STYLE
-  // ==========================================
   const resolvedWidth = useMemo(() => `${node.width}px`, [node.width]);
 
-  /** Text nodes are content-driven; map nodes honor their stored height. */
   const resolvedHeight = useMemo(() => {
     if (node.type === "text") return "auto";
     return node.height ? `${node.height}px` : "auto";
@@ -190,9 +171,6 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
 
   return (
     <>
-      {/* ==========================================
-          PRIMARY CONTAINER SHELL
-          ========================================== */}
       <div
         ref={nodeRef}
         onPointerDown={handlers.handlePointerDown}
@@ -225,7 +203,6 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           innerRef={dragHandleRef}
         />
 
-        {/* Floating type badge — opens the settings dialog */}
         <button
           type="button"
           onClick={handleOpenDialog}
@@ -239,16 +216,20 @@ export const CanvasNodeWrapper: React.FC<CanvasNodeWrapperProps> = (props) => {
           {node.type}
         </button>
 
-        {/* Content */}
+        {/* Content — Rendered directly inside the wrapper */}
         <div
           className={`w-full h-full select-text relative z-20 mt-2 ${
             isInteracting ? "pointer-events-none" : "pointer-events-auto"
           }`}
         >
-          {children}
+          <NodeContentFactory
+            node={node}
+            notebookId={notebookId}
+            pageId={pageId}
+            onUpdate={handleContentChange} // <-- CONNECTED HERE
+          />
         </div>
 
-        {/* Resize handle — text nodes resize horizontally only */}
         <div
           ref={resizeHandleRef}
           onPointerDown={handlers.handleResizeDown}

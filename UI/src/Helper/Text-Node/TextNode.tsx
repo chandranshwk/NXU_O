@@ -31,51 +31,41 @@ import { extractParagraphsToBlocks, type BlockItem } from "./TextNode.helper";
 import FloatingToolbar from "../FloatingToolbar/FloatingToolbar";
 
 interface TextNodeProps {
-  /** Raw content string containing document paragraphs or raw block markup */
   content: string;
-  /** Unique identification token key tracking this node block instance */
   nodeId: string;
-  /** Conditional layout modifier passing preset design constraints downward */
   hasPreset?: boolean;
+  onUpdate?: (newContent: string) => void;
 }
 
 export const TextNode: React.FC<TextNodeProps> = ({
   content,
   nodeId,
   hasPreset,
+  onUpdate,
 }) => {
-  /** Accesses dark mode state provided globally by the main layout shell */
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
   const settings = useSettings();
   const context = useEditorContext();
 
-  /** State array maintaining split paragraph nodes assigned for sorting items */
   const [blocks, setBlocks] = useState<BlockItem[]>([]);
-  /** References the active target TipTap engine instance receiving keyboard focus */
   const [activeEditor, setActiveEditor] = useState<Editor | null>(null);
-  /** Computed display coordinates anchoring the floating bubble selection toolbar */
   const [selected, setSelected] = useState<editorContextType>();
-  /** Computed display coordinates anchoring the floating bubble selection toolbar */
   const [menuCoords, setMenuCoords] = useState<{
     top: number;
     left: number;
   } | null>(null);
-  /** Anchor positions specifying viewport placement for custom table context menus */
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
   } | null>(null);
 
-  /** Boundary target node measuring active bounding boxes for menu layout math */
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const lastPushedHtmlRef = useRef<string>("");
 
   // ==========================================
   // LIFECYCLE: HTML STRUCTURE PARSER
   // ==========================================
-  /**
-   * Watches incoming data changes. Safely tests for JSON wrappers before
-   * extracting string bodies down into independent block paragraph indexes.
-   */
   useEffect(() => {
     let targetHTML = content;
     try {
@@ -86,46 +76,50 @@ export const TextNode: React.FC<TextNodeProps> = ({
     } catch {
       targetHTML = content;
     }
+
+    // 🔥 STOP THE CHURN: If Zustand is just echoing back what we typed, ignore it.
+    if (targetHTML === lastPushedHtmlRef.current) return;
+
+    lastPushedHtmlRef.current = targetHTML;
     setTimeout(() => {
       setBlocks(extractParagraphsToBlocks(targetHTML));
     }, 0);
   }, [content, nodeId]);
 
-  /** Closes the open contextual cell modifier overlays */
+  // ==========================================
+  // SYNC BLOCKS BACK TO ZUSTAND
+  // ==========================================
+  useEffect(() => {
+    if (blocks.length === 0 || !onUpdate) return;
+
+    const combinedHtml = blocks.map((b) => b.html).join("");
+
+    // Only push if it's actually different from what we last pushed
+    if (combinedHtml !== lastPushedHtmlRef.current) {
+      lastPushedHtmlRef.current = combinedHtml;
+      onUpdate(combinedHtml);
+    }
+  }, [blocks, onUpdate]);
+
   const closeContextMenu = () => setContextMenu(null);
 
-  // ==========================================
-  // INTERACTION: SORTABLE DRAG HANDLERS
-  // ==========================================
-  /**
-   * Runs upon mouse-release after drag interactions. Reorders items inside
-   * the local array map and log updates back to tracking controllers.
-   */
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setBlocks((items) => {
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over.id);
-        const updated = arrayMove(items, oldIndex, newIndex);
-
-        // Notify tracking delta context system of new HTML sequence layout
-        if (activeEditor) {
-          //console.clear();
-        }
-        return updated;
+        return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
-  /** Injects a new blank block directly beneath targeted row elements */
   const handleUpdateBlockContent = (id: string, newHtml: string) => {
     setBlocks((prev) =>
       prev.map((b) => (b.id === id ? { ...b, html: newHtml } : b)),
     );
   };
 
-  /** Injects a new blank block directly beneath targeted row elements */
   const handleInsertBelow = (id: string) => {
     setBlocks((prev) => {
       const index = prev.findIndex((b) => b.id === id);
@@ -139,25 +133,15 @@ export const TextNode: React.FC<TextNodeProps> = ({
     });
   };
 
-  /** Removes specific lines while shielding against zero-length array breaks */
   const handleDeleteBlock = (id: string) => {
     setBlocks((prev) =>
       prev.length <= 1 ? prev : prev.filter((b) => b.id !== id),
     );
   };
 
-  // ==========================================
-  // ENGINE: TRANSACTION COORDINATE MATH
-  // ==========================================
-  /**
-   * Triggers each time cursor bounding footprints shift. Scans type parameters,
-   * updates the parent button context, and transforms relative text measurements
-   * into absolute pixels to position the formatting popup bubble.
-   */
   const handleBlockTransaction = (currentEditor: Editor) => {
     const { selection } = currentEditor.state;
 
-    // Reset layout anchors if the text highlighting span contracts to empty
     if (selection.empty) {
       setSelected(undefined);
       setMenuCoords(null);
@@ -166,7 +150,6 @@ export const TextNode: React.FC<TextNodeProps> = ({
 
     if (!context) return;
 
-    // Sync typography formatting states to parent listeners
     context.setIsBold(currentEditor.isActive("bold"));
     context.setIsItalic(currentEditor.isActive("italic"));
     context.setIsUnderline(currentEditor.isActive("underline"));
@@ -201,12 +184,10 @@ export const TextNode: React.FC<TextNodeProps> = ({
       const toCoords = currentEditor.view.coordsAtPos(selection.to);
       const containerRect = containerRef.current.getBoundingClientRect();
 
-      // Computes structural center anchors tracking above selection lines
       const topOffset = fromCoords.top - containerRect.top - 54;
       const leftOffset =
         (fromCoords.left + toCoords.left) / 2 - containerRect.left;
 
-      // Restricts popups from slipping beyond canvas boundaries
       const toolbarWidth = 320;
       const minLeftBoundary = toolbarWidth / 2;
       const maxLeftBoundary = containerRect.width - toolbarWidth / 2;
@@ -225,7 +206,6 @@ export const TextNode: React.FC<TextNodeProps> = ({
   };
 
   return (
-    /* Visual container scales vertically via h-auto to adjust for paragraph counts */
     <div className="w-full h-auto relative z-10 -top-5 overflow-visible cursor-text">
       <div
         ref={containerRef}
@@ -236,7 +216,6 @@ export const TextNode: React.FC<TextNodeProps> = ({
           className="flex-1 w-full focus:outline-none space-y-1 h-auto"
           onContextMenu={(e) => {
             const targetElement = e.target as HTMLElement;
-            // Capture table context actions right here
             if (targetElement.closest("table")) {
               e.preventDefault();
               setContextMenu({ x: e.clientX, y: e.clientY });
@@ -245,7 +224,6 @@ export const TextNode: React.FC<TextNodeProps> = ({
             }
           }}
         >
-          {/* SORTABLE PARAGRAPH ITERATION DRAG CANVASES */}
           <DndContext
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
@@ -275,7 +253,6 @@ export const TextNode: React.FC<TextNodeProps> = ({
             </SortableContext>
           </DndContext>
 
-          {/* FLOAT SELECTION HOVER TEXT FORMATTER PANEL */}
           {activeEditor && menuCoords && (
             <FloatingToolbar
               editor={activeEditor}
@@ -286,7 +263,6 @@ export const TextNode: React.FC<TextNodeProps> = ({
           )}
         </div>
 
-        {/* DATA OVERLAY CELL STYLING MENUS */}
         {contextMenu && activeEditor && (
           <ContextMenu
             contextMenu={contextMenu}

@@ -5,8 +5,8 @@ import { FiSearch } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
 import SearchDrop, { type SearchItems } from "./SearchDrop";
 import ShortcutChip from "../components/ShortcutChip";
+import { useWorkspaceStore } from "../Store/store";
 
-// Explicitly define your separated central search bar properties interface
 interface TitleBarCentralProps {
   searching: boolean;
   setSearching: (searching: boolean) => void;
@@ -23,7 +23,7 @@ interface TitleBarCentralProps {
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   handleCloseSearch: (e: React.MouseEvent) => void;
   getTitleText: (pathname: string) => string;
-  inputRef: React.RefObject<HTMLInputElement | null>; // Received from parent container
+  inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
@@ -44,6 +44,10 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
   getTitleText,
   inputRef,
 }) => {
+  // Subscribe to the isDirty flag
+  const isDirty = useWorkspaceStore((s) => s.isDirty);
+  const isCodeDirty = useWorkspaceStore((s) => s.isCodeDirty);
+
   return (
     <motion.div
       data-tour="titlebar-search"
@@ -63,7 +67,6 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
           : "w-auto justify-center cursor-default text-zinc-500 bg-transparent"
       }`}
     >
-      {/* Input Field View State Transitions */}
       <AnimatePresence mode="wait">
         {!searching ? (
           <motion.div
@@ -72,9 +75,6 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -2 }}
             transition={{ duration: 0.15 }}
-            // onClick lives here (not on the outer wrapper) so that an
-            // outside mousedown that closes the search doesn't have its
-            // subsequent `click` bubble into an "open the search" handler.
             onClick={() => {
               if (isShowRoute) setSearching(true);
             }}
@@ -85,8 +85,21 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
             )}
             <span className="truncate">{getTitleText(location.pathname)}</span>
             <span className="opacity-30 shrink-0">—</span>
-            <span className="opacity-50 font-mono text-[10px] tracking-normal shrink-0">
-              {location.pathname.startsWith("/document/") ? "Saved" : "NXU_0"}
+            <span
+              className={`font-mono text-[10px] tracking-normal shrink-0 ${
+                (location.pathname.startsWith("/document/") ||
+                  location.pathname.startsWith("/code/")) &&
+                (isDirty || isCodeDirty)
+                  ? "text-amber-500 font-bold"
+                  : "opacity-50"
+              }`}
+            >
+              {location.pathname.startsWith("/document/") ||
+              location.pathname.startsWith("/code/")
+                ? isDirty || isCodeDirty
+                  ? "Unsaved Changes"
+                  : "Saved"
+                : "NXU_0"}
             </span>
           </motion.div>
         ) : (
@@ -101,9 +114,6 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
           >
             <FiSearch className="text-sm opacity-50 shrink-0" />
 
-            {/* data-search-area keeps the outside-click listener from
-                closing the search when the click lands on the input or
-                its predictive-suggestion overlay. */}
             <div
               className="relative flex-1 h-full flex items-center"
               data-search-area
@@ -111,7 +121,6 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
               <input
                 ref={(el) => {
                   if (inputRef) inputRef.current = el;
-
                   if (el) {
                     requestAnimationFrame(() => {
                       el.focus();
@@ -136,7 +145,6 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
                   style={{ padding: 0 }}
                 >
                   <span className="opacity-0">{searchQuery}</span>
-
                   <span
                     className={`opacity-35 select-none ${darkMode ? "text-zinc-400" : "text-zinc-500"}`}
                   >
@@ -156,11 +164,9 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Discovery chip — visible on every page, in the exact click target
-    that opens the command bar. Hover shows the tooltip. */}
       {isShowRoute && (
         <ShortcutChip
-          hotkey="search" // <-- RESTORED TO SEARCH
+          hotkey="search"
           label="Press"
           title="Search within this page"
           darkMode={darkMode}
@@ -168,7 +174,6 @@ export const TitleBarCentral: React.FC<TitleBarCentralProps> = ({
         />
       )}
 
-      {/* Isolated Dropdown Animations to let spring mathematics execute cleanly */}
       <AnimatePresence>
         {searching && isShowRoute && (
           <SearchDrop

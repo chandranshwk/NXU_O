@@ -25,7 +25,8 @@ const root = createRoot(container);
  * rendering any frontend layout components, ensuring RAM dictionaries are active.
  */
 initializeCustomLanguages()
-  .then(() => {
+  .then(async () => {
+    // <-- ADDED 'async' HERE
     // ── Seed the workspace before React mounts ──────────────────
     // `WelcomeModal` (mounted inside `Layout`) reads notebooks/folders/
     // codeFiles on its very first render. If we let React mount first and
@@ -35,7 +36,7 @@ initializeCustomLanguages()
     //
     // `initializeData()` is idempotent (guarded by `notebooks.length > 0`),
     // so StrictMode's dev double-invoke of this block does nothing harmful.
-    useWorkspaceStore.getState().initializeData();
+    await useWorkspaceStore.getState().initializeData();
 
     root.render(
       <StrictMode>
