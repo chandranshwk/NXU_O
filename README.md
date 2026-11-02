@@ -9,7 +9,7 @@ NXU_O is a fast, keyboard-first local workspace and coding environment for your 
 - **Tactile Workspace UI:** A dashboard where Notebooks render as 3D physical books, Code Problems as IDE windows, and Folders as fanned-out paper containers.
 - **Custom Pixel Stamps:** A built-in 16x16 pixel-art editor and emoji picker allows users to design custom stickers for their folders, complete with an HSL color picker.
 - **Native Scratchpad:** A fast, tabbed markdown editor that writes directly to the local disk via Rust. It features `Ctrl+S` interception, crash recovery via shadow drafts, and dynamic tab renaming.
-- **Integrated Code IDE:** A LeetCode-style split-screen coding environment with dynamic, JSON-based syntax highlighting that reads custom language themes directly from the local filesystem.
+- **Integrated Code IDE:** A LeetCode-style split-screen coding environment with dynamic, JSON-based syntax highlighting. It features an interactive terminal and supports executing local code directly on your machine.
 - **Notion-Style Folders:** Nested drag-and-drop (`@dnd-kit`) to organize groups of items, inline-editable titles/descriptions, and continuous canvas text areas.
 
 ---
@@ -19,7 +19,7 @@ NXU_O is a fast, keyboard-first local workspace and coding environment for your 
 NXU_O combines a lightweight desktop engine with a modern frontend:
 
 - **Desktop Shell Engine:** [Tauri v2](https://tauri.app) — Uses Rust to run a fast, native desktop app. It replaces heavy, slow apps like Electron and uses very little RAM.
-- **State Management:** [Zustand](https://pmnd.rs) — Handles the workspace structure while saving everything to your browser storage automatically.
+- **State Management:** [Zustand](https://pmnd.rs) — Handles the workspace structure, seamlessly syncing metadata to the local disk via Rust.
 - **Routing:** [React Router Dom](https://reactrouter.com) — Uses a Hash Router setup to ensure page navigation works reliably inside Tauri's app window.
 - **Frontend:** [React 19](https://react.dev) + [TypeScript](https://typescriptlang.org) — Keeps the code base type-safe, simple, and predictable.
 - **Design & Styling:** [Tailwind CSS v4](https://tailwindcss.com) — Powers the user interface layouts and dark mode themes.
@@ -28,6 +28,32 @@ NXU_O combines a lightweight desktop engine with a modern frontend:
 - **Animations:** [Framer Motion / Motion v11](https://framer.com) — Makes tabs, panels, and drag-and-drop actions move smoothly.
 
 ---
+
+## Frontend Folder Structure (UI/src)
+
+The React frontend is organized using a **Feature-Driven Architecture**. Instead of dumping all components into one massive folder, files are grouped by the feature they belong to. This makes the codebase highly scalable and prevents "spaghetti code."
+
+```text
+src/
+├── app/                  # App shell, routing, TitleBar, Sidebar, CommandBar
+├── assets/               # Static assets (Fonts, mock data, background themes)
+├── components/           # Reusable, global UI components
+│   ├── Modals/           # Welcome modal, onboarding tours, help overlays
+│   └── UI/               # Buttons, Dropdowns, Shortcuts, Cards
+├── contexts/             # Global React contexts (Settings, Events)
+├── Features/             # Domain-specific logic and UI
+│   ├── Editor/           # Shared TipTap engine, extensions, and toolbars
+│   ├── IDE/              # Code IDE, instruction panels, dynamic execution
+│   ├── Notebook/         # Infinite canvas, page rails, right-side tools
+│   ├── Scratchpad/       # Tabbed markdown editor and local disk sync
+│   ├── Settings/         # Preferences and hotkey rebinding
+│   ├── Tasks/            # Calendar, Todo boards, and Task nodes
+│   └── Workspace/        # Home dashboard, Folders, Code problem lists
+├── Hooks/                # Global React hooks (e.g., useFirstRun)
+├── Lib/                  # Pure utility functions and hotkey parsers
+├── Store/                # Zustand stores (Workspace, Notebooks, Code files)
+└── Tours/                # Onboarding step definitions
+```
 
 ## Key Architectural Choices
 
@@ -64,6 +90,8 @@ Make sure you have standard Tauri build tools ready on your machine (Rust compil
    ```bash
    npm install
    ```
+
+````
 
 ---
 
@@ -130,3 +158,4 @@ Please ensure your code follows the existing TypeScript/Rust conventions and tha
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+````
