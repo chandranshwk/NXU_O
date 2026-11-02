@@ -11,7 +11,7 @@
  */
 
 import { faker } from "@faker-js/faker";
-import type { editorContextType } from "../contexts/editorContext";
+import type { editorContextType } from "../Features/Editor/editorContext";
 
 export interface TEXT_ODocument {
   /** Numerical tracking index assigned to the file entity */

@@ -15,7 +15,7 @@ import type {
   MockPage,
   MockPageNode,
 } from "../assets/SAMPLE";
-import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
+import type { CodeFile } from "../Features/IDE/CodeIDE.SAMPLE";
 
 const DEFAULT_PRINT_WIDTH = 794;
 const today = () => new Date().toISOString().split("T")[0];

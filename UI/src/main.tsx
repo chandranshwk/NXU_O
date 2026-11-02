@@ -7,10 +7,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.tsx";
+import App from "./App/App.tsx";
 import { SettingsProvider } from "./contexts/settingsContext.tsx";
-import { WorkspaceProvider } from "./contexts/workspaceContext.tsx";
-import { initializeCustomLanguages } from "./Extensions/ThemeLoader.ts";
+import { WorkspaceProvider } from "./Features/Notebook/workspaceContext.tsx";
+import { initializeCustomLanguages } from "./Features/Editor/Extensions/ThemeLoader.ts";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 import { useWorkspaceStore } from "./Store/store.ts";
 

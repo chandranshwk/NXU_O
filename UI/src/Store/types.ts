@@ -4,7 +4,7 @@ import type {
   MockSubtask,
   NodeComponentType,
 } from "../assets/SAMPLE";
-import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
+import type { CodeFile } from "../Features/IDE/CodeIDE.SAMPLE";
 
 export interface WorkspaceState {
   // ── Top-level collections ──────────────────────────────────
@@ -34,11 +34,12 @@ export interface WorkspaceState {
   deleteFolder: (id: string) => void;
   addCodeFile: (title?: string) => string;
 
-  // Added saveCodeFileToDisk here
+  // Code file mutations
   saveCodeFileToDisk: (codeId: string) => Promise<void>;
-
-  // Changed id to string | number to match CodeFile.id
+  updateCodeFileCode: (codeId: string, language: string, code: string) => void;
+  updateCodeFileMetadata: (codeId: string, metadata: Partial<CodeFile>) => void;
   deleteCodeFile: (id: string | number) => void;
+  clearCodeDirty: () => void;
 
   // ── Page mutations ─────────────────────────────────────────
   addPageToNotebook: (notebookId: string, pageTitle: string) => void;
@@ -129,8 +130,4 @@ export interface WorkspaceState {
   updateFolderColor: (folderId: string, newColor: string) => void;
   updateFolderDescription: (folderId: string, newDescription: string) => void;
   updateFolderIcon: (folderId: string, icon: string | undefined) => void;
-
-  // ── CodeFile mutations ─────────────────────────────────────
-  updateCodeFileCode: (codeId: string, language: string, code: string) => void;
-  clearCodeDirty: () => void;
 }

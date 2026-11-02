@@ -6,7 +6,7 @@
  * add/remove steps without breaking the tour.
  */
 
-import type { TourStep } from "../components/SpotlightTour";
+import type { TourStep } from "../components/Modals/SpotlightTour";
 
 export const HOME_STEPS: TourStep[] = [
   {

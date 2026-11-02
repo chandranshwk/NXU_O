@@ -21,7 +21,7 @@ import {
   type Folder,
   type MockNotebook,
 } from "../assets/SAMPLE";
-import { type CodeFile } from "../Pages/CodeIDE.SAMPLE";
+import { type CodeFile } from "../Features/IDE/CodeIDE.SAMPLE";
 
 import {
   welcomeNotebook,

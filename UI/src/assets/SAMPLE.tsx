@@ -10,8 +10,8 @@
  */
 
 import { faker } from "@faker-js/faker";
-import type { MatrixEvent } from "../Helper/Calendar/CalenderNode";
-import type { CodeFile } from "../Pages/CodeIDE.SAMPLE";
+import type { MatrixEvent } from "../Features/Tasks/Calendar/CalenderNode";
+import type { CodeFile } from "../Features/IDE/CodeIDE.SAMPLE";
 
 export type NodeComponentType = "text" | "map" | "image";
 export type WdigetType = "calendar" | "todo" | "task";

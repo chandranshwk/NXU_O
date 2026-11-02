@@ -4,7 +4,10 @@
  */
 
 import { useEffect, useRef } from "react";
-import { startSpotlightTour, type TourStep } from "../components/SpotlightTour";
+import {
+  startSpotlightTour,
+  type TourStep,
+} from "../components/Modals/SpotlightTour";
 
 interface UseTourAutoStartOptions {
   storageKey: string;
