@@ -27,18 +27,12 @@ interface NodeContentFactoryProps {
 
 export const NodeContentFactory: React.FC<NodeContentFactoryProps> = ({
   node,
-  notebookId,
-  pageId,
   onUpdate,
 }) => {
   switch (node.type) {
     case "text":
       return (
-        <TextNode
-          content={node.content}
-          nodeId={node.id}
-          onUpdate={onUpdate} // <-- CONNECTED HERE
-        />
+        <TextNode content={node.content} nodeId={node.id} onUpdate={onUpdate} />
       );
 
     case "map":

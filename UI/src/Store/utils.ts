@@ -1,5 +1,9 @@
-import type { MockNotebook, MockPage, MockPageNode } from "../assets/SAMPLE";
-import type { NodeComponentType } from "../contexts/Canvas/CanvasNodeWrapper";
+import type {
+  MockNotebook,
+  MockPage,
+  MockPageNode,
+  NodeComponentType,
+} from "../assets/SAMPLE";
 
 export interface TreeUpdateResult {
   notebooks: MockNotebook[];

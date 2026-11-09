@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { FiType, FiPlus } from "react-icons/fi";
 import { useCanvas } from "../../Canvas/Canvas/CanvasContext";
 import type { NodeComponentType } from "../../../../assets/SAMPLE";
@@ -9,19 +9,55 @@ const NODE_TYPES: {
   label: string;
   desc: string;
   Icon: React.ComponentType<{ className?: string }>;
-  accent: string;
+  accentLight: string;
+  accentDark: string;
 }[] = [
   {
     type: "text",
-    label: "Text",
-    desc: "Notes & markdown",
+    label: "Text Block",
+    desc: "Add a markdown text node",
     Icon: FiType,
-    accent: "bg-blue-50 text-blue-600 border-blue-100",
+    accentLight: "bg-zinc-100 text-zinc-700 border-zinc-200",
+    accentDark: "bg-zinc-800 text-zinc-300 border-zinc-700",
   },
 ];
 
-const WidgetDrop = () => {
+interface WidgetDropProps {
+  darkMode: boolean;
+}
+
+const WidgetDrop: React.FC<WidgetDropProps> = ({ darkMode }) => {
   const canvas = useCanvas();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // ==========================================
+  // OUTSIDE CLICK HANDLER
+  // ==========================================
+  useEffect(() => {
+    if (!canvas.widgetOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      // If clicking inside the menu itself, do nothing
+      if (menuRef.current && menuRef.current.contains(target)) {
+        return;
+      }
+
+      // If clicking the "Widget" button in the toolbar, let the button's
+      // onClick handle the toggle so it doesn't immediately close and reopen.
+      if (target.closest('[title="Widget"]')) {
+        return;
+      }
+
+      // Otherwise, click was outside -> close menu
+      canvas.setWidgetOpen(false);
+    };
+
+    // Use mousedown to close it before the click event fires on other elements
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [canvas.widgetOpen, canvas.setWidgetOpen]);
 
   if (!canvas.widgetOpen) return null;
 
@@ -32,48 +68,81 @@ const WidgetDrop = () => {
 
   return (
     <div
-      className="absolute top-20 right-6 z-50 flex w-72 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white/95 shadow-lg shadow-slate-900/5 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200"
+      ref={menuRef}
+      className={`absolute top-14 right-4 z-[99999] flex w-64 flex-col overflow-hidden rounded-sm border shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 ${
+        darkMode
+          ? "bg-[#121214] border-zinc-800 shadow-black/60"
+          : "bg-white border-zinc-300 shadow-zinc-300/50"
+      }`}
       role="menu"
       aria-label="Canvas blocks"
     >
-      {/* Header */}
-      <div className="px-4 pt-4 pb-3">
-        <h3 className="text-[13px] font-semibold tracking-tight text-slate-900">
-          Add Node
-        </h3>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-          Select a node to place on the canvas
-        </p>
+      {/* Sharp, Technical Header */}
+      <div
+        className={`px-3 py-2 border-b flex items-center justify-between ${
+          darkMode
+            ? "border-zinc-800 bg-[#18181b]"
+            : "border-zinc-200 bg-zinc-50"
+        }`}
+      >
+        <span
+          className={`text-[10px] font-bold uppercase tracking-widest ${
+            darkMode ? "text-zinc-400" : "text-zinc-500"
+          }`}
+        >
+          Insert Widget
+        </span>
       </div>
 
       {/* Block list */}
-      <div className="custom-scrollbar max-h-95 flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
-        {NODE_TYPES.map(({ type, label, desc, Icon, accent }) => (
-          <button
-            key={type}
-            type="button"
-            role="menuitem"
-            onClick={() => handleAddNode(type)}
-            className="group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-          >
-            <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[15px] transition-transform duration-150 group-hover:scale-[1.04] ${accent}`}
+      <div className="flex-1 p-1">
+        {NODE_TYPES.map(
+          ({ type, label, desc, Icon, accentLight, accentDark }) => (
+            <button
+              key={type}
+              type="button"
+              role="menuitem"
+              onClick={() => handleAddNode(type)}
+              className={`group flex w-full items-center gap-3 rounded-sm px-2 py-2.5 text-left outline-none transition-colors ${
+                darkMode
+                  ? "hover:bg-zinc-800/80 focus-visible:bg-zinc-800/80"
+                  : "hover:bg-zinc-100 focus-visible:bg-zinc-100"
+              }`}
             >
-              <Icon />
-            </span>
-
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13px] font-medium text-slate-700 transition-colors group-hover:text-slate-900">
-                {label}
+              {/* Sharp Icon Box */}
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-[13px] ${
+                  darkMode ? accentDark : accentLight
+                }`}
+              >
+                <Icon />
               </span>
-              <span className="block truncate text-[11px] leading-relaxed text-slate-400">
-                {desc}
-              </span>
-            </span>
 
-            <FiPlus className="shrink-0 text-[15px] text-slate-300 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" />
-          </button>
-        ))}
+              <span className="min-w-0 flex-1 flex flex-col justify-center">
+                <span
+                  className={`block truncate text-[12px] font-semibold tracking-wide ${
+                    darkMode ? "text-zinc-200" : "text-zinc-800"
+                  }`}
+                >
+                  {label}
+                </span>
+                <span
+                  className={`block truncate text-[10px] ${
+                    darkMode ? "text-zinc-500" : "text-zinc-400"
+                  }`}
+                >
+                  {desc}
+                </span>
+              </span>
+
+              <FiPlus
+                className={`shrink-0 text-[14px] opacity-0 transition-opacity duration-150 group-hover:opacity-100 ${
+                  darkMode ? "text-zinc-400" : "text-zinc-500"
+                }`}
+              />
+            </button>
+          ),
+        )}
       </div>
     </div>
   );

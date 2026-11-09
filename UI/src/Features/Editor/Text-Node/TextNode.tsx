@@ -61,7 +61,7 @@ export const TextNode: React.FC<TextNodeProps> = ({
   const lastPushedHtmlRef = useRef<string>("");
 
   // ==========================================
-  // LIFECYCLE: HTML STRUCTURE PARSER
+  // LIFECYCLE: HTML STRUCTURE PARSER`
   // ==========================================
   useEffect(() => {
     let targetHTML = content;
@@ -74,7 +74,7 @@ export const TextNode: React.FC<TextNodeProps> = ({
       targetHTML = content;
     }
 
-    // 🔥 STOP THE CHURN: If Zustand is just echoing back what we typed, ignore it.
+    // If Zustand is just echoing back what we typed, ignore it.
     if (targetHTML === lastPushedHtmlRef.current) return;
 
     lastPushedHtmlRef.current = targetHTML;
@@ -185,13 +185,19 @@ export const TextNode: React.FC<TextNodeProps> = ({
       const leftOffset =
         (fromCoords.left + toCoords.left) / 2 - containerRect.left;
 
-      const toolbarWidth = 320;
-      const minLeftBoundary = toolbarWidth / 2;
-      const maxLeftBoundary = containerRect.width - toolbarWidth / 2;
-      const boundedLeft = Math.max(
-        minLeftBoundary,
-        Math.min(leftOffset, maxLeftBoundary),
-      );
+      // --- FIXED BOUNDARY MATH ---
+      // The actual floating toolbar is wider than 320px due to all the tools.
+      const toolbarWidth = 520;
+      const padding = 16; // Keep it slightly away from the exact edge
+
+      const minLeft = padding + toolbarWidth / 2;
+      const maxLeft = containerRect.width - padding - toolbarWidth / 2;
+
+      // If the node is narrower than the toolbar itself, just center it.
+      const boundedLeft =
+        containerRect.width < toolbarWidth
+          ? containerRect.width / 2
+          : Math.max(minLeft, Math.min(leftOffset, maxLeft));
 
       setMenuCoords({ top: topOffset, left: boundedLeft });
     } catch (err) {

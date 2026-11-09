@@ -30,7 +30,7 @@ interface props {
   context: editorContextType;
 }
 
-const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
+const SimpleToolBar: React.FC<props> = ({ darkMode, type, context }) => {
   const ELEMENTS = getEditorTools(type, context);
   const [fSize, setSize] = useState<string>(context.fontSize);
 
@@ -123,7 +123,7 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
       className={`
         flex items-center gap-1 py-1.5 px-2 select-none outline-none transition-all
         ${darkMode ? "bg-[#18181b] text-zinc-300 border-zinc-800" : "bg-white text-zinc-800 border-zinc-200"}
-        rounded-xl border shadow-sm
+        rounded-md border shadow-sm
       `}
     >
       {/* 1. Text Color */}

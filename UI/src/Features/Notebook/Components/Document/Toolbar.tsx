@@ -1,5 +1,5 @@
 /**
- * @file Toolbar.tsx (Snippet 1)
+ * @file Toolbar.tsx
  * @component Toolbar
  * @description The structural document toolbar for the notebook workspace.
  * Combines dropdown font loaders, custom size controls, text and background highlight color
@@ -23,20 +23,19 @@ import { PiTextAUnderline } from "react-icons/pi";
 import { useSettings } from "../../../../contexts/settingsContext";
 import { useEditorContext } from "../../../Editor/editorContext";
 import { ToolbarDropdown } from "../../../Editor/Components/ToolBarDropdown";
+import TablePickerDropdown from "../../../Editor/Components/TablePickerDropdown";
 
 import { formatName } from "../../../../Lib/functions";
 import { checkIsActive, COLORS, FONTS } from "../../../../assets/assets";
 import { getEditorTools } from "../../../Editor/Config/Tools";
 import { ColorNames, HighLighterNames } from "../../../Editor/Config/Utils";
 import { useCanvas } from "../../Canvas/Canvas/CanvasContext";
+import { useWorkspaceStore } from "../../../../Store/store"; // <-- ADDED IMPORT
 import WidgetDrop from "./WidgetDrop";
 
 interface ToolProps {
-  /** The unique key name identifying the purpose of the action tool */
   name: CanvasToolName;
-  /** Graphic visual snippet element bound to the menu button container */
   icon: React.ReactNode;
-  /** Optional activation command executed when tapping the action button */
   exec?: () => void;
 }
 
@@ -55,22 +54,57 @@ export type CanvasToolName =
 const Toolbar = () => {
   const setting = useSettings();
   const context = useEditorContext();
-  /** Extracts rich formatting text item data mappings directly out of shared asset registries */
   const ELEMENTS = getEditorTools("rich", context);
 
   const darkMode = setting.darkMode;
   const activeCanvasTool = context.activeCanvasTool || "Select";
-
   const canvas = useCanvas();
 
-  /** Config array defining mock action handles and graphic icon snippets for whiteboards */
+  // ==========================================
+  // Z-LAYER LOGIC (Bring to Front)
+  // ==========================================
+  const handleZLayer = () => {
+    if (!canvas.selectedNodeId || !canvas.activePageId) {
+      console.warn("Select a node first to change its layer.");
+      return;
+    }
+
+    const store = useWorkspaceStore.getState();
+    const activeNotebook = store.activeNotebook;
+    if (!activeNotebook) return;
+
+    // Directly update the store to move the selected node to the end of the array
+    useWorkspaceStore.setState((state) => {
+      const updatedNotebooks = state.notebooks.map((nb) => {
+        if (nb.id !== activeNotebook.id) return nb;
+        return {
+          ...nb,
+          pages: nb.pages.map((page) => {
+            if (page.id !== canvas.activePageId) return page;
+
+            const nodeIndex = page.nodes.findIndex(
+              (n) => n.id === canvas.selectedNodeId,
+            );
+            if (nodeIndex === -1) return page;
+
+            const newNodes = [...page.nodes];
+            const [targetNode] = newNodes.splice(nodeIndex, 1);
+            newNodes.push(targetNode); // Pushing to end renders it on top
+
+            return { ...page, nodes: newNodes };
+          }),
+        };
+      });
+      return { notebooks: updatedNotebooks };
+    });
+  };
+
   const tool: ToolProps[] = [
     {
       name: "Select",
       icon: <BsCursor />,
       exec: () => {
         context.setActiveCanvasTool("Select");
-        console.log("Select mode");
       },
     },
     {
@@ -83,7 +117,6 @@ const Toolbar = () => {
       icon: <BiBrush />,
       exec: () => {
         context.setActiveCanvasTool("Sketch");
-        console.log("Sketch mode");
       },
     },
     {
@@ -91,7 +124,6 @@ const Toolbar = () => {
       icon: <BiEraser />,
       exec: () => {
         context.setActiveCanvasTool("Erase");
-        console.log("Erase mode");
       },
     },
     {
@@ -99,7 +131,6 @@ const Toolbar = () => {
       icon: <BsHandIndexThumb />,
       exec: () => {
         context.setActiveCanvasTool("Pan");
-        console.log("Pan viewport");
       },
     },
     {
@@ -117,13 +148,12 @@ const Toolbar = () => {
       icon: <MdOutlineWidgets />,
       exec: () => {
         canvas.setWidgetOpen(!canvas.widgetOpen);
-        console.log("Widget menu");
       },
     },
     {
       name: "Z-Layer",
       icon: <BiLayer />,
-      exec: () => console.log("Layer stack"),
+      exec: handleZLayer, // <-- WIRED UP HERE
     },
     {
       name: "Clear",
@@ -132,16 +162,12 @@ const Toolbar = () => {
     },
   ];
 
-  // ==========================================
-  // VISUAL COMPILER HELPER CLASS BUILDERS
-  // ==========================================
-  /** Generates button layout style rules based on active selection state indicators */
   const getBtnClass = (isActive: boolean) => {
     if (isActive) {
       return "bg-blue-600 text-white font-semibold shadow-md";
     }
     return darkMode
-      ? "hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200"
+      ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
       : "hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900";
   };
 
@@ -159,15 +185,13 @@ const Toolbar = () => {
 
   return (
     <div
-      className={`w-full h-14 flex items-center justify-center gap-2 px-4 border-b transition-colors duration-200 ${
+      className={`z-99999 w-full h-14 flex items-center justify-center gap-2 px-4 border-b transition-colors duration-200 ${
         darkMode
           ? "bg-zinc-950 border-zinc-800 text-zinc-200"
           : "bg-white border-zinc-200 text-zinc-800"
       }`}
     >
-      {/* ==========================================
-          DROPDOWN MODULE 1: GLOBAL FONT FAMILY SELECTION
-          ========================================== */}
+      {/* 1. Font Family */}
       <div className="flex items-center">
         <select
           value={setting.defaultFont}
@@ -182,16 +206,13 @@ const Toolbar = () => {
         </select>
       </div>
 
-      {/* ==========================================
-          DROPDOWN MODULE 2: FONT SIZE PIXEL SELECTOR
-          ========================================== */}
+      {/* 2. Font Size */}
       <div className="flex items-center mr-2">
         <select
           value={setting.defaultFontSize}
           onChange={(e) => setting.setDefaultFontSize(e.target.value)}
           className={selectDropdownClass}
         >
-          {/* Dynamically build option rows from 1px up to 100px values */}
           {Array.from({ length: 100 }, (_, i) => i + 1).map((size) => (
             <option key={size} value={`${size}px`}>
               {size}px
@@ -200,11 +221,9 @@ const Toolbar = () => {
         </select>
       </div>
 
-      {/* ==========================================
-          SWATCH DROPDOWN 3: INLINE FONT TEXT COLOR
-          ========================================== */}
+      {/* 3. Text Color */}
       <ToolbarDropdown
-        type="blocks" // Displays a compact icon matrix grid format
+        type="blocks"
         title="Text Color"
         darkMode={darkMode}
         icon={
@@ -224,12 +243,10 @@ const Toolbar = () => {
             idx={idx}
           />
         ))}
-        {/* Reset Action: Erases text styles back to theme default conditions */}
         <button
           type="button"
           onClick={() => {
             if (context.editor) {
-              // 1. Wipe custom color inline style parameters from the document node selection tree
               context.editor
                 .chain()
                 .focus()
@@ -237,7 +254,6 @@ const Toolbar = () => {
                 .updateAttributes("textStyle", { color: null })
                 .run();
 
-              // 2. Fall back cleanly to application default theme color variables
               context.setTextColor(
                 setting.defaultColor || (darkMode ? "#fff" : "#000"),
               );
@@ -249,9 +265,7 @@ const Toolbar = () => {
         </button>
       </ToolbarDropdown>
 
-      {/* ==========================================
-          SWATCH DROPDOWN 4: CHARACTER BACKGROUND HIGHLIGHT
-          ========================================== */}
+      {/* 4. Highlight Color */}
       <ToolbarDropdown
         type="blocks"
         title="Highlight Color"
@@ -275,7 +289,6 @@ const Toolbar = () => {
             idx={idx}
           />
         ))}
-        {/* Reset Action: Wipes active mark textures back to full transparency */}
         <button
           type="button"
           onClick={() => {
@@ -290,14 +303,17 @@ const Toolbar = () => {
         </button>
       </ToolbarDropdown>
 
+      {/* 5. Table Creator */}
+      <div className="flex items-center ml-1">
+        <TablePickerDropdown darkMode={darkMode} editor={context.editor!} />
+      </div>
+
       {/* Vertical boundary layout partition line */}
       <div
         className={`w-px h-6 mx-2 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
       />
 
-      {/* ==========================================
-          INLINE BUTTON TRACK 5: FORMATTING ELEMENT MODIFIERS
-          ========================================== */}
+      {/* 6. Formatting Elements */}
       <div className="flex items-center gap-1">
         {ELEMENTS.map((el, idx) => {
           const isActive = checkIsActive(el.name, context);
@@ -342,15 +358,11 @@ const Toolbar = () => {
         className={`w-px h-6 mx-2 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
       />
 
-      {/* ==========================================
-          TRACK SYSTEM B: WHITEBOARD SPATIAL CONTROL BUTTONS LOOP
-          ========================================== */}
+      {/* 7. Canvas Tools */}
       <div className="flex items-center gap-1">
         {tool.map((item, idx) => {
-          // Verify if the loop item matches the canvas tool currently selected by the user
           const isToolActive = activeCanvasTool === item.name;
 
-          // Switch contrast styles depending on theme conditions when item is toggled active
           const activeStyle = isToolActive
             ? darkMode
               ? "bg-zinc-100 text-zinc-950 shadow-md font-semibold"
@@ -362,12 +374,11 @@ const Toolbar = () => {
               key={idx}
               className="relative group flex items-center justify-center"
             >
-              {/* Spatial Action Trigger Button */}
               <button
                 type="button"
                 onClick={() => {
                   context.setActiveCanvasTool(item.name);
-                  if (item.exec) item.exec(); // Execute the dummy action handle if mapped
+                  if (item.exec) item.exec();
                 }}
                 title={item.name}
                 className={`w-8 h-8 flex items-center justify-center rounded-md text-base transition-all duration-150 outline-none ${activeStyle}`}
@@ -375,9 +386,6 @@ const Toolbar = () => {
                 {item.icon}
               </button>
 
-              {/* ==========================================
-                  INTERFACE ACCENT: FLOATING HOVER TOOLTIP
-                  ========================================== */}
               <span
                 className={`text-[10px] tracking-wide pointer-events-none hidden group-hover:block absolute px-2 py-1 rounded shadow-md top-10 whitespace-nowrap z-50 transition-colors ${
                   darkMode
@@ -391,7 +399,9 @@ const Toolbar = () => {
           );
         })}
       </div>
-      <WidgetDrop />
+
+      {/* 8. Widget Drop (Passed darkMode) */}
+      <WidgetDrop darkMode={darkMode} />
     </div>
   );
 };

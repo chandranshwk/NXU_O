@@ -22,8 +22,8 @@ import {
 import { useWorkspaceStore } from "../../Store/store";
 import type { Folder, MockNotebook } from "../../assets/SAMPLE";
 import type { CodeFile } from "../IDE/CodeIDE.SAMPLE";
-import { SortableGroup } from "../Pages/SortableGroup";
-import { SortableRow } from "../Pages/SortableRow";
+import { SortableRow } from "./SortableRow";
+import { SortableGroup } from "./SortableGroup";
 
 const isNotebook = (
   item: CodeFile | MockNotebook | Folder,
