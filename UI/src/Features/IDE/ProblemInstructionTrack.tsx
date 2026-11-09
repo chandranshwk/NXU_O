@@ -139,14 +139,16 @@ export const ProblemInstructionTrack: React.FC<
     setEditConstraints(editConstraints.filter((_, i) => i !== index));
   };
 
-  const baseClass = `h-full flex flex-col border rounded-sm overflow-y-auto no-scrollbar transition-colors duration-200 ${
-    darkMode ? "bg-zinc-900/40 border-zinc-800/80" : "bg-white border-zinc-200"
+  const baseClass = `w-128 h-full flex flex-col border rounded-sm overflow-y-auto no-scrollbar transition-colors duration-200 ${
+    darkMode ? "bg-[#121214] border-zinc-800/80" : "bg-white border-zinc-200"
   }`;
 
-  // Ultra-clean input class (Notion style)
-  const inputClass = `w-full bg-transparent border-b border-transparent hover:border-zinc-700/50 focus:border-indigo-500 outline-none px-1 py-1 text-sm transition-colors ${
+  // Clean, seamless input styles
+  const inputClass = `w-full bg-[#1a1a1c] border border-zinc-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-600 ${
     darkMode ? "text-zinc-200" : "text-zinc-800"
   }`;
+
+  const textareaClass = `${inputClass} resize-none leading-relaxed font-sans`;
 
   // ==========================================
   // EDIT MODE RENDER
@@ -154,52 +156,55 @@ export const ProblemInstructionTrack: React.FC<
   if (isEditing) {
     return (
       <div className={baseClass}>
-        {/* Compact Sticky Header */}
+        {/* Sticky Header */}
         <div
-          className={`sticky top-0 z-10 flex items-center justify-between px-4 py-2.5 border-b backdrop-blur-md ${
+          className={`sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b backdrop-blur-md ${
             darkMode
-              ? "bg-zinc-900/90 border-zinc-800/80"
+              ? "bg-[#121214]/90 border-zinc-800/80"
               : "bg-white/90 border-zinc-200"
           }`}
         >
-          <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-500">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-400">
             Editing Problem
           </span>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <button
               onClick={handleCancel}
-              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 transition-colors"
-              title="Cancel"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                darkMode
+                  ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  : "hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800"
+              }`}
             >
-              <FiX size={16} />
+              <FiX size={14} /> Cancel
             </button>
             <button
               onClick={handleSave}
-              className="p-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
-              title="Save Changes"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors shadow-sm"
             >
-              <FiCheck size={16} />
+              <FiCheck size={14} /> Save
             </button>
           </div>
         </div>
 
-        <div className="p-4 flex flex-col gap-5 pb-12">
+        <div className="p-5 flex flex-col gap-8 pb-12">
           {/* Title Input */}
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-50">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">
               Title
             </label>
             <input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               className={`${inputClass} font-semibold text-base`}
+              placeholder="Problem Title"
             />
           </div>
 
           {/* Description Textarea */}
-          <div>
-            <div className="flex justify-between items-end mb-1">
-              <label className="block text-[10px] font-bold uppercase tracking-wider opacity-50">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between items-end ml-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                 Description
               </label>
               <span className="text-[9px] opacity-40 italic">
@@ -210,74 +215,88 @@ export const ProblemInstructionTrack: React.FC<
               value={editDesc}
               onChange={(e) => setEditDesc(e.target.value)}
               rows={6}
-              className={`w-full bg-transparent border border-zinc-700/50 rounded-md px-3 py-2 text-sm font-sans outline-none focus:border-indigo-500/50 transition-colors resize-y leading-relaxed ${
-                darkMode ? "text-zinc-200" : "text-zinc-800"
-              }`}
+              className={textareaClass}
+              placeholder="Write your problem description here..."
             />
           </div>
 
           {/* Examples List */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wider opacity-50">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between ml-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                 Examples
               </label>
               <button
                 onClick={addExample}
-                className="text-[11px] font-medium text-indigo-500 hover:text-indigo-400 flex items-center gap-1"
+                className="flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-[11px] font-medium transition-colors"
               >
-                <FiPlus size={12} /> Add
+                <FiPlus size={12} /> Add Example
               </button>
             </div>
 
             {editExamples.map((ex, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-lg border mb-2 relative group ${
+                className={`rounded-xl border p-4 relative group flex flex-col gap-3 transition-colors ${
                   darkMode
-                    ? "bg-zinc-950/30 border-zinc-800/60"
-                    : "bg-zinc-50 border-zinc-200"
+                    ? "bg-[#18181b] border-zinc-800/80 hover:border-zinc-700"
+                    : "bg-zinc-50 border-zinc-200 hover:border-zinc-300"
                 }`}
               >
-                <button
-                  onClick={() => removeExample(idx)}
-                  className="absolute top-2 right-2 p-1 rounded-md text-zinc-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-                >
-                  <FiTrash2 size={12} />
-                </button>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-zinc-500">
+                    Example {idx + 1}
+                  </span>
+                  <button
+                    onClick={() => removeExample(idx)}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      darkMode
+                        ? "text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10"
+                        : "text-zinc-400 hover:text-rose-500 hover:bg-rose-50"
+                    }`}
+                    title="Remove Example"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+                </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-2">
-                  <div>
-                    <label className="block text-[9px] uppercase font-semibold opacity-50 mb-0.5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-zinc-500 ml-1">
                       Input
                     </label>
-                    <input
+                    <textarea
                       value={ex.input}
                       onChange={(e) => {
                         const newEx = [...editExamples];
                         newEx[idx].input = e.target.value;
                         setEditExamples(newEx);
                       }}
-                      className={`${inputClass} font-mono text-xs`}
+                      rows={3}
+                      className={`${textareaClass} font-mono text-xs`}
+                      placeholder="e.g. 5\n10"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[9px] uppercase font-semibold opacity-50 mb-0.5">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-zinc-500 ml-1">
                       Output
                     </label>
-                    <input
+                    <textarea
                       value={ex.output}
                       onChange={(e) => {
                         const newEx = [...editExamples];
                         newEx[idx].output = e.target.value;
                         setEditExamples(newEx);
                       }}
-                      className={`${inputClass} font-mono text-xs`}
+                      rows={3}
+                      className={`${textareaClass} font-mono text-xs`}
+                      placeholder="e.g. 15"
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-[9px] uppercase font-semibold opacity-50 mb-0.5">
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] uppercase font-bold tracking-widest text-zinc-500 ml-1">
                     Explanation (Optional)
                   </label>
                   <input
@@ -288,6 +307,7 @@ export const ProblemInstructionTrack: React.FC<
                       setEditExamples(newEx);
                     }}
                     className={`${inputClass} text-xs`}
+                    placeholder="Explain why this happens..."
                   />
                 </div>
               </div>
@@ -295,21 +315,21 @@ export const ProblemInstructionTrack: React.FC<
           </div>
 
           {/* Constraints List */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wider opacity-50">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between ml-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                 Constraints
               </label>
               <button
                 onClick={addConstraint}
-                className="text-[11px] font-medium text-indigo-500 hover:text-indigo-400 flex items-center gap-1"
+                className="flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-[11px] font-medium transition-colors"
               >
-                <FiPlus size={12} /> Add
+                <FiPlus size={12} /> Add Constraint
               </button>
             </div>
 
             {editConstraints.map((c, idx) => (
-              <div key={idx} className="flex items-center gap-2 mb-1 group">
+              <div key={idx} className="flex items-center gap-2 group">
                 <input
                   value={c}
                   onChange={(e) => {
@@ -318,11 +338,14 @@ export const ProblemInstructionTrack: React.FC<
                     setEditConstraints(newC);
                   }}
                   className={`${inputClass} font-mono text-xs`}
+                  placeholder="e.g. 1 <= nums.length <= 100"
                 />
                 <button
                   onClick={() => removeConstraint(idx)}
-                  className={`shrink-0 p-1 rounded-md hover:bg-rose-500/10 hover:text-rose-500 transition-colors ${
-                    darkMode ? "text-zinc-500" : "text-zinc-400"
+                  className={`shrink-0 p-2 rounded-lg transition-colors ${
+                    darkMode
+                      ? "text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10"
+                      : "text-zinc-400 hover:text-rose-500 hover:bg-rose-50"
                   }`}
                 >
                   <FiTrash2 size={14} />
@@ -362,9 +385,9 @@ export const ProblemInstructionTrack: React.FC<
       <div className="mb-6">{renderDescription(data.description.html)}</div>
 
       <div className="flex flex-col gap-2 mb-6 select-text">
-        {data.examples.map((example) => (
+        {data.examples.map((example, idx) => (
           <div
-            key={example.id}
+            key={example.id || idx}
             className={`p-3 rounded-lg border font-mono text-[11px] ${
               darkMode
                 ? "bg-zinc-950/40 border-zinc-800/60"
@@ -372,17 +395,19 @@ export const ProblemInstructionTrack: React.FC<
             }`}
           >
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 block mb-1.5">
-              Example {example.id}
+              Example {idx + 1}
             </span>
             <div className="space-y-1">
-              <div className="break-all">
-                <span className="opacity-40">Input:</span> {example.input}
+              <div className="break-all whitespace-pre-wrap">
+                <span className="opacity-40">Input:</span>{" "}
+                {example.input?.replace(/\\n/g, "\n")}
               </div>
-              <div className="break-all">
-                <span className="opacity-40">Output:</span> {example.output}
+              <div className="break-all whitespace-pre-wrap">
+                <span className="opacity-40">Output:</span>{" "}
+                {example.output?.replace(/\\n/g, "\n")}
               </div>
               {example.explanation && (
-                <div className="mt-2 pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800/60 font-sans text-zinc-400 leading-normal">
+                <div className="mt-2 pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800/60 font-sans text-zinc-400 leading-normal whitespace-pre-wrap">
                   <span className="italic opacity-60">Explanation:</span>{" "}
                   {example.explanation}
                 </div>

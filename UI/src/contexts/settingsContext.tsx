@@ -353,8 +353,7 @@ export const SettingsProvider = ({
     useState<string>("Mod-Shift-x");
 
   const [openShortcut, setOpenShortcut] = useState<string>("Mod-Alt-C");
-  const [defaultSavingFolder, setDefaultSavingFolder] =
-    useState<string>("C:\\Desktop");
+  const [defaultSavingFolder, setDefaultSavingFolder] = useState<string>("");
   const [textModeShortcut, setTextModeShortcut] =
     useState<string>("Ctrl-Shift-Q");
   const [canvasModeShortcut, setCanvasModeShortcut] =

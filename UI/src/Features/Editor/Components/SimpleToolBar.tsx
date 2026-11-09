@@ -24,32 +24,24 @@ import { COLORS, FONTS } from "../../../assets/assets";
 import { ColorNames, FontNames, HighLighterNames } from "../Config/Utils";
 
 interface props {
-  /** Shared dark mode setting flag used to toggle UI themes */
   darkMode: boolean;
-  /** Configuration filter sorting whether to load lightweight or fully loaded tool arrays */
   type: "simple" | "rich";
-  /** Sizing variant rule determining full width bar extensions vs compact floating layout panels */
   size: "small" | "full";
-  /** Shared text context manager holding editor instances and styling triggers */
   context: editorContextType;
 }
 
-/**
- * @component SimpleToolBar
- * @description Renders the formatting bar, synchronizes state indicators, and pipes
- * typography, font color, selection grid highlighting, and dimension commands down to TipTap.
- */
 const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
-  /** Extracts functional metadata button arrays tailored matching formatting mode configs */
   const ELEMENTS = getEditorTools(type, context);
+  const [fSize, setSize] = useState<string>(context.fontSize);
 
-  // ==========================================
-  // LOOK-UP VALUE STATUS ACTIVATION TRAP
-  // ==========================================
-  /**
-   * Compares incoming button identities with active editor context variables,
-   * returning flags used to light up matching interface items.
-   */
+  useEffect(() => {
+    if (context.fontSize) {
+      queueMicrotask(() => setSize(context.fontSize));
+    }
+  }, [context.fontSize]);
+
+  if (!context) return null;
+
   const checkIsActive = (name: string): boolean => {
     switch (name) {
       case "Bold":
@@ -80,75 +72,71 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
         return context.isHeading(2);
       case "Heading 3":
         return context.isHeading(3);
-      case "Heading 4":
-        return context.isHeading(4);
-      case "Heading 5":
-        return context.isHeading(5);
-      case "Heading 6":
-        return context.isHeading(6);
       default:
         return false;
     }
   };
 
-  /** Local state tracking current text input inside the font size entry box */
-  const [fSize, setSize] = useState<string>(context.fontSize);
-
-  // ==========================================
-  // LIFECYCLE: SIZE SELECTION SYNCHRONIZER
-  // ==========================================
-  /**
-   * Uses low-priority microtask loops to sync local size variables with external
-   * text changes, preventing typing latency inside the text editor pane.
-   */
-  useEffect(() => {
-    if (context.fontSize) {
-      queueMicrotask(() => {
-        setSize(context.fontSize);
-      });
-    }
-  }, [context.fontSize]);
-
-  // Structural Render Guard: Prevent draw actions if active connection hooks clear out
-  if (!context) return null;
+  const renderTools = () => {
+    // We only want specific tools in the simple toolbar matching the photo
+    const allowedTools = [
+      "Bold",
+      "Italic",
+      "Underline",
+      "Strikethrough",
+      "Left Align",
+      "Center Align",
+      "Right Align",
+      "Ordered List",
+      "Bullet List",
+      "Heading 1",
+      "Heading 2",
+      "Heading 3",
+    ];
+    return ELEMENTS.filter((el) => allowedTools.includes(el.name)).map(
+      (el, idx) => {
+        const isActive = checkIsActive(el.name);
+        return (
+          <button
+            key={idx}
+            title={el.name}
+            onClick={() => el.onClick(context.editor!, context)}
+            className={`p-1.5 rounded-md transition-colors ${
+              isActive
+                ? "bg-indigo-500 text-white shadow-sm"
+                : darkMode
+                  ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+            }`}
+          >
+            <div className="w-4 h-4 flex items-center justify-center text-[15px]">
+              {el.icon}
+            </div>
+          </button>
+        );
+      },
+    );
+  };
 
   return (
     <div
       className={`
-        flex items-center justify-center gap-3 py-1.5 px-3 select-none outline-none transition-all duration-200
-        ${
-          darkMode
-            ? "bg-[#121211] text-zinc-100 border-zinc-800/80 shadow-zinc-950/40"
-            : "bg-zinc-100 text-zinc-800 border-zinc-200 shadow-zinc-200/50"
-        } 
-        ${
-          size === "small"
-            ? "w-full rounded-lg  flex-1 border my-2 mb-0 shadow-sm backdrop-blur-md"
-            : "w-full border-b rounded-lg"
-        }
+        flex items-center gap-1 py-1.5 px-2 select-none outline-none transition-all
+        ${darkMode ? "bg-[#18181b] text-zinc-300 border-zinc-800" : "bg-white text-zinc-800 border-zinc-200"}
+        rounded-xl border shadow-sm
       `}
     >
-      {/* ==========================================
-          DROPDOWN 1: TEXT COLOR SELECTOR GRID
-          ========================================== */}
+      {/* 1. Text Color */}
       <ToolbarDropdown
-        type="blocks" // Displays a compact icon matrix layout grid format
-        icon={
-          <div className="flex items-center justify-center p-0.5">
-            <PiTextAUnderline
-              size={18}
-              color={
-                context.textColor !== ""
-                  ? context.textColor
-                  : darkMode
-                    ? "#ffffff"
-                    : "#000000"
-              }
-            />
-          </div>
-        }
+        type="blocks"
         title="Text Color"
         darkMode={darkMode}
+        icon={
+          <PiTextAUnderline
+            size={18}
+            color={context.textColor || (darkMode ? "#fff" : "#000")}
+          />
+        }
       >
         {COLORS.map((color, idx) => (
           <ColorNames
@@ -160,43 +148,19 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
             idx={idx}
           />
         ))}
-        {/* Reset Action: Erases text styles back to theme default conditions */}
-        <button
-          onClick={() => {
-            context.editor?.chain().focus().unsetColor().run();
-            context.setTextColor("");
-          }}
-          className={`w-full text-left text-xs px-2 py-1.5 rounded border-t mt-1 transition-colors ${
-            darkMode
-              ? "hover:bg-zinc-800 border-zinc-800 text-zinc-400"
-              : "hover:bg-zinc-200 border-zinc-200 text-zinc-600"
-          }`}
-        >
-          Reset Text Color
-        </button>
       </ToolbarDropdown>
 
-      {/* ==========================================
-          DROPDOWN 2: HIGHLIGHTER BACKGROUND SELECTOR
-          ========================================== */}
+      {/* 2. Highlight */}
       <ToolbarDropdown
         type="blocks"
-        icon={
-          <div className="flex items-center justify-center p-0.5">
-            <FaHighlighter
-              size={18}
-              color={
-                context.highlightedColor !== ""
-                  ? context.highlightedColor
-                  : darkMode
-                    ? "#ffffff"
-                    : "#000000"
-              }
-            />
-          </div>
-        }
-        title="Text Color"
+        title="Highlight"
         darkMode={darkMode}
+        icon={
+          <FaHighlighter
+            size={16}
+            color={context.highlightedColor || (darkMode ? "#fff" : "#000")}
+          />
+        }
       >
         {COLORS.map((color, idx) => (
           <HighLighterNames
@@ -208,124 +172,68 @@ const SimpleToolBar: React.FC<props> = ({ darkMode, type, size, context }) => {
             idx={idx}
           />
         ))}
-        {/* Reset Action: Clear custom background textures back to transparency bounds */}
-        <button
-          onClick={() => {
-            context.editor?.chain().focus().unsetBackgroundColor().run();
-            context.setHighlightedColor("");
-          }}
-          className={`w-full text-left text-xs px-2 py-1.5 rounded border-t mt-1 transition-colors ${
-            darkMode
-              ? "hover:bg-zinc-800 border-zinc-800 text-zinc-400"
-              : "hover:bg-zinc-200 border-zinc-200 text-zinc-600"
-          }`}
-        >
-          Reset Highlight
-        </button>
       </ToolbarDropdown>
 
-      {/* ==========================================
-          INPUT BLOCK 3: NUMERIC FONT SIZE BOX FIELD
-          ========================================== */}
+      {/* 3. Font Size */}
       <input
         type="text"
-        value={fSize}
-        onChange={(e) => {
-          setSize(e.target.value);
-        }}
+        value={fSize.replace("px", "")}
+        onChange={(e) => setSize(e.target.value + "px")}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            const numericValue = parseInt(fSize, 10);
-            if (isNaN(numericValue)) return;
-
-            const sizeString = `${numericValue}px`;
-
-            // Commit sizing variables directly down to text highlight layers
-            context.editor?.chain().focus().setFontSize(sizeString).run();
-            context.setFontSize(sizeString);
-
-            // Strip active keyboard cursor focus to complete inputs cleanly
+            const val = parseInt(fSize, 10);
+            if (!isNaN(val)) {
+              context.editor?.chain().focus().setFontSize(`${val}px`).run();
+              context.setFontSize(`${val}px`);
+            }
             e.currentTarget.blur();
           }
         }}
-        // Prevent focus-stealing conflicts with the underlying text canvas
-        onMouseDown={(e) => e.stopPropagation()}
-        className={`w-12 text-xs font-medium text-center py-1 px-1.5 rounded border outline-none transition-colors ${
+        className={`w-10 text-center text-xs py-1 rounded-md border outline-none transition-colors ${
           darkMode
-            ? "bg-zinc-900 border-zinc-800 text-zinc-200 focus:border-zinc-600"
-            : "bg-slate-50 border-slate-200 text-slate-700 focus:border-slate-400"
+            ? "bg-zinc-900 border-zinc-800 hover:border-zinc-700 focus:border-indigo-500"
+            : "bg-zinc-50 border-zinc-200 hover:border-zinc-300 focus:border-indigo-500"
         }`}
       />
 
-      {/* ==========================================
-          DROPDOWN 4: TYPOGRAPHY FAMILY SELECTION RAIL (FONTS)
-          ========================================== */}
+      {/* 4. Font Family */}
       <ToolbarDropdown
         type="col"
-        icon={
-          <div
-            className={`w-full flex items-center justify-between px-3 py-1.5 rounded-md border text-zinc-400 gap-3 min-w-30 transition-colors ${
-              darkMode
-                ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:border-zinc-700"
-                : "bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300"
-            }`}
-            style={{ fontFamily: context.font }}
-          >
-            {/* Left Icon and Text Label container block */}
-            <div className="flex items-center gap-2">
-              <IoTextOutline className="text-sm opacity-60" />
-              <span className="text-xs font-medium tracking-wide">
-                {formatName(context.font)}
-              </span>
-            </div>
-
-            {/* A tiny subtle dropdown indicator arrow layout decoration */}
-            <span className="text-[10px] opacity-40">▼</span>
-          </div>
-        }
-        width="w-max h-4"
+        width="w-max"
         title="Font Family"
         darkMode={darkMode}
+        icon={
+          <div
+            className={`flex items-center gap-2 px-2 py-1 rounded-md border text-xs min-w-[80px] ${darkMode ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200"}`}
+          >
+            <IoTextOutline size={14} className="opacity-50" />
+            <span className="truncate">{formatName(context.font)}</span>
+          </div>
+        }
       >
         {FONTS.map((font, idx) => (
-          <div key={idx}>
-            <FontNames darkMode={darkMode} font={font} context={context} />
-          </div>
+          <FontNames
+            key={idx}
+            darkMode={darkMode}
+            font={font}
+            context={context}
+          />
         ))}
-        <button
-          onClick={() => {
-            context.editor?.chain().focus().unsetFontFamily().run();
-            context.setFont("sans-serif");
-          }}
-          className="w-full text-xs px-2 py-1.5 rounded hover:bg-zinc-800 text-left text-zinc-500 border-t border-zinc-800 mt-1"
-        >
-          Default Font
-        </button>
       </ToolbarDropdown>
 
+      <div
+        className={`w-px h-5 mx-1 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
+      />
+
+      {/* 5. Table */}
       <TablePickerDropdown darkMode={darkMode} editor={context.editor!} />
-      {ELEMENTS.map((el, idx) => {
-        const isActive = checkIsActive(el.name);
-        return (
-          <button
-            key={idx}
-            title={el.name}
-            aria-label={el.name}
-            className={`p-2 rounded transition-colors duration-150 outline-none ${
-              isActive
-                ? "bg-blue-500 text-white shadow-inner font-semibold"
-                : `${darkMode ? "hover:bg-white hover:text-black" : "hover:bg-zinc-950 hover:text-white"} text-zinc-400`
-            }`}
-            onClick={() => {
-              el.onClick(context.editor!, context);
-            }}
-          >
-            <div className="w-4 h-4 flex items-center justify-center text-base">
-              {el.icon}
-            </div>
-          </button>
-        );
-      })}
+
+      <div
+        className={`w-px h-5 mx-1 ${darkMode ? "bg-zinc-800" : "bg-zinc-200"}`}
+      />
+
+      {/* 6. Formatting & Alignments & Headings */}
+      <div className="flex items-center gap-0.5">{renderTools()}</div>
     </div>
   );
 };

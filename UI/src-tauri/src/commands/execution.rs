@@ -15,6 +15,8 @@ pub struct LanguageConfig {
     pub compile_cmd: Option<Vec<String>>,
     #[serde(rename = "runCmd")]
     pub run_cmd: Vec<String>,
+    #[serde(rename = "isCustom", default)]
+    pub is_custom: bool,
 }
 
 #[derive(serde::Serialize)]
@@ -119,4 +121,41 @@ pub fn execute_code(
         }),
         Err(e) => Err(format!("Failed to execute process: {}", e)),
     }
+}
+
+#[tauri::command]
+pub fn get_installed_languages() -> Result<Vec<String>, String> {
+    let lang_map = get_available_languages()?;
+    let mut installed = Vec::new();
+
+    for (slug, config) in lang_map {
+        // Determine which executable to test.
+        // Usually it's the compiler (compileCmd) or the interpreter (runCmd)
+        let exe_to_test = if let Some(compile_cmd) = &config.compile_cmd {
+            &compile_cmd[0]
+        } else {
+            &config.run_cmd[0]
+        };
+
+        // Try running `exe --version` or `exe -v`
+        // If the command spawns successfully (even if it returns a non-zero exit code), it means the executable exists in the PATH.
+        let is_installed = Command::new(exe_to_test)
+            .arg("--version")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok() 
+            || Command::new(exe_to_test)
+            .arg("-v")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok();
+
+        if is_installed {
+            installed.push(slug);
+        }
+    }
+
+    Ok(installed)
 }

@@ -7,16 +7,19 @@
  *
  * @architecture
  * - Leverages the reusable layout template engine `<Cards />` to bundle rows.
- * - Bridges desktop filesystem calls with the Tauri native API layer via `@tauri-apps/plugin-dialog`.
+ * - Bridges desktop filesystem calls with a custom FileExplorerModal.
  * - Computes and converts local milliseconds slider values directly to parent state seconds parameters.
  */
 
+import { useState } from "react";
 import { Cards } from "../../../components/UI/Cards";
-import { FiFolder, FiSliders } from "react-icons/fi";
+import { FiFolder, FiSliders, FiCode } from "react-icons/fi";
 import type { settingsContextType } from "../../../contexts/settingsContext";
 import type { SetStateAction } from "react";
-import { open as openTauriDialog } from "@tauri-apps/plugin-dialog";
 import { formatName } from "../../../Lib/functions";
+import { FileExplorerModal } from "../../../components/Modals/FileExplorerModal";
+import { CustomLanguageModal } from "../../IDE/CustomLanguageModal"; // <-- IMPORT MODAL
+
 interface props {
   /** Shared dark mode setting flag used to switch interface style rules */
   darkMode: boolean;
@@ -26,10 +29,6 @@ interface props {
   autoSaveDelay: number;
   /** Dispatch modifier tracking active background delay changes */
   setAutoSaveDelay: React.Dispatch<SetStateAction<number>>;
-}
-
-interface TauriFilePath {
-  path: string;
 }
 
 /**
@@ -43,43 +42,8 @@ const SectionA: React.FC<props> = ({
   autoSaveDelay,
   setAutoSaveDelay,
 }) => {
-  // ==========================================
-  // TAURI LOCAL FILESYSTEM COMPILER HOOK
-  // ==========================================
-  /**
-   * Spawns a native desktop directory explorer menu. Intercepts chosen parameters
-   * and safely parses filesystem paths back down into root preferences variables.
-   */
-  const handleFolderSelect = async (): Promise<void> => {
-    try {
-      const selectedPath = await openTauriDialog({
-        directory: true,
-        multiple: false,
-      });
-
-      // Break execution sequence early if the window picker gets canceled
-      if (!selectedPath) return;
-
-      let cleanPathString = "";
-
-      // Adaptable Type Check: Safely unwrap path fields across cross-platform dialogue shapes
-      if (typeof selectedPath === "string") {
-        cleanPathString = selectedPath;
-      } else if (
-        typeof selectedPath === "object" &&
-        selectedPath !== null &&
-        "path" in selectedPath
-      ) {
-        cleanPathString = (selectedPath as TauriFilePath).path;
-      }
-
-      if (cleanPathString) {
-        settings.setDefaultSavingFolder(cleanPathString);
-      }
-    } catch (error) {
-      console.error("Failed to select directory folder:", error);
-    }
-  };
+  const [isExplorerOpen, setIsExplorerOpen] = useState(false);
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false); // <-- NEW STATE
 
   /** Local configuration listing mapping layout dropdown theme parameters */
   const type = ["Dark Mode", "Light Mode", "System-Settings"];
@@ -162,18 +126,58 @@ const SectionA: React.FC<props> = ({
         }
         darkMode={darkMode}
       >
-        {/* Open native folder selector dial overlay panel */}
         <button
-          className={`text-xs flex items-center gap-3 px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer ${
+          type="button"
+          className={`text-xs flex items-center gap-3 px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer transition-colors ${
             darkMode
-              ? "bg-zinc-800 border-zinc-700 text-zinc-200"
-              : "bg-zinc-50 border-zinc-300 text-zinc-700"
+              ? "bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-700"
+              : "bg-zinc-50 border-zinc-300 text-zinc-700 hover:bg-zinc-100"
           }`}
-          onClick={handleFolderSelect}
+          onClick={() => setIsExplorerOpen(true)}
         >
           <FiFolder className="w-3.5 h-3.5" /> Browse
         </button>
       </Cards>
+
+      {/* ==========================================
+          ROW OPTION 4: CUSTOM LANGUAGES
+          ========================================== */}
+      <Cards
+        type="normal"
+        title="Custom Languages"
+        description="Add your own compiler or interpreter to the Code IDE."
+        darkMode={darkMode}
+      >
+        <button
+          type="button"
+          className={`text-xs w-max flex items-center gap-3 px-2.5 py-1.5 rounded border outline-none font-medium cursor-pointer transition-colors ${
+            darkMode
+              ? "bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-700"
+              : "bg-zinc-50 border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+          }`}
+          onClick={() => setIsLangModalOpen(true)}
+        >
+          <FiCode className="w-3.5 h-3.5" /> Manage Languages
+        </button>
+      </Cards>
+
+      {/* MODALS */}
+      <FileExplorerModal
+        isOpen={isExplorerOpen}
+        onClose={() => setIsExplorerOpen(false)}
+        onSelectFolder={(path) => settings.setDefaultSavingFolder(path)}
+        darkMode={darkMode}
+      />
+
+      <CustomLanguageModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+        onSuccess={() => {
+          // Optional: show a toast or console log here
+          console.log("Custom language added successfully!");
+        }}
+        darkMode={darkMode}
+      />
     </div>
   );
 };

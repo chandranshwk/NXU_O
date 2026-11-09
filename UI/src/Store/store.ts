@@ -32,6 +32,143 @@ import {
 
 const DEFAULT_PRINT_WIDTH = 794;
 
+// ==========================================
+// CODE EXPORT HELPERS & FILTERS
+// ==========================================
+
+const CODE_EXT_MAP: Record<string, string> = {
+  python: "py",
+  javascript: "js",
+  typescript: "ts",
+  java: "java",
+  cpp: "cpp",
+  c: "c",
+  rust: "rs",
+  go: "go",
+  ruby: "rb",
+  php: "php",
+  bash: "sh",
+  perl: "pl",
+  swift: "swift",
+  kotlin: "kt",
+  csharp: "cs",
+  dart: "dart",
+  r: "r",
+  lua: "lua",
+  elixir: "exs",
+  haskell: "hs",
+  scala: "scala",
+  clojure: "clj",
+  julia: "jl",
+  groovy: "groovy",
+  fsharp: "fsx",
+  "objective-c": "m",
+  assembly: "s",
+  fortran: "f90",
+  zig: "zig",
+  nim: "nim",
+};
+
+const REQUIRES_CLASS_MATCH = ["java", "csharp", "kotlin", "scala"];
+const HASH_COMMENT_LANGS = [
+  "python",
+  "ruby",
+  "bash",
+  "perl",
+  "r",
+  "powershell",
+];
+
+const sanitizeFilename = (title: string): string => {
+  let safe = title
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/[^a-zA-Z0-9_\- ]/g, "")
+    .replace(/\s+/g, "_")
+    .trim();
+
+  if (/^[0-9]/.test(safe)) {
+    safe = `Problem_${safe}`;
+  }
+
+  return safe || "Untitled_Problem";
+};
+
+const looksLikeLegacyHtml = (text: string): boolean => {
+  const hasOpen = /<p[\s>]/i.test(text) || /<div[\s>]/i.test(text);
+  const hasClose =
+    /<\/p>/i.test(text) || /<\/div>/i.test(text) || /<br\s*\/?>/i.test(text);
+  return hasOpen && hasClose;
+};
+
+const stripHtmlToTextPreservingIndent = (html: string): string => {
+  let text = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<\/h[1-6]>/gi, "\n")
+    .replace(/<\/blockquote>/gi, "\n");
+
+  text = text.replace(/<[^>]+>/g, "");
+
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+
+  return textarea.value.replace(/^\n+|\n+$/g, "");
+};
+
+const buildCodeHeader = (
+  problem: CodeFile,
+  safeTitle: string,
+  ext: string,
+  langSlug: string,
+): string => {
+  const lines: string[] = [];
+
+  lines.push(`@file ${safeTitle}.${ext}`);
+  lines.push(`@title ${problem.title}`);
+  if (problem.category) lines.push(`@category ${problem.category}`);
+  if (problem.difficulty) lines.push(`@difficulty ${problem.difficulty}`);
+  lines.push("");
+
+  if (problem.description?.markdown) {
+    lines.push("@description");
+    problem.description.markdown.split("\n").forEach((line) => {
+      lines.push(line);
+    });
+    lines.push("");
+  }
+
+  if (problem.examples && problem.examples.length > 0) {
+    lines.push("@examples");
+    problem.examples.forEach((ex, i) => {
+      lines.push(`Example ${i + 1}:`);
+      lines.push(`Input: ${ex.input || ""}`);
+      lines.push(`Output: ${ex.output || ""}`);
+      if (ex.explanation) lines.push(`Explanation: ${ex.explanation}`);
+      lines.push("");
+    });
+  }
+
+  if (problem.constraints && problem.constraints.length > 0) {
+    lines.push("@constraints");
+    problem.constraints.forEach((c) => lines.push(`- ${c}`));
+    lines.push("");
+  }
+
+  if (HASH_COMMENT_LANGS.includes(langSlug)) {
+    return (
+      lines.map((l) => (l.length > 0 ? `# ${l}` : "#")).join("\n") + "\n\n"
+    );
+  } else {
+    return (
+      "/**\n" +
+      lines.map((l) => (l.length > 0 ? ` * ${l}` : " *")).join("\n") +
+      "\n */\n\n"
+    );
+  }
+};
+
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set, get) => {
@@ -144,7 +281,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         setActiveNotebookById: (id) => {
           const notebook = get().notebooks.find((n) => n.id === id) ?? null;
-
           set({
             activeNotebook: notebook,
             isDirty: false,
@@ -177,73 +313,70 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }
         },
 
-        // ── Code File Mutations ────────────────────────────────────
-        saveCodeFileToDisk: async (codeId: string) => {
+        saveCodeFileToJson: async (codeId: string) => {
           const codeFile = get().codeFiles.find(
             (c) => c.id.toString() === codeId,
           );
           if (!codeFile) return;
 
           try {
-            // 1. Save internal JSON metadata
             await invoke("save_code_file", {
               codeId: codeFile.id.toString(),
               contents: JSON.stringify(codeFile, null, 2),
             });
+            console.log(`[JSON] Saved metadata for: ${codeFile.title}`);
+            set({ isCodeDirty: false });
+          } catch (error) {
+            console.error(`[JSON] Failed to save code file ${codeId}:`, error);
+          }
+        },
 
-            // 2. Find out which language is currently active in the IDE
+        exportCodeToDisk: async (codeId: string, langConfig?: any) => {
+          const codeFile = get().codeFiles.find(
+            (c) => c.id.toString() === codeId,
+          );
+          if (!codeFile) return;
+
+          try {
             const activeLangName =
               localStorage.getItem("ide_selected_language") || "Python";
             const activeTemplate = codeFile.codeTemplates?.find(
               (t) => t.language === activeLangName,
             );
+            if (!activeTemplate) return;
 
-            // 3. Only export the file for the active language
-            if (activeTemplate) {
-              const safeTitle = codeFile.title
-                .replace(/[\\/:*?"<>|]/g, "-")
-                .trim();
+            const slug = activeTemplate.slug;
+            const ext = langConfig?.extension || CODE_EXT_MAP[slug] || "txt";
+            const requiresClassMatch =
+              langConfig?.requiresClassMatch ||
+              REQUIRES_CLASS_MATCH.includes(slug);
 
-              const extMap: Record<string, string> = {
-                python: "py",
-                javascript: "js",
-                java: "java",
-                cpp: "cpp",
-              };
-              const ext = extMap[activeTemplate.slug] || "txt";
+            const safeTitle = sanitizeFilename(codeFile.title);
 
-              const extractCode = (html: string) => {
-                let text = html
-                  .replace(/<br\s*\/?>/gi, "\n")
-                  .replace(/<\/p>/gi, "\n")
-                  .replace(/<\/div>/gi, "\n")
-                  .replace(/<\/li>/gi, "\n")
-                  .replace(/<\/h[1-6]>/gi, "\n")
-                  .replace(/<\/blockquote>/gi, "\n");
+            let finalCode = looksLikeLegacyHtml(activeTemplate.starterCode)
+              ? stripHtmlToTextPreservingIndent(activeTemplate.starterCode)
+              : activeTemplate.starterCode;
 
-                text = text.replace(/<[^>]+>/g, "");
-
-                const textarea = document.createElement("textarea");
-                textarea.innerHTML = text;
-                text = textarea.value;
-
-                return text.replace(/\n{3,}/g, "\n\n").trim();
-              };
-
-              const rawCode = extractCode(activeTemplate.starterCode);
-
-              await invoke("export_raw_code", {
-                filename: `${safeTitle}.${ext}`,
-                contents: rawCode,
-              });
+            if (requiresClassMatch) {
+              finalCode = finalCode.replace(
+                /\b(class|interface|enum)\s+Solution\b/g,
+                `$1 ${safeTitle}`,
+              );
             }
 
-            console.log(
-              `[Disk] Saved and exported code file: ${codeFile.title} (${activeLangName})`,
-            );
-            set({ isCodeDirty: false });
+            const header = buildCodeHeader(codeFile, safeTitle, ext, slug);
+            const finalContent = header + finalCode;
+
+            await invoke("export_raw_code", {
+              filename: `${safeTitle}.${ext}`,
+              contents: finalContent,
+            });
+            console.log(`[Disk] Exported raw file: ${safeTitle}.${ext}`);
           } catch (error) {
-            console.error(`[Disk] Failed to save code file ${codeId}:`, error);
+            console.error(
+              `[Disk] Failed to export code file ${codeId}:`,
+              error,
+            );
           }
         },
 
@@ -251,7 +384,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           set((state) => ({
             codeFiles: state.codeFiles.map((c) => {
               if (c.id.toString() !== codeId.toString()) return c;
-
               return {
                 ...c,
                 codeTemplates: c.codeTemplates?.map((t) =>
@@ -267,10 +399,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           set((state) => ({
             codeFiles: state.codeFiles.map((c) => {
               if (c.id.toString() !== codeId.toString()) return c;
-              return {
-                ...c,
-                ...metadata,
-              };
+              return { ...c, ...metadata };
             }),
             isCodeDirty: true,
           }));
@@ -304,7 +433,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
           set((state) => ({ notebooks: [newNotebook, ...state.notebooks] }));
           setTimeout(() => get().saveNotebookToDisk(notebookId), 0);
-
           return notebookId;
         },
 
@@ -314,7 +442,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             activeNotebook:
               state.activeNotebook?.id === id ? null : state.activeNotebook,
           }));
-
           invoke("delete_notebook", { notebookId: id }).catch((err) =>
             console.error("Failed to delete notebook from disk", err),
           );
@@ -386,8 +513,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           };
 
           set((state) => ({ codeFiles: [newFile, ...state.codeFiles] }));
-          setTimeout(() => get().saveCodeFileToDisk(newFile.id.toString()), 0);
-
+          setTimeout(() => get().saveCodeFileToJson(newFile.id.toString()), 0);
           return newFile.titleSlug;
         },
 
@@ -395,7 +521,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const fileToDelete = get().codeFiles.find(
             (c) => c.id.toString() === id.toString(),
           );
-
           set((state) => ({
             codeFiles: state.codeFiles.filter(
               (c) => c.id.toString() !== id.toString(),
@@ -407,16 +532,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           );
 
           if (fileToDelete) {
-            const safeTitle = fileToDelete.title
-              .replace(/[\\/:*?"<>|]/g, "-")
-              .trim();
-            const exts = ["py", "js", "java", "cpp", "txt"];
+            const safeTitle = sanitizeFilename(fileToDelete.title);
+            const exts = [...Object.values(CODE_EXT_MAP), "txt"];
             exts.forEach((ext) => {
               invoke("delete_raw_code", {
                 filename: `${safeTitle}.${ext}`,
-              }).catch(() => {
-                // Ignore errors for missing extensions
-              });
+              }).catch(() => {});
             });
           }
         },
@@ -432,7 +553,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         addPageToNotebook: (notebookId, pageTitle) => {
           const { createdDate, createdTime } = generateTimestamp();
-
           const newPage: MockPage = {
             id: crypto.randomUUID(),
             notebookId,
@@ -443,7 +563,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             nodes: [],
             strokes: [],
           };
-
           commit(
             mapNotebook(get().notebooks, notebookId, (nb) => ({
               ...nb,
@@ -493,9 +612,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         addNodeToPage: (notebookId, pageId, nodeType) => {
           const targetPage = findPage(notebookId, pageId);
           if (!targetPage) return;
-
           const node = createNode(nodeType, targetPage.nodes.length);
-
           commit(
             mapPage(get().notebooks, notebookId, pageId, (p) => ({
               ...p,
@@ -507,7 +624,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         deleteNodeFromPage: (notebookId, pageId, nodeId) => {
           const targetPage = findPage(notebookId, pageId);
           if (!targetPage) return;
-
           commit(
             mapPage(get().notebooks, notebookId, pageId, (p) => ({
               ...p,
@@ -529,7 +645,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         addTask: (notebookId, title) => {
           const trimmed = title.trim();
           if (!trimmed) return;
-
           const newTask: MockTask = {
             id: crypto.randomUUID(),
             title: trimmed,
@@ -537,7 +652,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             priority: "medium",
             subtasks: [],
           };
-
           commit(
             mapNotebook(get().notebooks, notebookId, (nb) => ({
               ...nb,
@@ -550,20 +664,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const notebook = get().notebooks.find((n) => n.id === notebookId);
           const task = notebook?.tasks.find((t) => t.id === taskId);
           if (!task) return;
-
           const hasIncompleteSubtasks =
             task.subtasks.length > 0 && task.subtasks.some((s) => !s.done);
-
           let next: MockTask["status"];
-          if (task.status === "todo") {
-            next = "in-progress";
-          } else if (task.status === "in-progress") {
+          if (task.status === "todo") next = "in-progress";
+          else if (task.status === "in-progress") {
             if (hasIncompleteSubtasks) return;
             next = "done";
-          } else {
-            next = "todo";
-          }
-
+          } else next = "todo";
           commit(
             mapNotebook(get().notebooks, notebookId, (nb) => ({
               ...nb,
@@ -587,13 +695,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         addSubtask: (notebookId, taskId, text) => {
           const trimmed = text.trim();
           if (!trimmed) return;
-
           const newSubtask: MockSubtask = {
             id: crypto.randomUUID(),
             text: trimmed,
             done: false,
           };
-
           commit(
             mapNotebook(get().notebooks, notebookId, (nb) => ({
               ...nb,
@@ -662,6 +768,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             ),
           }));
         },
+
         updateFolderBody: (folderId, body) => {
           set((state) => ({
             folders: state.folders.map((f) =>
@@ -743,9 +850,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     },
     {
       name: "caldera-workspace-storage-v8",
-      partialize: (state) => ({
-        folders: state.folders,
-      }),
+      partialize: (state) => ({ folders: state.folders }),
     },
   ),
 );

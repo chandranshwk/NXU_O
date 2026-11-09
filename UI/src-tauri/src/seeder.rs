@@ -40,6 +40,13 @@ pub fn seed_default_languages_on_boot() -> Result<(), String> {
     "commentPrefix": "//",
     "runCmd": ["node", "{file}"]
   },
+  "typescript": {
+    "name": "TypeScript",
+    "slug": "typescript",
+    "extension": "ts",
+    "commentPrefix": "//",
+    "runCmd": ["npx", "tsx", "{file}"]
+  },
   "cpp": {
     "name": "C++",
     "slug": "cpp",
@@ -48,13 +55,198 @@ pub fn seed_default_languages_on_boot() -> Result<(), String> {
     "compileCmd": ["g++", "{file}", "-o", "{exePath}"],
     "runCmd": ["{exePath}"]
   },
+  "c": {
+    "name": "C",
+    "slug": "c",
+    "extension": "c",
+    "commentPrefix": "//",
+    "compileCmd": ["gcc", "{file}", "-o", "{exePath}"],
+    "runCmd": ["{exePath}"]
+  },
   "java": {
     "name": "Java",
     "slug": "java",
     "extension": "java",
     "commentPrefix": "//",
+    "requiresClassMatch": true,
     "compileCmd": ["javac", "{file}"],
     "runCmd": ["java", "-cp", "{dir}", "Solution"]
+  },
+  "rust": {
+    "name": "Rust",
+    "slug": "rust",
+    "extension": "rs",
+    "commentPrefix": "//",
+    "compileCmd": ["rustc", "{file}", "-o", "{exePath}"],
+    "runCmd": ["{exePath}"]
+  },
+  "go": {
+    "name": "Go",
+    "slug": "go",
+    "extension": "go",
+    "commentPrefix": "//",
+    "runCmd": ["go", "run", "{file}"]
+  },
+  "ruby": {
+    "name": "Ruby",
+    "slug": "ruby",
+    "extension": "rb",
+    "commentPrefix": "#",
+    "runCmd": ["ruby", "{file}"]
+  },
+  "php": {
+    "name": "PHP",
+    "slug": "php",
+    "extension": "php",
+    "commentPrefix": "//",
+    "runCmd": ["php", "{file}"]
+  },
+  "bash": {
+    "name": "Bash",
+    "slug": "bash",
+    "extension": "sh",
+    "commentPrefix": "#",
+    "runCmd": ["bash", "{file}"]
+  },
+  "perl": {
+    "name": "Perl",
+    "slug": "perl",
+    "extension": "pl",
+    "commentPrefix": "#",
+    "runCmd": ["perl", "{file}"]
+  },
+  "swift": {
+    "name": "Swift",
+    "slug": "swift",
+    "extension": "swift",
+    "commentPrefix": "//",
+    "runCmd": ["swift", "{file}"]
+  },
+  "kotlin": {
+    "name": "Kotlin",
+    "slug": "kotlin",
+    "extension": "kt",
+    "commentPrefix": "//",
+    "requiresClassMatch": true,
+    "runCmd": ["kotlin", "{file}"]
+  },
+  "csharp": {
+    "name": "C#",
+    "slug": "csharp",
+    "extension": "cs",
+    "commentPrefix": "//",
+    "requiresClassMatch": true,
+    "runCmd": ["dotnet", "script", "{file}"]
+  },
+  "dart": {
+    "name": "Dart",
+    "slug": "dart",
+    "extension": "dart",
+    "commentPrefix": "//",
+    "runCmd": ["dart", "run", "{file}"]
+  },
+  "r": {
+    "name": "R",
+    "slug": "r",
+    "extension": "r",
+    "commentPrefix": "#",
+    "runCmd": ["Rscript", "{file}"]
+  },
+  "lua": {
+    "name": "Lua",
+    "slug": "lua",
+    "extension": "lua",
+    "commentPrefix": "--",
+    "runCmd": ["lua", "{file}"]
+  },
+  "elixir": {
+    "name": "Elixir",
+    "slug": "elixir",
+    "extension": "exs",
+    "commentPrefix": "#",
+    "runCmd": ["elixir", "{file}"]
+  },
+  "haskell": {
+    "name": "Haskell",
+    "slug": "haskell",
+    "extension": "hs",
+    "commentPrefix": "--",
+    "runCmd": ["runhaskell", "{file}"]
+  },
+  "scala": {
+    "name": "Scala",
+    "slug": "scala",
+    "extension": "scala",
+    "commentPrefix": "//",
+    "requiresClassMatch": true,
+    "runCmd": ["scala", "{file}"]
+  },
+  "clojure": {
+    "name": "Clojure",
+    "slug": "clojure",
+    "extension": "clj",
+    "commentPrefix": ";",
+    "runCmd": ["clojure", "{file}"]
+  },
+  "julia": {
+    "name": "Julia",
+    "slug": "julia",
+    "extension": "jl",
+    "commentPrefix": "#",
+    "runCmd": ["julia", "{file}"]
+  },
+  "groovy": {
+    "name": "Groovy",
+    "slug": "groovy",
+    "extension": "groovy",
+    "commentPrefix": "//",
+    "runCmd": ["groovy", "{file}"]
+  },
+  "fsharp": {
+    "name": "F#",
+    "slug": "fsharp",
+    "extension": "fsx",
+    "commentPrefix": "//",
+    "runCmd": ["dotnet", "fsi", "{file}"]
+  },
+  "objective-c": {
+    "name": "Objective-C",
+    "slug": "objective-c",
+    "extension": "m",
+    "commentPrefix": "//",
+    "compileCmd": ["clang", "-framework", "Foundation", "{file}", "-o", "{exePath}"],
+    "runCmd": ["{exePath}"]
+  },
+  "assembly": {
+    "name": "Assembly (GCC)",
+    "slug": "assembly",
+    "extension": "s",
+    "commentPrefix": "#",
+    "compileCmd": ["gcc", "-x", "assembler", "{file}", "-o", "{exePath}"],
+    "runCmd": ["{exePath}"]
+  },
+  "fortran": {
+    "name": "Fortran",
+    "slug": "fortran",
+    "extension": "f90",
+    "commentPrefix": "!",
+    "compileCmd": ["gfortran", "{file}", "-o", "{exePath}"],
+    "runCmd": ["{exePath}"]
+  },
+  "zig": {
+    "name": "Zig",
+    "slug": "zig",
+    "extension": "zig",
+    "commentPrefix": "//",
+    "runCmd": ["zig", "run", "{file}"]
+  },
+  "nim": {
+    "name": "Nim",
+    "slug": "nim",
+    "extension": "nim",
+    "commentPrefix": "#",
+    "compileCmd": ["nim", "c", "-r", "{file}"],
+    "runCmd": []
   }
 }"##;
 

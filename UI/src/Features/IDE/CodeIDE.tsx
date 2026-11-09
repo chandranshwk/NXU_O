@@ -23,10 +23,49 @@ import { useTourAutoStart } from "../../Hooks/useTourAutoStart";
 import { CODEIDE_STEPS } from "../../Tours/pageTours";
 import { FiTerminal, FiX } from "react-icons/fi";
 
-// Fallback just in case the JSON file fails to load
 const FALLBACK_LANGS = [
   { name: "Python", slug: "python", extension: "py", commentPrefix: "#" },
 ];
+
+// ==========================================
+// TEXT <-> DOC HELPERS
+// ==========================================
+
+const looksLikeHtml = (text: string): boolean => {
+  const hasOpen = /<p[\s>]/i.test(text) || /<div[\s>]/i.test(text);
+  const hasClose =
+    /<\/p>/i.test(text) || /<\/div>/i.test(text) || /<br\s*\/?>/i.test(text);
+  return hasOpen && hasClose;
+};
+
+const stripHtmlToText = (html: string): string => {
+  let text = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<\/h[1-6]>/gi, "\n")
+    .replace(/<\/blockquote>/gi, "\n");
+
+  text = text.replace(/<[^>]+>/g, "");
+
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+
+  return textarea.value.replace(/\n{3,}/g, "\n\n").replace(/^\n+|\n+$/g, "");
+};
+
+const buildDocFromText = (text: string) => {
+  const lines = text.split("\n");
+  return {
+    type: "doc",
+    content: lines.map((line) =>
+      line.length > 0
+        ? { type: "paragraph", content: [{ type: "text", text: line }] }
+        : { type: "paragraph" },
+    ),
+  };
+};
 
 const CodeIDEContent: React.FC = () => {
   const { darkMode } = useOutletContext<{ darkMode: boolean }>();
@@ -35,13 +74,15 @@ const CodeIDEContent: React.FC = () => {
 
   const codeFiles = useWorkspaceStore((s) => s.codeFiles);
   const updateCodeFileCode = useWorkspaceStore((s) => s.updateCodeFileCode);
-  const saveCodeFileToDisk = useWorkspaceStore((s) => s.saveCodeFileToDisk);
 
-  // Dynamic Languages State
+  const saveCodeFileToJson = useWorkspaceStore((s) => s.saveCodeFileToJson);
+  const exportCodeToDisk = useWorkspaceStore((s) => s.exportCodeToDisk);
+
   const [availableLanguages, setAvailableLanguages] = useState<any[]>([]);
-  const [selectedLang, setSelectedLang] = useState<string>("Python");
+  const [selectedLang, setSelectedLang] = useState<string>(
+    localStorage.getItem("ide_selected_language") || "Python",
+  );
 
-  // Execution State
   const [isRunning, setIsRunning] = useState(false);
   const [terminalOutput, setTerminalOutput] = useState<{
     stdout: string;
@@ -50,19 +91,33 @@ const CodeIDEContent: React.FC = () => {
   } | null>(null);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
 
-  // Load Languages from Rust dynamically
+  const [customInput, setCustomInput] = useState("");
+  const [activeExampleIdx, setActiveExampleIdx] = useState<number>(0);
+
   useEffect(() => {
     invoke<Record<string, any>>("get_available_languages")
-      .then((langMap) => {
-        const langArray = Object.values(langMap);
-        setAvailableLanguages(langArray);
+      .then(async (langMap) => {
+        const allLangArray = Object.values(langMap);
+        const installedSlugs = await invoke<string[]>(
+          "get_installed_languages",
+        );
+        let filtered = allLangArray.filter((lang) =>
+          installedSlugs.includes(lang.slug),
+        );
+
+        if (filtered.length === 0 && langMap["python"]) {
+          filtered = [langMap["python"]];
+        }
+
+        setAvailableLanguages(filtered);
 
         const savedLang = localStorage.getItem("ide_selected_language");
-        const isValid = langArray.some((l) => l.name === savedLang);
+        const isValid = filtered.some((l) => l.name === savedLang);
+
         if (isValid && savedLang) {
           setSelectedLang(savedLang);
-        } else if (langArray.length > 0) {
-          setSelectedLang(langArray[0].name);
+        } else if (filtered.length > 0) {
+          setSelectedLang(filtered[0].name);
         }
       })
       .catch((err) => {
@@ -109,7 +164,7 @@ const CodeIDEContent: React.FC = () => {
     editorProps: {
       attributes: {
         className:
-          "max-w-full w-full outline-none font-mono text-xs p-4 leading-relaxed break-all h-full min-h-full",
+          "nxuo-ide-tiptap max-w-full w-full outline-none font-mono text-xs p-4 leading-relaxed break-all h-full min-h-full",
         spellcheck: "false",
         autocorrect: "off",
         autocapitalize: "off",
@@ -124,9 +179,16 @@ const CodeIDEContent: React.FC = () => {
     content: "",
     onUpdate: ({ editor: currentEditor }) => {
       if (isTransitioningRef.current) return;
-      const currentHTML = currentEditor.getHTML();
+
+      const rawText = currentEditor.state.doc.textBetween(
+        0,
+        currentEditor.state.doc.content.size,
+        "\n",
+        "\n",
+      );
+
       if (problem) {
-        updateCodeFileCode(problem.id.toString(), selectedLang, currentHTML);
+        updateCodeFileCode(problem.id.toString(), selectedLang, rawText);
       }
     },
   });
@@ -150,17 +212,23 @@ const CodeIDEContent: React.FC = () => {
       (t) => t.language === selectedLang,
     );
 
-    let targetContent = template?.starterCode;
+    let rawText = template?.starterCode ?? "";
 
-    if (!targetContent) {
+    if (looksLikeHtml(rawText)) {
+      rawText = stripHtmlToText(rawText);
+    }
+
+    if (!rawText) {
       const langConfig = availableLanguages.find(
         (l) => l.name === selectedLang,
       );
       const prefix = langConfig?.commentPrefix || "//";
-      targetContent = `${prefix} Write your ${selectedLang} solution here\n`;
+      rawText = `${prefix} Write your ${selectedLang} solution here\n`;
     }
 
-    editor.commands.setContent(targetContent, { emitUpdate: false });
+    editor.commands.setContent(buildDocFromText(rawText), {
+      emitUpdate: false,
+    });
 
     const langConfig = availableLanguages.find((l) => l.name === selectedLang);
     const langSlug = langConfig?.slug || "javascript";
@@ -173,40 +241,59 @@ const CodeIDEContent: React.FC = () => {
     }, 50);
   }, [problem?.id, selectedLang, editor, availableLanguages]);
 
-  // ==========================================
-  // MANUAL SAVE ONLY (CTRL+S)
-  // ==========================================
   useEffect(() => {
-    const handleSave = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        if (problem) {
-          saveCodeFileToDisk(problem.id.toString());
+    const handleSave = (e?: KeyboardEvent) => {
+      if (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+          e.preventDefault();
+        } else {
+          return;
         }
+      }
+      if (problem) {
+        saveCodeFileToJson(problem.id.toString());
       }
     };
 
     window.addEventListener("keydown", handleSave);
+    const autoSaveInterval = setInterval(handleSave, 30_000);
 
     return () => {
       window.removeEventListener("keydown", handleSave);
+      clearInterval(autoSaveInterval);
     };
-  }, [problem, saveCodeFileToDisk]);
+  }, [problem, saveCodeFileToJson]);
+
+  // Reset tab to Example 1 when switching problems
+  useEffect(() => {
+    setActiveExampleIdx(0);
+  }, [problem?.id]);
+
+  // Sync STDIN with the selected Example Tab
+  useEffect(() => {
+    if (activeExampleIdx === -1) return; // -1 means Custom, don't overwrite
+
+    const example = problem?.examples?.[activeExampleIdx];
+    if (example && example.input) {
+      setCustomInput(example.input.replace(/\\n/g, "\n"));
+    } else {
+      setCustomInput("");
+    }
+  }, [problem?.id, activeExampleIdx]);
 
   const handleRunCode = async () => {
     if (!editor || !problem) return;
 
     const code = editor.getText();
     const langConfig = availableLanguages.find((l) => l.name === selectedLang);
-
     if (!langConfig) return;
 
     setIsRunning(true);
     setIsTerminalOpen(true);
     setTerminalOutput(null);
 
-    // Get the first example's input to feed into the program
-    const testInput = problem.examples?.[0]?.input || "";
+    // Ensure literal \n is converted to real newlines for the Rust backend
+    const finalInput = customInput.replace(/\\n/g, "\n");
 
     try {
       const result = await invoke<{
@@ -217,7 +304,7 @@ const CodeIDEContent: React.FC = () => {
         languageSlug: langConfig.slug,
         code: code,
         fileId: problem.id.toString(),
-        stdinInput: testInput, // <-- Pass it here!
+        stdinInput: finalInput,
       });
 
       setTerminalOutput(result);
@@ -245,115 +332,215 @@ const CodeIDEContent: React.FC = () => {
   }
 
   return (
-    <div
-      className={`p-1 pl-2 pr-3.5 w-full h-[calc(100vh-2.25rem)] grid grid-cols-3 gap-1 transition-colors duration-200 overflow-hidden select-none ${
-        darkMode ? "bg-[#121214] text-zinc-100" : "bg-gray-50 text-zinc-800"
-      }`}
-    >
-      <div data-tour="ide-problem" className="col-span-1 h-full min-h-0">
-        <ProblemInstructionTrack darkMode={darkMode} />
-      </div>
+    <>
+      <style>{`
+        .tiptap.nxuo-ide-tiptap,
+        .tiptap.nxuo-ide-tiptap * {
+          white-space: pre-wrap !important;
+          tab-size: 4;
+          -moz-tab-size: 4;
+        }
+        .tiptap.nxuo-ide-tiptap p {
+          margin: 0 !important;
+          padding: 0 !important;
+          font-size: 0.75rem !important;
+          line-height: 1.5 !important;
+        }
+      `}</style>
 
-      <div className="col-span-2 flex flex-col h-full overflow-hidden w-[calc(100%+0.5rem)] relative">
-        <CodeWorkspaceHeader
-          darkMode={darkMode}
-          languages={availableLanguages}
-          selectedLanguage={selectedLang}
-          onLanguageChange={(lang) => setSelectedLang(lang)}
-          onSave={() => saveCodeFileToDisk(problem.id.toString())}
-          onRun={handleRunCode}
-          isRunning={isRunning}
-        />
-
-        <div
-          data-tour="ide-editor"
-          className={`flex-1 w-full min-h-0 overflow-y-auto border-x border-b transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
-            isTerminalOpen ? "rounded-none border-b-0" : "rounded-b-sm"
-          } ${
-            darkMode
-              ? "bg-[#151518] border-zinc-800/80"
-              : "bg-zinc-50/50 border-zinc-200"
-          }`}
-        >
-          <EditorContent
-            editor={editor}
-            className={`w-full min-h-full flex flex-col font-mono text-xs transition-colors duration-200 [&_.tiptap]:flex-1 [&_.tiptap]:outline-none [&_.tiptap]:p-2 ${
-              darkMode
-                ? "bg-[#151518] [&_.tiptap]:text-zinc-200"
-                : "bg-zinc-50/50 [&_.tiptap]:text-zinc-800"
-            }`}
-            style={
-              {
-                "--editor-line-height": "10px",
-                "--editor-font-size": settings.defaultFontSize,
-                "--editor-ordered-list-representer":
-                  settings.defaultOLRepresenter,
-                "--editor-font-color": settings.defaultColor,
-              } as React.CSSProperties
-            }
-          />
+      <div
+        className={`p-3 w-full h-[calc(100vh-2.25rem)] flex gap-3 transition-colors duration-200 overflow-hidden select-none ${
+          darkMode ? "bg-[#121214] text-zinc-100" : "bg-gray-50 text-zinc-800"
+        }`}
+      >
+        <div data-tour="ide-problem" className="h-full min-h-0 overflow-hidden">
+          <ProblemInstructionTrack darkMode={darkMode} />
         </div>
 
-        {/* Terminal Panel */}
-        {isTerminalOpen && (
+        <div className="flex flex-col flex-1 h-full overflow-hidden w-full relative">
+          <CodeWorkspaceHeader
+            darkMode={darkMode}
+            languages={availableLanguages}
+            selectedLanguage={selectedLang}
+            onLanguageChange={(lang) => setSelectedLang(lang)}
+            onSave={() => saveCodeFileToJson(problem.id.toString())}
+            onExport={() => exportCodeToDisk(problem.id.toString())}
+            onRun={handleRunCode}
+            isRunning={isRunning}
+          />
+
+          {/* EDITOR AREA */}
           <div
-            className={`h-64 shrink-0 flex flex-col border-x border-b rounded-b-xl overflow-hidden font-mono text-xs ${
+            data-tour="ide-editor"
+            className={`flex-1 w-full min-h-0 overflow-y-auto border-x transition-colors focus-within:ring-1 focus-within:ring-indigo-500/20 ${
+              isTerminalOpen ? "border-b-0" : "border-b rounded-b-md"
+            } ${
               darkMode
-                ? "bg-[#0c0c0d] border-zinc-800/80 text-zinc-300"
-                : "bg-white border-zinc-200 text-zinc-700"
+                ? "bg-[#151518] border-zinc-800/80"
+                : "bg-zinc-50/50 border-zinc-200"
             }`}
           >
-            <div
-              className={`flex items-center justify-between px-3 py-1.5 border-b ${darkMode ? "border-zinc-800/80 bg-[#121214]" : "border-zinc-200 bg-zinc-100"}`}
-            >
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider opacity-60">
-                <FiTerminal /> Output
-              </div>
-              <button
-                onClick={() => setIsTerminalOpen(false)}
-                className="hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity"
-              >
-                <FiX size={14} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3 whitespace-pre-wrap">
-              {isRunning ? (
-                <span className="text-amber-500 animate-pulse">
-                  Compiling and executing...
-                </span>
-              ) : terminalOutput ? (
-                <>
-                  {terminalOutput.stdout && (
-                    <div
-                      className={
-                        darkMode ? "text-emerald-400" : "text-emerald-600"
-                      }
-                    >
-                      {terminalOutput.stdout}
-                    </div>
-                  )}
-                  {terminalOutput.stderr && (
-                    <div className="text-rose-500 mt-2">
-                      {terminalOutput.stderr}
-                    </div>
-                  )}
-                  {!terminalOutput.stdout && !terminalOutput.stderr && (
-                    <span className="opacity-50 italic">
-                      Process finished with exit code 0 (no output)
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="opacity-50 italic">
-                  Press "Run" to execute your code.
-                </span>
-              )}
-            </div>
+            <EditorContent
+              editor={editor}
+              className={`w-full min-h-full flex flex-col font-mono text-xs transition-colors duration-200 [&_.tiptap]:flex-1 [&_.tiptap]:outline-none [&_.tiptap]:p-2 [&_.tiptap]:whitespace-pre-wrap ${
+                darkMode
+                  ? "bg-[#151518] [&_.tiptap]:text-zinc-200"
+                  : "bg-zinc-50/50 [&_.tiptap]:text-zinc-800"
+              }`}
+              style={
+                {
+                  "--editor-line-height": "1.5",
+                  "--editor-font-size": "0.75rem",
+                  "--editor-ordered-list-representer":
+                    settings.defaultOLRepresenter,
+                  "--editor-font-color": settings.defaultColor,
+                } as React.CSSProperties
+              }
+            />
           </div>
-        )}
+
+          {/* NEW: EXAMPLE SELECTOR TABS */}
+          <div
+            className={`flex items-center gap-1 px-3 pt-2 pb-0 border-x shrink-0 ${
+              darkMode
+                ? "bg-[#18181b] border-zinc-800/80"
+                : "bg-zinc-100 border-zinc-200"
+            }`}
+          >
+            {problem.examples?.map((ex, idx) => (
+              <button
+                key={ex.id || idx}
+                onClick={() => setActiveExampleIdx(idx)}
+                className={`px-3 py-1.5 text-[11px] font-medium rounded-t-md border-t border-x transition-colors ${
+                  activeExampleIdx === idx
+                    ? darkMode
+                      ? "bg-[#151518] border-zinc-800/80 text-zinc-200 border-b-transparent"
+                      : "bg-white border-zinc-200 text-zinc-800 border-b-transparent"
+                    : darkMode
+                      ? "bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30"
+                      : "bg-transparent border-transparent text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50"
+                }`}
+              >
+                Example {idx + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setActiveExampleIdx(-1)}
+              className={`px-3 py-1.5 text-[11px] font-medium rounded-t-md border-t border-x transition-colors ${
+                activeExampleIdx === -1
+                  ? darkMode
+                    ? "bg-[#151518] border-zinc-800/80 text-zinc-200 border-b-transparent"
+                    : "bg-white border-zinc-200 text-zinc-800 border-b-transparent"
+                  : darkMode
+                    ? "bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30"
+                    : "bg-transparent border-transparent text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50"
+              }`}
+            >
+              Custom
+            </button>
+          </div>
+
+          {/* STDIN INPUT BAR */}
+          <div
+            className={`flex items-center px-3 py-2 border-x border-b shrink-0 transition-colors ${
+              isTerminalOpen ? "border-b-0" : "rounded-b-md"
+            } ${
+              darkMode
+                ? "bg-[#151518] border-zinc-800/80"
+                : "bg-white border-zinc-200"
+            }`}
+          >
+            <span className="text-zinc-500 mr-2 text-[10px] uppercase font-bold tracking-wider">
+              Input (Stdin):
+            </span>
+            <input
+              type="text"
+              value={customInput}
+              onChange={(e) => {
+                setCustomInput(e.target.value);
+                setActiveExampleIdx(-1); // Switch to Custom tab if user types
+              }}
+              placeholder="Type your test input here before running..."
+              className={`flex-1 bg-transparent outline-none text-xs font-mono ${
+                darkMode
+                  ? "text-emerald-300 placeholder-zinc-600"
+                  : "text-emerald-600 placeholder-zinc-400"
+              }`}
+              disabled={isRunning}
+            />
+            <button
+              onClick={() => setIsTerminalOpen(!isTerminalOpen)}
+              className="text-[10px] font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 ml-4 transition-colors"
+            >
+              {isTerminalOpen ? "Hide Console" : "Show Console"}
+            </button>
+          </div>
+
+          {/* TERMINAL OUTPUT AREA */}
+          {isTerminalOpen && (
+            <div
+              className={`h-64 shrink-0 flex flex-col border-x border-b rounded-b-md overflow-hidden font-mono text-xs ${
+                darkMode
+                  ? "bg-[#0c0c0d] border-zinc-800/80 text-zinc-300"
+                  : "bg-white border-zinc-200 text-zinc-700"
+              }`}
+            >
+              <div
+                className={`flex items-center justify-between px-3 py-1.5 border-b ${
+                  darkMode
+                    ? "border-zinc-800/80 bg-[#121214]"
+                    : "border-zinc-200 bg-zinc-100"
+                }`}
+              >
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider opacity-60">
+                  <FiTerminal /> Output Console
+                </div>
+                <button
+                  onClick={() => setIsTerminalOpen(false)}
+                  className="hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity"
+                >
+                  <FiX size={14} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 whitespace-pre-wrap">
+                {isRunning ? (
+                  <span className="text-amber-500 animate-pulse">
+                    Compiling and executing...
+                  </span>
+                ) : terminalOutput ? (
+                  <>
+                    {terminalOutput.stdout && (
+                      <div
+                        className={
+                          darkMode ? "text-emerald-400" : "text-emerald-600"
+                        }
+                      >
+                        {terminalOutput.stdout}
+                      </div>
+                    )}
+                    {terminalOutput.stderr && (
+                      <div className="text-rose-500 mt-2">
+                        {terminalOutput.stderr}
+                      </div>
+                    )}
+                    {!terminalOutput.stdout && !terminalOutput.stderr && (
+                      <span className="opacity-50 italic">
+                        Process finished with exit code 0 (no output)
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="opacity-50 italic">
+                    Press "Run" to execute your code.
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

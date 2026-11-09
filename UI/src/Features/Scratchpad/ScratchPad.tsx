@@ -11,12 +11,14 @@
  * - Combines `<Pages />` (tab switcher) and `<SimpleToolBar />` into a single top menu bar.
  */
 
-/**
- * @file ScratchPad.tsx
- * @component ScratchPad
- */
-
 import { useOutletContext } from "react-router-dom";
+import {
+  FiFileText,
+  FiClock,
+  FiCheckCircle,
+  FiSave,
+  FiDownload,
+} from "react-icons/fi";
 import SimpleToolBar from "../Editor/Components/SimpleToolBar";
 import EditorDoc from "../Editor/Components/EditorDoc";
 import { EditorProvider, useEditorContext } from "../Editor/editorContext";
@@ -36,25 +38,29 @@ const ScratchPadContent = () => {
     enabled: settings.activeSlots.length > 0 && !settings.loading,
   });
 
+  const wordCount = settings.info
+    ? settings.info
+        .replace(/<[^>]+>/g, " ")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length
+    : 0;
+
+  const handleSave = () => {
+    const event = new KeyboardEvent("keydown", { key: "s", ctrlKey: true });
+    window.dispatchEvent(event);
+  };
+
   return (
+    // DARK/GREY DESK BACKGROUND
     <div
-      className={`h-full flex-1 min-w-0 flex flex-col overflow-hidden ${
-        !darkMode ? "bg-[#f4f4f5]" : "bg-[#141414]"
-      }`}
+      className={`h-full flex flex-col font-sans transition-colors ${!darkMode ? "bg-zinc-100" : "bg-[#09090b]"}`}
     >
-      {/* ==========================================
-          SOLID STICKY HEADER (TABS & TOOLBAR)
-          ========================================== */}
+      {/* HEADER (Tabs + Actions) */}
       <div
-        data-tour="scratchpad-tabbar"
-        className={`w-full shrink-0 flex px-4 items-center justify-between relative z-40 border-b ${
-          darkMode
-            ? "bg-[#181818] border-zinc-800/80"
-            : "bg-white border-zinc-200"
-        }`}
+        className={`flex flex-col shrink-0 z-30 ${darkMode ? "bg-[#121214]" : "bg-white"}`}
       >
-        {/* LEFT BLOCK: Tabs */}
-        <div className="flex-1 min-w-0 h-12 flex items-center">
+        <div className="px-2 h-11 flex items-center border-b border-zinc-400/50">
           <Pages
             darkMode={darkMode}
             allPads={settings.allPads}
@@ -64,55 +70,98 @@ const ScratchPadContent = () => {
           />
         </div>
 
-        {/* RIGHT BLOCK: Toolbar */}
-        <div
-          data-tour="scratchpad-toolbar"
-          className="shrink-0 h-full flex items-center pl-4"
-        >
-          <SimpleToolBar
-            darkMode={darkMode}
-            type="simple"
-            size="small"
-            context={context}
-          />
+        <div className="px-8 py-3 flex items-center justify-between gap-4 max-w-4xl w-full mx-auto">
+          <div className="flex items-center gap-4">
+            <h1
+              className={`text-xl font-bold tracking-tight ${darkMode ? "text-zinc-100" : "text-zinc-900"}`}
+            >
+              {settings.activeSlots[settings.activeSlot]?.name || "Untitled"}
+            </h1>
+            <div
+              className={`flex items-center gap-3 pl-4 border-l text-[11px] font-medium ${darkMode ? "border-zinc-800 text-zinc-500" : "border-zinc-200 text-zinc-500"}`}
+            >
+              <span className="flex items-center gap-1.5">
+                <FiFileText size={12} /> {wordCount} words
+              </span>
+              <span
+                className={`flex items-center gap-1.5 ${settings.saveStatus === "Saving..." ? "text-amber-500" : "text-emerald-500"}`}
+              >
+                {settings.saveStatus === "Saving..." ? (
+                  <FiClock size={12} />
+                ) : (
+                  <FiCheckCircle size={12} />
+                )}
+                {settings.saveStatus || "Saved"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSave}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-md border transition-all ${darkMode ? "bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800" : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm"}`}
+            >
+              <FiSave size={12} /> Save
+            </button>
+            <button
+              onClick={handleSave}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-md transition-all ${darkMode ? "bg-indigo-500 text-white hover:bg-indigo-400" : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm"}`}
+            >
+              <FiDownload size={12} /> Export
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ==========================================
-          CENTERED PAPER CANVAS
-          ========================================== */}
-      <div
-        data-tour="scratchpad-editor"
-        // 🔥 FIX: Focus the editor when clicking anywhere on the gray background
-        onClick={() => {
-          if (context.editor && !context.editor.isFocused) {
-            context.editor.commands.focus("end");
-          }
-        }}
-        className="flex-1 overflow-y-auto focus:outline-none w-full px-4 sm:px-8"
-      >
-        {settings.activeSlots.length > 0 ? (
-          <div className="w-full max-w-4xl mx-auto min-h-full flex justify-center">
-            {/* THE "PAPER" CONTAINER */}
-            <div
-              className={`w-full max-w-3xl border flex flex-col transition-all duration-200 ${
-                darkMode
-                  ? "bg-[#1a1a1a] border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
-                  : "bg-white border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
-              }`}
-            >
-              {/* Internal padding creates the "margin" of the paper */}
-              <div className="flex-1 px-12 py-12">
+      {/* MAIN DESK AREA */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar relative ">
+        {/* THE PAPER */}
+        <div
+          className={`max-w-4xl mx-auto min-h-full  shadow-lg border flex flex-col ${
+            darkMode
+              ? "bg-[#121214] border-zinc-800/80 shadow-black/50"
+              : "bg-white border-zinc-200 shadow-zinc-200/50"
+          }`}
+        >
+          {settings.activeSlots.length > 0 ? (
+            <>
+              {/* Sticky Toolbar inside paper */}
+              <div
+                className={`sticky top-0 z-20 px-8 py-4 border-b rounded-t-xl backdrop-blur-md ${
+                  darkMode
+                    ? "bg-[#121214]/95 border-zinc-800/80"
+                    : "bg-white/95 border-zinc-100"
+                }`}
+              >
+                <SimpleToolBar
+                  darkMode={darkMode}
+                  type="simple"
+                  size="full"
+                  context={context}
+                />
+              </div>
+
+              {/* Text Editor */}
+              <div
+                className="flex-1 px-8 md:px-16 py-10 cursor-text"
+                onClick={() => {
+                  if (context.editor && !context.editor.isFocused)
+                    context.editor.commands.focus("end");
+                }}
+              >
                 <EditorDoc size="full" content={settings.info} />
               </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 h-full min-h-[400px]">
+              <FiFileText size={48} className="mb-4 opacity-20" />
+              <p className="text-sm font-medium">No active scratchpads</p>
+              <p className="text-xs mt-1">
+                Click the + button above to create one.
+              </p>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center w-full h-full text-zinc-500 italic text-sm">
-            No active scratchpads opened. Use the menu dropdown to create or
-            load a file.
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

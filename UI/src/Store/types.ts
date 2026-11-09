@@ -35,7 +35,8 @@ export interface WorkspaceState {
   addCodeFile: (title?: string) => string;
 
   // Code file mutations
-  saveCodeFileToDisk: (codeId: string) => Promise<void>;
+  saveCodeFileToJson: (codeId: string) => Promise<void>;
+  exportCodeToDisk: (codeId: string) => Promise<void>;
   updateCodeFileCode: (codeId: string, language: string, code: string) => void;
   updateCodeFileMetadata: (codeId: string, metadata: Partial<CodeFile>) => void;
   deleteCodeFile: (id: string | number) => void;
